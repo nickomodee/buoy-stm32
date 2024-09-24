@@ -1,0 +1,18 @@
+#include "PAL_ARDUINO.h"
+
+static uint32_t get_adc_random_value() {
+    uint32_t seed = 0;
+
+    for (int i = 0; i < 32; i++) {
+        uint32_t adc_value = analogRead(A0);
+        seed ^= (adc_value & 0x1) << i; // Use only the least significant bit of each sample
+    }
+
+    return seed;
+}
+
+uint32_t PAL_ARDUINO_RANDOMSEED_INIT_ENTROPY() {
+    uint32_t seed = get_adc_random_value();
+    PAL_GENERAL_RANDOMSEED(seed);
+    return seed;
+}
