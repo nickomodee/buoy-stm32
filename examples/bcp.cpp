@@ -9,7 +9,7 @@
 #define LORA_NUM_RETRIES 5
 #define LORA_LOCAL_ADDR 101
 #define LORA_TARGET_ADDR 102
-#define LORA_FREQ 920000000 // 920 MHz
+#define LORA_FREQ 915000000 // 915 MHz
 #define LORA_DATA_RATE DataRate::SF12
 #define LORA_BANDWIDTH Bandwidth::BANDWIDTH_250_KHZ
 #define LORA_CODE_RATE CodeRate::RATE_4_BY_5
@@ -17,11 +17,11 @@
 #define LORA_IQCONVERTED IQConverted::OFF
 
 // BCP config
-#define BCP_TIMEOUT 5000
+#define BCP_TIMEOUT 10000
 #define BCP_NUM_RETRIES 5
 
 #if PLATFORM == STM32
-    PAL_UART_STREAM LoRaSerial_UART_STM32(USART1); // USART2 is used for the default 'Serial'
+    PAL_STM32_UART_STREAM LoRaSerial_UART_STM32(USART1); // USART2 is used for the default 'Serial'
     #define SERIAL_INTERFACE LoRaSerial_UART_STM32
 #elif PLATFORM == ARDUINO
     // #define ALTSERIAL

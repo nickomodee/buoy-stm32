@@ -15,7 +15,7 @@
 #define LORA_IQCONVERTED IQConverted::OFF
 
 #if PLATFORM == STM32
-    PAL_UART_STREAM LoRaSerial_UART_STM32(USART1); // USART2 is used for the default 'Serial'
+    PAL_STM32_UART_STREAM LoRaSerial_UART_STM32(USART1); // USART2 is used for the default 'Serial'
     #define SERIAL_INTERFACE LoRaSerial_UART_STM32
 #elif PLATFORM == ARDUINO
     // #define ALTSERIAL

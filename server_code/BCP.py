@@ -291,7 +291,7 @@ if __name__ == "__main__":
     LORA_NUM_RETRIES: Literal[5] = 5
     LORA_LOCAL_ADDR: Literal[102] = 102 # Swapped from the microcontroller end
     LORA_TARGET_ADDR: Literal[101] = 101
-    LORA_FREQ: Literal[920000000] = 920000000  # 920 MHz
+    LORA_FREQ: Literal[915000000] = 915000000  # 915 MHz
     LORA_DATA_RATE: DataRate = DataRate.SF12
     LORA_BANDWIDTH: Bandwidth = Bandwidth.BANDWIDTH_250_KHZ
     LORA_CODE_RATE: CodeRate = CodeRate.RATE_4_BY_5
@@ -299,7 +299,7 @@ if __name__ == "__main__":
     LORA_IQCONVERTED: IQConverted = IQConverted.OFF
 
     # BCP config
-    BCP_TIMEOUT: float = 5.0
+    BCP_TIMEOUT: float = 10.0
     BCP_NUM_RETRIES: Literal[5] = 5
 
     try:

@@ -17,11 +17,11 @@
 
 extern void Error_Handler(); // From main STM32 PAL
 
-class PAL_STM32_UART_BUFFER {
+class PAL_STM32_STREAM_BUFFER {
     public:
         static const uint16_t BUFFER_SIZE = 1024;
 
-        PAL_STM32_UART_BUFFER();
+        PAL_STM32_STREAM_BUFFER();
         void init();
         bool isEmpty() const;
         bool isFull() const;
@@ -34,6 +34,7 @@ class PAL_STM32_UART_BUFFER {
          */
         void put(const uint8_t data);
         bool get(uint8_t &data);
+        bool peek(uint8_t &data);
         uint16_t getCount() const;
 
     private:
@@ -45,16 +46,47 @@ class PAL_STM32_UART_BUFFER {
 /**
  * @brief Similar to the Arduino `Stream` class.
  */
-class PAL_STM32_UART_STREAM {
+class PAL_STM32_STREAM {
+    public:
+        int available();
+        int read();
+        int peek();
+        virtual size_t write(const uint8_t data) = 0;
+        virtual size_t write(const char* str);
+        virtual size_t write(const uint8_t* buffer, const size_t size);
+        virtual size_t write(const char* buffer, const size_t size);
+
+        /**
+         * @brief Puts the received byte into the buffer.
+         *
+         * Uses `rx_byte_` to insert into the internal circular buffer.
+         */
+        void put_buffer();
+        /**
+         * @brief Get the rx byte ptr object.
+         *
+         * @warning This is const.
+         * It should not be modified except for from interrupts (or other rx sources for the stream).
+         * Modification may lead to rx data loss.
+         * It should only be modified by interrupts (or other rx sources for the stream).
+         * @returns A const volatile* pointer to the internal rx byte
+         */
+        const volatile uint8_t* get_rx_byte_ptr() const;
+
+    protected:
+        volatile uint8_t rx_byte_;
+
+    private:
+        PAL_STM32_STREAM_BUFFER UART_buffer_;
+};
+
+class PAL_STM32_UART_STREAM : public PAL_STM32_STREAM {
     public:
         PAL_STM32_UART_STREAM(USART_TypeDef* UART_instance);
         void begin(uint32_t baud_rate);
-        int available();
-        int read();
-        size_t write(const uint8_t data);
-        size_t write(const char* str);
-        size_t write(const uint8_t* buffer, const size_t size);
-        size_t write(const char* buffer, const size_t size);
+        size_t write(const uint8_t data) override;
+        size_t write(const char* str) override;
+        size_t write(const uint8_t* buffer, const size_t size) override; // We override so that we can transmit the entire buffer at once, instead of chunks like the base class does
 
         // PRINTS
         size_t print(const char* str);
@@ -76,29 +108,11 @@ class PAL_STM32_UART_STREAM {
         size_t println(const double n, uint8_t digits = 2);
         size_t println();
 
-        /**
-         * @brief Puts the received byte from the UART interrupt into the buffer.
-         *
-         * Uses `rx_byte_` to insert into the internal circular buffer.
-         */
-        void put_buffer();
-        /**
-         * @brief Get the rx byte ptr object.
-         *
-         * @warning This is const.
-         * It should not be modified.
-         * Modification may lead to UART rx data loss.
-         * It should only be modified by the UART interrupt.
-         * @return const volatile*
-         */
-        const volatile uint8_t* get_rx_byte_ptr() const;
         UART_HandleTypeDef* get_huart_ptr();
 
     private:
         volatile UART_HandleTypeDef huart_;
-        PAL_STM32_UART_BUFFER UART_buffer_;
         const USART_TypeDef* UART_instance_;
-        volatile uint8_t rx_byte_;
 
         size_t printNumber(uint32_t n, uint8_t base);
         size_t printFloat(double number, uint8_t digits);

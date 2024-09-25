@@ -1,29 +1,29 @@
 #include "PAL_STM32_UART.h"
 
-PAL_STM32_UART_BUFFER::PAL_STM32_UART_BUFFER() : head_(0), tail_(0) {}
+PAL_STM32_STREAM_BUFFER::PAL_STM32_STREAM_BUFFER() : head_(0), tail_(0) {}
 
-void PAL_STM32_UART_BUFFER::init() {
+void PAL_STM32_STREAM_BUFFER::init() {
     head_ = 0;
     tail_ = 0;
 }
 
-bool PAL_STM32_UART_BUFFER::isEmpty() const {
+bool PAL_STM32_STREAM_BUFFER::isEmpty() const {
     return (head_ == tail_);
 }
 
-bool PAL_STM32_UART_BUFFER::isFull() const {
+bool PAL_STM32_STREAM_BUFFER::isFull() const {
     uint16_t next_head = (head_ + 1) % BUFFER_SIZE;
     return (next_head == tail_);
 }
 
-void PAL_STM32_UART_BUFFER::put(const uint8_t data) {
+void PAL_STM32_STREAM_BUFFER::put(const uint8_t data) {
     uint16_t next_head = (head_ + 1) % BUFFER_SIZE;
 
     buffer_[head_] = data;
     head_ = next_head;
 }
 
-bool PAL_STM32_UART_BUFFER::get(uint8_t &data) {
+bool PAL_STM32_STREAM_BUFFER::get(uint8_t &data) {
     if (isEmpty()) {
         return false;
     }
@@ -33,7 +33,16 @@ bool PAL_STM32_UART_BUFFER::get(uint8_t &data) {
     return true;
 }
 
-uint16_t PAL_STM32_UART_BUFFER::getCount() const {
+bool PAL_STM32_STREAM_BUFFER::peek(uint8_t &data) {
+    if (isEmpty()) {
+        return false;
+    }
+
+    data = buffer_[tail_];
+    return true;
+}
+
+uint16_t PAL_STM32_STREAM_BUFFER::getCount() const {
     if (head_ >= tail_) {
         return head_ - tail_;
     } else {
@@ -41,7 +50,63 @@ uint16_t PAL_STM32_UART_BUFFER::getCount() const {
     }
 }
 
-// -----------------------------------------------------------
+// PAL_STM32_STREAM --------------------------------------------------------------------------
+
+int PAL_STM32_STREAM::available() {
+    return this->UART_buffer_.getCount();
+}
+
+int PAL_STM32_STREAM::read() {
+    uint8_t data;
+    if (!this->UART_buffer_.get(data)) { // Empty, return -1, as the Arduino `Stream` class does
+        return -1;
+    }
+    return data;
+}
+
+int PAL_STM32_STREAM::peek() {
+    uint8_t data;
+    if (!this->UART_buffer_.peek(data)) { // Empty, return -1, as the Arduino `Stream` class does
+        return -1;
+    }
+    return data;
+}
+
+void PAL_STM32_STREAM::put_buffer() {
+    const bool wasIrqEnabled = ~(__get_PRIMASK() & 1);
+    if (wasIrqEnabled) {
+        __disable_irq();
+    }
+    this->UART_buffer_.put(this->rx_byte_);
+    if (wasIrqEnabled) {
+        __enable_irq();
+    }
+}
+
+const volatile uint8_t* PAL_STM32_STREAM::get_rx_byte_ptr() const {
+    return &this->rx_byte_;
+}
+
+size_t PAL_STM32_STREAM::write(const char* str) {
+    return write((const uint8_t*)str, strlen(str));
+}
+
+size_t PAL_STM32_STREAM::write(const uint8_t* buffer, const size_t size) {
+    size_t written = 0;
+
+    for (size_t i = 0; i < size; i++) {
+        written += write(buffer[i]);
+    }
+
+    return written;
+}
+
+size_t PAL_STM32_STREAM::write(const char* buffer, const size_t size) {
+    return write((const uint8_t*)buffer, size);
+}
+
+// PAL_STM32_UART_STREAM --------------------------------------------------------------------------
+
 static PAL_STM32_UART_STREAM* USART1_STREAM = nullptr;
 static PAL_STM32_UART_STREAM* USART2_STREAM = nullptr;
 
@@ -72,7 +137,7 @@ static void UART_MSP_INIT(const USART_TypeDef* UART_instance) {
         PA9     ------> USART1_TX
         PA10     ------> USART1_RX
         */
-        GPIO_InitStruct.Pin = GPIO_PIN_9|GPIO_PIN_10;
+        GPIO_InitStruct.Pin = GPIO_PIN_9 | GPIO_PIN_10;
         GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
         GPIO_InitStruct.Pull = GPIO_NOPULL;
         GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
@@ -91,7 +156,7 @@ static void UART_MSP_INIT(const USART_TypeDef* UART_instance) {
         PA2     ------> USART2_TX
         PA3     ------> USART2_RX
         */
-        GPIO_InitStruct.Pin = GPIO_PIN_2|GPIO_PIN_3;
+        GPIO_InitStruct.Pin = GPIO_PIN_2 | GPIO_PIN_3;
         GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
         GPIO_InitStruct.Pull = GPIO_NOPULL;
         GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
@@ -128,38 +193,6 @@ void PAL_STM32_UART_STREAM::begin(uint32_t baud_rate) {
     HAL_UART_Receive_IT(get_huart_ptr(), const_cast<uint8_t*>(&this->rx_byte_), 1);
 }
 
-int PAL_STM32_UART_STREAM::available() {
-    const bool wasIrqEnabled = ~(__get_PRIMASK() & 1);
-    if (wasIrqEnabled) {
-        __disable_irq();
-    }
-    int count = this->UART_buffer_.getCount();
-    
-    if (wasIrqEnabled) {
-        __enable_irq();
-    }
-    return count;
-}
-
-int PAL_STM32_UART_STREAM::read() {
-    const bool wasIrqEnabled = ~(__get_PRIMASK() & 1);
-    if (wasIrqEnabled) {
-        __disable_irq();
-    }
-    uint8_t data;
-    if (!this->UART_buffer_.get(data)) { // Empty, return -1, as the Arduino `Stream` class does
-        if (wasIrqEnabled) {
-            __enable_irq();
-        }
-        return -1;
-    }
-
-    if (wasIrqEnabled) {
-        __enable_irq();
-    }
-    return data;
-}
-
 size_t PAL_STM32_UART_STREAM::write(const uint8_t data) {
     const bool wasIrqEnabled = ~(__get_PRIMASK() & 1);
     if (wasIrqEnabled) {
@@ -179,7 +212,7 @@ size_t PAL_STM32_UART_STREAM::write(const uint8_t data) {
 }
 
 size_t PAL_STM32_UART_STREAM::write(const char* str) {
-    return write((const uint8_t*)str, strlen(str));
+    return PAL_STM32_STREAM::write(str);
 }
 
 size_t PAL_STM32_UART_STREAM::write(const uint8_t* buffer, const size_t size) {
@@ -198,10 +231,6 @@ size_t PAL_STM32_UART_STREAM::write(const uint8_t* buffer, const size_t size) {
         __enable_irq();
     }
     return 0;
-}
-
-size_t PAL_STM32_UART_STREAM::write(const char* buffer, const size_t size) {
-    return write((const uint8_t*)buffer, size);
 }
 
 // Print functions
@@ -348,21 +377,6 @@ size_t PAL_STM32_UART_STREAM::println(const double n, uint8_t digits) {
 
 size_t PAL_STM32_UART_STREAM::println() {
     return write("\r\n");
-}
-
-void PAL_STM32_UART_STREAM::put_buffer() {
-    const bool wasIrqEnabled = ~(__get_PRIMASK() & 1);
-    if (wasIrqEnabled) {
-        __disable_irq();
-    }
-    this->UART_buffer_.put(this->rx_byte_);
-    if (wasIrqEnabled) {
-        __enable_irq();
-    }
-}
-
-const volatile uint8_t* PAL_STM32_UART_STREAM::get_rx_byte_ptr() const {
-    return &this->rx_byte_;
 }
 
 UART_HandleTypeDef* PAL_STM32_UART_STREAM::get_huart_ptr() {

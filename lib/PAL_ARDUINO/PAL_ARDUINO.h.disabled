@@ -10,7 +10,7 @@
 
 extern uint32_t PAL_STM32_RANDOMSEED_INIT_ENTROPY();
 
-#define PAL_ARDUINO_UART_STREAM Stream
+#define PAL_ARDUINO_STREAM Stream
 
 #define PAL_ARDUINO_MILLISECONDS millis
 #define PAL_ARDUINO_DELAY delay
