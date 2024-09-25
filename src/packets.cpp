@@ -17,7 +17,6 @@ const uint8_t encryption_key[16] = { 0x41, 0x41, 0x41, 0x41, 0x41, 0x41, 0x41, 0
 Encryption encryption(encryption_key);
 
 void setup() {
-    blink(5);
     PAL_SERIAL.begin(9600);
     const char data[] = "package this";
     const uint8_t data_size = strlen(data);

@@ -215,6 +215,10 @@ size_t PAL_STM32_UART_STREAM::write(const char* str) {
     return PAL_STM32_STREAM::write(str);
 }
 
+size_t PAL_STM32_UART_STREAM::write(const char* buffer, const size_t size) {
+    return PAL_STM32_STREAM::write(buffer, size);
+}
+
 size_t PAL_STM32_UART_STREAM::write(const uint8_t* buffer, const size_t size) {
     const bool wasIrqEnabled = ~(__get_PRIMASK() & 1);
     if (wasIrqEnabled) {

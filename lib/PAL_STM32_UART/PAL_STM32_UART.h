@@ -86,6 +86,7 @@ class PAL_STM32_UART_STREAM : public PAL_STM32_STREAM {
         void begin(uint32_t baud_rate);
         size_t write(const uint8_t data) override;
         size_t write(const char* str) override;
+        size_t write(const char* buffer, const size_t size) override;
         size_t write(const uint8_t* buffer, const size_t size) override; // We override so that we can transmit the entire buffer at once, instead of chunks like the base class does
 
         // PRINTS
