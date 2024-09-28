@@ -68,6 +68,8 @@ bool LoRa::send(const char* data, size_t data_size) {
         return false;
     }
 
+    DEBUG_LORA_PRINT("LoRa current state: "); DEBUG_LORA_PRINTLN((uint8_t)this->state);
+
     const LoRaState saved_state = this->state;
     if (!this->set_state(LoRaState::TX)) {
         this->set_state(saved_state);   

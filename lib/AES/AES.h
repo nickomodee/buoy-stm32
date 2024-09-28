@@ -1,7 +1,5 @@
-// https://github.com/suculent/thinx-aes-lib/blob/master/src/AES.h
-
-#ifndef __AES_H__
-#define __AES_H__
+// Modified from: https://github.com/suculent/thinx-aes-lib/blob/master/src/AES.h
+#pragma once
 
 #include "PAL.h"
 
@@ -112,7 +110,7 @@ class AES
    *      #define N_BLOCK   (N_ROW * N_COL)
    *  @endcode
    *  Changed to that will change the Block_size.
-   *  @Return 0 if SUCCESS or -1 if FAILURE
+   *  @Return 0 if AES_SUCCESS or -1 if AES_FAILURE
    *
    */
   byte encrypt (const byte plain [N_BLOCK], byte cipher [N_BLOCK]) ;
@@ -123,7 +121,7 @@ class AES
    *  @param *cipher Pointer, points to the ciphertext that will be created.
    *  @param n_block integer, indicated the number of blocks to be ciphered.
    *  @param iv[N_BLOCK] byte Array that holds the IV (initialization vector).
-   *  @Return 0 if SUCCESS or -1 if FAILURE
+   *  @Return 0 if AES_SUCCESS or -1 if AES_FAILURE
    *
    */
   byte cbc_encrypt (const byte * plain, byte * cipher, int n_block, byte iv [N_BLOCK]) ;
@@ -137,7 +135,7 @@ class AES
    *      #define N_BLOCK   (N_ROW * N_COL)
    *  @endcode
    *  Changed to that will change the Block_size.
-   *  @Return 0 if SUCCESS or -1 if FAILURE
+   *  @Return 0 if AES_SUCCESS or -1 if AES_FAILURE
    *
    */
   byte decrypt (const byte cipher [N_BLOCK], byte plain [N_BLOCK]) ;
@@ -148,7 +146,7 @@ class AES
    *  @param *plain Pointer, points to the plaintex.
    *  @param n_block integer, indicated the number of blocks to be ciphered.
    *  @param iv[N_BLOCK] byte Array that holds the IV (initialization vector).
-   *  @Return 0 if SUCCESS or -1 if FAILURE
+   *  @Return 0 if AES_SUCCESS or -1 if AES_FAILURE
    *
    */
   byte cbc_decrypt (const byte * cipher, byte * plain, int n_block, byte iv [N_BLOCK]) ;
@@ -293,9 +291,6 @@ class AES
   int size;/**< hold the size of the plaintext to be ciphered */
   byte arr_pad[15] = { 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00 };/**< holds the hexadecimal padding values */
 } ;
-
-
-#endif
 
 /**
  * @example aes.ino

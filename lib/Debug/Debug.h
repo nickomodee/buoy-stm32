@@ -21,6 +21,11 @@
 #define DEBUG_PACKET_PRINT(...) PAL_SERIAL.print("[PACKET] "); PAL_SERIAL.print(__VA_ARGS__)
 #define DEBUG_PACKET_PRINTLN(...) PAL_SERIAL.print("[PACKET] "); PAL_SERIAL.println(__VA_ARGS__)
 #define DEBUG_PACKET_WRITE(...) PAL_SERIAL.print("[PACKET] "); PAL_SERIAL.write(__VA_ARGS__)
+
+// Debug for LoRa
+#define DEBUG_LORA_PRINT(...) PAL_SERIAL.print("[LORA] "); PAL_SERIAL.print(__VA_ARGS__)
+#define DEBUG_LORA_PRINTLN(...) PAL_SERIAL.print("[LORA] "); PAL_SERIAL.println(__VA_ARGS__)
+#define DEBUG_LORA_WRITE(...) PAL_SERIAL.print("[LORA] "); PAL_SERIAL.write(__VA_ARGS__)
 #else
 // Debug for BCP
 #define DEBUG_BCP_PRINT(...) DEBUG_NOOP()
@@ -36,4 +41,9 @@
 #define DEBUG_PACKET_PRINT(...) DEBUG_NOOP()
 #define DEBUG_PACKET_PRINTLN(...) DEBUG_NOOP()
 #define DEBUG_PACKET_WRITE(...) DEBUG_NOOP()
+
+// Debug for LoRa
+#define DEBUG_LORA_PRINT(...) DEBUG_NOOP()
+#define DEBUG_LORA_PRINTLN(...) DEBUG_NOOP()
+#define DEBUG_LORA_WRITE(...) DEBUG_NOOP()
 #endif

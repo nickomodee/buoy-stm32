@@ -20,6 +20,26 @@ enum class RetransmissionController {
 };
 
 /**
+ * @brief Enum class to indicate the status of a sent or received packet.
+ * 
+ * Used as the return value for `BCP` methods.
+ * 
+ *  - `SUCCESS` is for a packet that is sent or received successfully.
+ * 
+ *  - `RETRANSMISSION` is for a received packet that is a retransmission.
+ * 
+ *  - `INVALID` is for a received packet that is invalid or attempting to send an invalid packet.
+ * 
+ *  - `TIMEOUT` is for a packet that is not sent successfully (due to a LoRa UART communication error), or an expected packet that is not received within the specified timeout.
+ */
+enum class PacketStatus {
+    SUCCESS,
+    RETRANSMISSION,
+    INVALID,
+    TIMEOUT
+};
+
+/**
  * @brief Protocol to send and receive encrypted data over LoRa to another device.
  * 
  * An adaptation of TCP.
@@ -64,9 +84,9 @@ class BCP : public DataSender {
          * @brief Send the packet that is at the index in the `sent_packet_history[]` buffer.
          * 
          * @param[in] history_index The index of the packet to send in the `sent_packet_history[]` buffer
-         * @returns A boolean if the packet was sent successfully
+         * @returns A PacketStatus to indicate if the packet was sent successfully
          */
-        bool send_packet(uint8_t history_index);
+        PacketStatus send_packet(uint8_t history_index);
         /**
          * @brief Create a new `Packet` for sending.
          * 
@@ -93,12 +113,13 @@ class BCP : public DataSender {
          * Wait to receive the expected packet.
          * Send the desired number of packets in order, from highest index to lowest, from the `sent_packet_history[]` buffer.
          * Waits to receive a valid packet of the expected type.
+         * Retries if the expected packet is not received within the specified timeout.
          * 
          * @param[in] num_packets The number of packets from the `sent_packet_history[]` buffer to send.
          * @param[in] expected_packet_type The expected packet type in response to the sent packets.
-         * @returns A boolean if the packets were successfully sent and the response was valid and of the expected packet type.
+         * @returns A PacketStatus to indicate if the packets were successfully sent and the response was valid and of the expected packet type.
          */
-        bool send_recv(uint8_t num_packets, PacketType expected_packet_type);
+        PacketStatus send_recv(uint8_t num_packets, PacketType expected_packet_type);
         /**
          * @brief Perform the initial synchronisation handshake of the BCP stream.
          * 
@@ -167,9 +188,11 @@ class BCP : public DataSender {
          * Rejects the packet if it is invalidated.
          * Does not wait until a valid packet; it only receives the next available packet.
          * 
-         * @returns A boolean if a packet was successfully received and validated.
+         * @returns A PacketStatus if a packet was successfully received and validated.
+         * @note A successfully received packet can have the return value of `RETRANSMISSION`.
+         * Important that when checking for `SUCCESS`, that `RETRANSMISSION` is also considered.
          */
-        bool recv_packet();
+        PacketStatus recv_packet();
         /**
          * @brief Checks if the last received packet is valid.
          * 
@@ -180,9 +203,9 @@ class BCP : public DataSender {
          * If the IV is the same, we should not treat it as a retransmission for security reasons; a replay attack could DOS the buoy by flooding it with the same packet, which would reset the control flow indefinitely.
          * Sets the current index to the correct value if it is a retransmission.
          * 
-         * @returns A boolean if the packet is valid.
+         * @returns A PacketStatus if the packet is valid, or a retransmission.
          */
-        bool validate_recvd_packet();
+        PacketStatus validate_recvd_packet();
         /**
          * @brief Removes the last packet from the `recvd_packet_history[]` buffer.
          * 

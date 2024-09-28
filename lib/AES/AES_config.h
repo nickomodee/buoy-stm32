@@ -50,7 +50,7 @@
 #define N_BLOCK   (N_ROW * N_COL)
 #define N_MAX_ROUNDS           14
 #define KEY_SCHEDULE_BYTES ((N_MAX_ROUNDS + 1) * N_BLOCK)
-#define SUCCESS (0)
-#define FAILURE (-1)
+#define AES_SUCCESS (0)
+#define AES_FAILURE (-1)
 
 #endif

@@ -1,4 +1,4 @@
-// https://github.com/suculent/thinx-aes-lib/blob/master/src/AES.cpp
+// Modified from: https://github.com/suculent/thinx-aes-lib/blob/master/src/AES.cpp
 
 #include "AES.h"
 
@@ -282,7 +282,7 @@ byte AES::set_key (const byte key [], uint16_t keylen)
       break;
     default:
       round = 0;
-      return FAILURE;
+      return AES_FAILURE;
     }
   hi = (round + 1) << 4 ;
   copy_n_bytes (key_sched, key, keylen) ;
@@ -311,7 +311,7 @@ byte AES::set_key (const byte key [], uint16_t keylen)
       for (byte i = 0 ; i < N_COL ; i++)
         key_sched [cc + i] = key_sched [tt + i] ^ t[i] ;
     }
-  return SUCCESS ;
+  return AES_SUCCESS ;
 }
 
 /******************************************************************************/
@@ -366,8 +366,8 @@ byte AES::encrypt (const byte plain [N_BLOCK], byte cipher [N_BLOCK])
       copy_and_key (cipher, s1, (byte*) (key_sched + r * N_BLOCK)) ;
     }
   else
-    return FAILURE ;
-  return SUCCESS ;
+    return AES_FAILURE ;
+  return AES_SUCCESS ;
 }
 
 /******************************************************************************/
@@ -377,13 +377,13 @@ byte AES::cbc_encrypt (const byte * plain, byte * cipher, int n_block, byte iv [
   while (n_block--)
     {
       xor_block (iv, plain) ;
-      if (encrypt (iv, iv) != SUCCESS)
-        return FAILURE ;
+      if (encrypt (iv, iv) != AES_SUCCESS)
+        return AES_FAILURE ;
       copy_n_bytes (cipher, iv, N_BLOCK) ;
       plain  += N_BLOCK ;
       cipher += N_BLOCK ;
     }
-  return SUCCESS ;
+  return AES_SUCCESS ;
 }
 
 /******************************************************************************/
@@ -405,8 +405,8 @@ byte AES::decrypt (const byte plain [N_BLOCK], byte cipher [N_BLOCK])
       copy_and_key (cipher, s1, (byte*) (key_sched)) ;
     }
   else
-    return FAILURE ;
-  return SUCCESS ;
+    return AES_FAILURE ;
+  return AES_SUCCESS ;
 }
 
 /******************************************************************************/
@@ -417,14 +417,14 @@ byte AES::cbc_decrypt (const byte * cipher, byte * plain, int n_block, byte iv [
     {
       byte tmp [N_BLOCK] ;
       copy_n_bytes (tmp, cipher, N_BLOCK) ;
-      if (decrypt (cipher, plain) != SUCCESS)
-        return FAILURE ;
+      if (decrypt (cipher, plain) != AES_SUCCESS)
+        return AES_FAILURE ;
       xor_block (plain, iv) ;
       copy_n_bytes (iv, tmp, N_BLOCK) ;
       plain  += N_BLOCK ;
       cipher += N_BLOCK;
     }
-  return SUCCESS ;
+  return AES_SUCCESS ;
 }
 
 /*****************************************************************************/

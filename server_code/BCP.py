@@ -16,6 +16,12 @@ class RetransmissionController(Enum):
     BUOY = 0
     SERVER = 1
 
+class PacketStatus(Enum):
+    SUCCESS = 0
+    RETRANSMISSION = 1
+    INVALID = 2
+    TIMEOUT = 3
+
 def print_hex(data: bytes, func: Callable[[object], None]) -> None:
     func(" ".join([f"0x{x:02x}" for x in data]))
 
@@ -51,7 +57,7 @@ class BCP:
             self._recvd_packet_history = [Packet(encryption) for i in range(BCP_RECVD_HISTORY_SIZE)]
             self._lora.set_state(LoRaState.RX)
             self._set_retransmission_control(RetransmissionController.BUOY)
-            if self._handle_recv(PacketType.SYN):
+            if self._handle_recv(PacketType.SYN) == PacketStatus.SUCCESS:
                 # begin
                 start_time: float = time.time()
                 logger.info("BCP message begin")
@@ -81,9 +87,9 @@ class BCP:
                 logger.info(f"BCP message finished in {time_difference // 60:.0f}:{time_difference % 60:05.2f}")
                 return self._recv_buffer
 
-    def _send_packet(self, history_index: int) -> bool:
+    def _send_packet(self, history_index: int) -> PacketStatus:
         if history_index >= BCP_SENT_HISTORY_SIZE:
-            return False
+            return PacketStatus.INVALID
         
         packet: Packet = self._sent_packet_history[history_index]
         packet.generate_raw()
@@ -92,7 +98,7 @@ class BCP:
         logger.debug(f"Sending: {packet.get_type()}, Index: {packet.get_index()}")
         print_hex(packet.get_packet(), logger.debug)
         print_hex(packet.get_data(), logger.debug)
-        return self._lora.send(packet_data)
+        return PacketStatus.SUCCESS if self._lora.send(packet_data) else PacketStatus.TIMEOUT
 
     def _new_send_packet(self) -> Packet:
         for i in range(BCP_SENT_HISTORY_SIZE - 1, 0, -1): # we don't want to include 0
@@ -111,14 +117,14 @@ class BCP:
         self._current_index += 1
         return self._recvd_packet_history[0]
 
-    def _send_recv(self, num_packets: int, expected_packet_type: PacketType) -> bool:
+    def _send_recv(self, num_packets: int, expected_packet_type: PacketType) -> PacketStatus:
         if num_packets > BCP_SENT_HISTORY_SIZE:
-            return False
+            return PacketStatus.INVALID
 
         for i in range(self._num_retries):
             send_failed: bool = False
             for packet_index in range(num_packets - 1, -1, -1):
-                if not self._send_packet(packet_index):
+                if self._send_packet(packet_index) != PacketStatus.SUCCESS:
                     send_failed = True
                     break
             if send_failed:
@@ -126,40 +132,42 @@ class BCP:
 
             start_time: float = time.time()
             while time.time() - start_time < self._timeout:
-                if self._recv_packet():
+                if self._recv_packet() == PacketStatus.SUCCESS: # retransmission is not possible, so only check for success
                     if self._recvd_packet_history[0].get_type() != expected_packet_type:
                         self._reject_recvd_packet()
                         continue
-                    return True # success
-        return False
+                    return PacketStatus.SUCCESS
+                # don't do anything if it is invalid (the packet is already rejected in `recv_packet()`) or timed-out
+        return PacketStatus.TIMEOUT
 
-    def _handle_recv(self, expected_packet_type: PacketType) -> bool:
+    def _handle_recv(self, expected_packet_type: PacketType) -> PacketStatus:
         start_time: float = time.time()
-        while time.time() - start_time < self._num_retries * self._timeout: # transmission control is up to the server, so timeout should be multiplied by num of retries to allow buoy to send packet in case of packet loss            
-            if self._recv_packet():
-                if self._recvd_packet_history[0].get_type() == expected_packet_type:
-                    return True
-                
-                if self._recvd_packet_history[0] == self._recvd_packet_history[1]: # if this is a retransmission just resend last sent packet, but we don't break, as we need to keep checking for the expected next packet
-                    self._send_packet(0) # doesn't matter if this fails
-                    continue
+        while time.time() - start_time < self._num_retries * self._timeout: # transmission control is up to the buoy, so timeout should be multiplied by num of retries to allow buoy to send packet in case of packet loss            
+            PACKET_STATUS: PacketStatus = self._recv_packet()
+            if PACKET_STATUS == PacketStatus.RETRANSMISSION: # if this is a retransmission just resend last sent packet, but we don't break, as we need to keep checking for the expected next packet
+                self._send_packet(0) # doesn't matter if this fails
+                continue
 
+            if PACKET_STATUS == PacketStatus.SUCCESS:
+                if self._recvd_packet_history[0].get_type() == expected_packet_type:
+                    return PacketStatus.SUCCESS            
                 self._reject_recvd_packet() # else, reject
-                
-        return False
+            # don't do anything if it is invalid (the packet is already rejected in `recv_packet()`) or timedout
+        return PacketStatus.TIMEOUT
 
     def _synchronise(self) -> bool:
         # SYN has already been received
         new_packet: Packet = self._new_send_packet()
         new_packet.set(PacketType.SYNACK, -1, b"")
-        if not self._send_packet(0):
+        if self._send_packet(0) != PacketStatus.SUCCESS:
             return False
-        return self._handle_recv(PacketType.ACK)
+        return self._handle_recv(PacketType.ACK) == PacketStatus.SUCCESS
 
     def _recv_data_desc(self) -> bool:
         start_time: float = time.time()
         while time.time() - start_time < self._num_retries * self._timeout: # transmission control is up to the buoy, so timeout should be multiplied by num of retries to allow buoy to send packet in case of packet loss
-            if self._recv_packet():
+            PACKET_STATUS: PacketStatus = self._recv_packet()
+            if PACKET_STATUS == PacketStatus.SUCCESS: # retransmission is not possible, so only check for success
                 if self._recvd_packet_history[0].get_type() != PacketType.DATA_DESC:
                     self._reject_recvd_packet()
                     continue
@@ -168,15 +176,25 @@ class BCP:
 
                 new_packet: Packet = self._new_send_packet()
                 new_packet.set(PacketType.ACK, -1, b"")
-                return self._send_packet(0)
+                return self._send_packet(0) == PacketStatus.SUCCESS
+            # don't do anything if it is invalid (the packet is already rejected in `recv_packet()`) or timedout
         return False
 
     def _recv_data(self) -> bool:
-        for i in range(self._total_msg_packets):
+        i = 0
+        while i < self._total_msg_packets:
+            logger.debug(f"Received Data: {i + 1} / {self._total_msg_packets - 1}")
+
             timed_out: bool = True
             start_time: float = time.time()
             while time.time() - start_time < self._num_retries * self._timeout:
-                if self._recv_packet():
+                PACKET_STATUS: PacketStatus = self._recv_packet()
+                if PACKET_STATUS == PacketStatus.RETRANSMISSION: # if this is a retransmission just resend last sent packet, but we don't break, as we need to keep checking for the expected next packet
+                    self._send_packet(0) # doesn't matter if this fails
+                    # do not increment `i` and continue waiting for the expected packet
+                    continue
+
+                if PACKET_STATUS == PacketStatus.SUCCESS:
                     if self._recvd_packet_history[0].get_type() == PacketType.DATA:
                         self._recv_buffer += self._recvd_packet_history[0].get_data()
 
@@ -185,17 +203,15 @@ class BCP:
 
                         if i == self._total_msg_packets - 1: # if this is the last data packet, don't send the ACK, as we will do this in `send_data_desc()`
                             return True
-                        if not self._send_packet(0):
+                        if self._send_packet(0) != PacketStatus.SUCCESS:
                             continue
 
                         timed_out = False
+                        i += 1 # move to the next packet
                         break
-
-                    if self._recvd_packet_history[0] == self._recvd_packet_history[1]: # if this is a retransmission just resend last sent packet, but we don't break, as we need to keep checking for the expected next packet
-                        self._send_packet(0)
-                        continue
-
                     self._reject_recvd_packet() # else, reject
+                # don't do anything if it is invalid (the packet is already rejected in `recv_packet()`) or timed-out
+
             if timed_out:
                 return False
         return True
@@ -205,7 +221,7 @@ class BCP:
         num_packets: int = int(data_size / MAX_DATA_SIZE) + (1 if data_size % MAX_DATA_SIZE else 0)
         logger.debug(f"Send DATA_DESC, Num packets: {self._total_msg_packets}")
         new_packet.set(PacketType.DATA_DESC, -1, num_packets.to_bytes(4, byteorder='little')) # little endian format
-        return self._send_recv(2, PacketType.ACK) # send the ACK from `recv_data()` first, and then the DATA_DESC
+        return self._send_recv(2, PacketType.ACK) == PacketStatus.SUCCESS # send the ACK from `recv_data()` first, and then the DATA_DESC
 
     def _send_data(self, data: bytes) -> bool:
         data_size: int = len(data)
@@ -213,20 +229,20 @@ class BCP:
         for i in range(num_packets):
             new_packet: Packet = self._new_send_packet()
             new_packet.set(PacketType.DATA, -1, data[i * MAX_DATA_SIZE:i * MAX_DATA_SIZE + MAX_DATA_SIZE])
-            if not self._send_recv(1, PacketType.ACK):
+            if self._send_recv(1, PacketType.ACK) != PacketStatus.SUCCESS:
                 return False
         return True
 
     def _finish(self) -> bool:
-        if not self._handle_recv(PacketType.FIN):
+        if self._handle_recv(PacketType.FIN) != PacketStatus.SUCCESS:
             return False
         new_packet: Packet = self._new_send_packet()
         new_packet.set(PacketType.ACK, -1, b"")
         new_packet = self._new_send_packet()
         new_packet.set(PacketType.FIN, -1, b"")
-        return self._send_recv(2, PacketType.ACK)
+        return self._send_recv(2, PacketType.ACK) == PacketStatus.SUCCESS
 
-    def _recv_packet(self) -> bool:
+    def _recv_packet(self) -> PacketStatus:
         start_time: float = time.time()
         while time.time() - start_time < self._timeout:
             if self._lora.recv():
@@ -234,30 +250,31 @@ class BCP:
                 new_packet: Packet = self._new_recv_packet()
                 new_packet.set_packet(data)
                 if not new_packet.from_raw():
-                    logger.debug("Packet invalidated, error while decoding raw bytes")
+                    logger.debug("Packet invalidated, error while decoding raw bytes:")
+                    print_hex(new_packet.get_packet(), logger.debug)
                     self._reject_recvd_packet()
                     continue
                 logger.debug(f"Recvd packet: {new_packet.get_type()}, Index: {new_packet.get_index()}")
-                if not self._validate_recvd_packet():
+                PACKET_VALIDATION_STATUS: PacketStatus = self._validate_recvd_packet()
+                if PACKET_VALIDATION_STATUS == PacketStatus.INVALID:
                     self._reject_recvd_packet()
-                    return False
-                return True
-        return False
+                return PACKET_VALIDATION_STATUS
+        return PacketStatus.TIMEOUT
 
-    def _validate_recvd_packet(self) -> bool:
+    def _validate_recvd_packet(self) -> PacketStatus:
         if not self._recvd_packet_history[0].validate_message_checksum() or not self._recvd_packet_history[0].validate_packet_checksum():
             logger.debug(f"Packet invalidated, Checksum failed Message checksum success: {self._recvd_packet_history[0].validate_message_checksum()} Packet checksum success: {self._recvd_packet_history[0].validate_packet_checksum()}")
-            return False
+            return PacketStatus.INVALID
         
         if self._recvd_packet_history[0].get_index() == self._current_index - 1:
-            return True
+            return PacketStatus.SUCCESS
         
-        if self._retransmission_control == RetransmissionController.BUOY and self._recvd_packet_history[0] == self._recvd_packet_history[1] and self._recvd_packet_history[0].get_iv() != self._recvd_packet_history[1].get_iv(): # probably a duplicate if the IVs are equal. if buoy controls retransmission, it may miss our packet, so we may receive an already received packet
+        if self._retransmission_control == RetransmissionController.BUOY and self._recvd_packet_history[0] == self._recvd_packet_history[1] and self._recvd_packet_history[0].get_iv() != self._recvd_packet_history[1].get_iv(): # // probably a duplicate NOT A RETRANSMISSION if the IVs are equal (duplicate meaning it could be reflected off a mountain but arriving at a later time). if buoy controls retransmission, it may miss our packet, so we may receive an already received packet
             logger.debug("Recvd retransmission packet")
             self._current_index = self._recvd_packet_history[0].get_index() + 1
-            return True
-        logger.debug(f"Packet invalidated, Current index: {self._current_index} Packet index: {self._recvd_packet_history[0].get_index()} Other packet index: {self._recvd_packet_history[1].get_index()} This packet type: {self._recvd_packet_history[0].get_type()} Other packet type: {self._recvd_packet_history[1].get_type()} This packet data: {self._recvd_packet_history[0].get_data()} Other packet data: {self._recvd_packet_history[1].get_data()}")
-        return False
+            return PacketStatus.RETRANSMISSION
+        logger.debug(f"Packet invalidated, Current index: {self._current_index} Packet index: {self._recvd_packet_history[0].get_index()} Other packet index: {self._recvd_packet_history[1].get_index()} This packet type: {self._recvd_packet_history[0].get_type()} Other packet type: {self._recvd_packet_history[1].get_type()} This packet data: {self._recvd_packet_history[0].get_data()!r} Other packet data: {self._recvd_packet_history[1].get_data()!r}")
+        return PacketStatus.INVALID
 
     def _reject_recvd_packet(self) -> None:
         for i in range(BCP_RECVD_HISTORY_SIZE - 1):
@@ -292,8 +309,8 @@ if __name__ == "__main__":
     LORA_LOCAL_ADDR: Literal[102] = 102 # Swapped from the microcontroller end
     LORA_TARGET_ADDR: Literal[101] = 101
     LORA_FREQ: Literal[915000000] = 915000000  # 915 MHz
-    LORA_DATA_RATE: DataRate = DataRate.SF12
-    LORA_BANDWIDTH: Bandwidth = Bandwidth.BANDWIDTH_250_KHZ
+    LORA_DATA_RATE: DataRate = DataRate.SF7
+    LORA_BANDWIDTH: Bandwidth = Bandwidth.BANDWIDTH_500_KHZ
     LORA_CODE_RATE: CodeRate = CodeRate.RATE_4_BY_5
     LORA_TX_POWER: Literal[22] = 22
     LORA_IQCONVERTED: IQConverted = IQConverted.OFF
@@ -326,6 +343,7 @@ if __name__ == "__main__":
             while True:
                 bcp_instance: BCP = BCP(timeout=BCP_TIMEOUT, num_retries=BCP_NUM_RETRIES, lora=lora, encryption=encryption)
                 data: bytes = b"A" * 32768
-                print(f"BCP Message received: {bcp_instance.listen(data)}")
+                print(f"BCP Message received: {bcp_instance.listen(data)!r}")
         except serial.serialutil.SerialException as e:
             print(f"Serial Error: {e}")
+            time.sleep(5)
