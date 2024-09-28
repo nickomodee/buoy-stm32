@@ -1,6 +1,6 @@
 <mxfile host="Electron" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/24.7.8 Chrome/128.0.6613.36 Electron/32.0.1 Safari/537.36" version="24.7.8">
   <diagram name="Page-1" id="yCL1zt9VY65ja0sVucTP">
-    <mxGraphModel dx="1885" dy="1095" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+    <mxGraphModel dx="2765" dy="1607" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -216,6 +216,20 @@
         </mxCell>
         <mxCell id="jToumhlvFBkeTF0nTc3O-51" value="&lt;font style=&quot;font-size: 20px;&quot;&gt;ACK&lt;/font&gt;" style="edgeLabel;resizable=0;html=1;;align=center;verticalAlign=middle;" parent="jToumhlvFBkeTF0nTc3O-50" connectable="0" vertex="1">
           <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="9qUT46ZeRDZTprNaIiom-1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;" edge="1" parent="jToumhlvFBkeTF0nTc3O-60" source="9qUT46ZeRDZTprNaIiom-3">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="440" y="590" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9qUT46ZeRDZTprNaIiom-2" value="" style="group" vertex="1" connectable="0" parent="jToumhlvFBkeTF0nTc3O-60">
+          <mxGeometry x="380" y="540" width="160" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="9qUT46ZeRDZTprNaIiom-3" value="" style="shape=curlyBracket;whiteSpace=wrap;html=1;rounded=1;flipH=1;labelPosition=right;verticalLabelPosition=middle;align=left;verticalAlign=middle;" vertex="1" parent="9qUT46ZeRDZTprNaIiom-2">
+          <mxGeometry width="20" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="9qUT46ZeRDZTprNaIiom-4" value="&lt;font style=&quot;font-size: 16px;&quot;&gt;OPTIONAL&lt;/font&gt;&lt;div style=&quot;font-size: 16px;&quot;&gt;&lt;font style=&quot;font-size: 16px;&quot;&gt;n can be 0&lt;/font&gt;&lt;/div&gt;" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="9qUT46ZeRDZTprNaIiom-2">
+          <mxGeometry x="60" y="25" width="100" height="50" as="geometry" />
         </mxCell>
         <mxCell id="X6KZrAgQ8tCWKOz5m7eS-4" value="&lt;font style=&quot;font-size: 30px;&quot;&gt;Packet Structure&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" parent="1" vertex="1">
           <mxGeometry x="1150" y="50" width="250" height="50" as="geometry" />

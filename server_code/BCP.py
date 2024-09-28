@@ -137,7 +137,7 @@ class BCP:
                         self._reject_recvd_packet()
                         continue
                     return PacketStatus.SUCCESS
-                # don't do anything if it is invalid (the packet is already rejected in `recv_packet()`) or timed-out
+                # don't do anything if it is invalid (the packet is already rejected in `_recv_packet()`) or timed-out
         return PacketStatus.TIMEOUT
 
     def _handle_recv(self, expected_packet_type: PacketType) -> PacketStatus:
@@ -309,8 +309,8 @@ if __name__ == "__main__":
     LORA_LOCAL_ADDR: Literal[102] = 102 # Swapped from the microcontroller end
     LORA_TARGET_ADDR: Literal[101] = 101
     LORA_FREQ: Literal[915000000] = 915000000  # 915 MHz
-    LORA_DATA_RATE: DataRate = DataRate.SF7
-    LORA_BANDWIDTH: Bandwidth = Bandwidth.BANDWIDTH_500_KHZ
+    LORA_DATA_RATE: DataRate = DataRate.SF12
+    LORA_BANDWIDTH: Bandwidth = Bandwidth.BANDWIDTH_250_KHZ
     LORA_CODE_RATE: CodeRate = CodeRate.RATE_4_BY_5
     LORA_TX_POWER: Literal[22] = 22
     LORA_IQCONVERTED: IQConverted = IQConverted.OFF
@@ -342,7 +342,7 @@ if __name__ == "__main__":
 
             while True:
                 bcp_instance: BCP = BCP(timeout=BCP_TIMEOUT, num_retries=BCP_NUM_RETRIES, lora=lora, encryption=encryption)
-                data: bytes = b"A" * 32768
+                data: bytes = b"A" * 100
                 print(f"BCP Message received: {bcp_instance.listen(data)!r}")
         except serial.serialutil.SerialException as e:
             print(f"Serial Error: {e}")

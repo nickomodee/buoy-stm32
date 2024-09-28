@@ -10,8 +10,8 @@
 #define LORA_LOCAL_ADDR 101
 #define LORA_TARGET_ADDR 102
 #define LORA_FREQ 915000000 // 915 MHz
-#define LORA_DATA_RATE DataRate::SF7
-#define LORA_BANDWIDTH Bandwidth::BANDWIDTH_500_KHZ
+#define LORA_DATA_RATE DataRate::SF12
+#define LORA_BANDWIDTH Bandwidth::BANDWIDTH_250_KHZ
 #define LORA_CODE_RATE CodeRate::RATE_4_BY_5
 #define LORA_TX_POWER 22
 #define LORA_IQCONVERTED IQConverted::OFF
@@ -45,14 +45,6 @@ Encryption encryption(encryption_key);
 void setup() {
     PAL_SERIAL.begin(9600);
     SERIAL_INTERFACE.begin(9600);
-
-    bool lora_begin_status;
-    do {
-        lora_begin_status = lora.begin();
-        PAL_SERIAL.print(F("LoRa begin: "));
-        PAL_SERIAL.println(lora_begin_status);
-        PAL_DELAY(5000);
-    } while (!lora_begin_status);
 }
 
 // void update_data_rate() {
