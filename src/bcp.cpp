@@ -69,7 +69,7 @@ void loop() {
     } while (!lora_begin_status);
 
     BCP bcp_instance(BCP_TIMEOUT, BCP_NUM_RETRIES, &lora, &data_stream_func, &encryption);
-    const char data[] = "hello world";
+    const char data[] = "hello world PADDING PADDING PADDING PADDING PADDING PADDING PADDING PADDING";
     if (!bcp_instance.send(data, strlen(data))) {
         // update_data_rate();
     }

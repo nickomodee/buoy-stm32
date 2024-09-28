@@ -98,7 +98,9 @@ class BCP:
         logger.debug(f"Sending: {packet.get_type()}, Index: {packet.get_index()}")
         print_hex(packet.get_packet(), logger.debug)
         print_hex(packet.get_data(), logger.debug)
-        return PacketStatus.SUCCESS if self._lora.send(packet_data) else PacketStatus.TIMEOUT
+        PACKET_SEND_STATUS: bool = self._lora.send(packet_data)
+        logger.debug(f"Packet Send Status: {PACKET_SEND_STATUS}")
+        return PacketStatus.SUCCESS if PACKET_SEND_STATUS else PacketStatus.TIMEOUT
 
     def _new_send_packet(self) -> Packet:
         for i in range(BCP_SENT_HISTORY_SIZE - 1, 0, -1): # we don't want to include 0
@@ -183,7 +185,7 @@ class BCP:
     def _recv_data(self) -> bool:
         i = 0
         while i < self._total_msg_packets:
-            logger.debug(f"Received Data: {i + 1} / {self._total_msg_packets - 1}")
+            logger.debug(f"Receiving Data: {i + 1} / {self._total_msg_packets}")
 
             timed_out: bool = True
             start_time: float = time.time()
@@ -342,7 +344,7 @@ if __name__ == "__main__":
 
             while True:
                 bcp_instance: BCP = BCP(timeout=BCP_TIMEOUT, num_retries=BCP_NUM_RETRIES, lora=lora, encryption=encryption)
-                data: bytes = b"A" * 100
+                data: bytes = b"A" * 70
                 print(f"BCP Message received: {bcp_instance.listen(data)!r}")
         except serial.serialutil.SerialException as e:
             print(f"Serial Error: {e}")
