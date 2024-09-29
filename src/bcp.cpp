@@ -5,7 +5,7 @@
 #include "BCP.h"
 
 // LoRa config
-#define LORA_TIMEOUT 5000
+#define LORA_TIMEOUT 500
 #define LORA_NUM_RETRIES 5
 #define LORA_LOCAL_ADDR 101
 #define LORA_TARGET_ADDR 102
@@ -17,8 +17,8 @@
 #define LORA_IQCONVERTED IQConverted::OFF
 
 // BCP config
-#define BCP_TIMEOUT 10000
-#define BCP_NUM_RETRIES 5
+#define BCP_TIMEOUT 2000
+#define BCP_NUM_RETRIES 10
 
 #if PLATFORM == STM32
     PAL_STM32_UART_STREAM LoRaSerial_UART_STM32(USART1); // USART2 is used for the default 'Serial'

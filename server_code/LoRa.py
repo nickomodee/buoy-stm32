@@ -222,7 +222,7 @@ class LoRa:
         result: bytes = b""
         while len(result) < len(expected) or result[-len(expected):] != expected:
             # check if timeout reached
-            if time.time() - START_TIME >= self._timeout:
+            if (self._lora_serial.in_waiting == 0) and (time.time() - START_TIME >= self._timeout): # `self._lora_serial.in_waiting == 0` so that we don't "cut-off" in the middle of receiving data
                 return False
             
             # check if byte available to read (so that we don't block)

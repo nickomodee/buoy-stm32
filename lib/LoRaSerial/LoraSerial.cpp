@@ -23,12 +23,12 @@ bool LoRaSerial::expected(const char* target, size_t target_length, char* result
     // keep reading until result ends with specified text or timeout is reached
     while ((result_length < target_length) || (strcmp(&result[result_length - target_length], target) != 0)) {
         // prevent buffer overflow
-        if (result_length >= result_size - 1) {
+        if (result_length >= result_size - 1) { // ` - 1` for the null terminator
             return false;
         }
 
         // check if timeout reached
-        if ((timeout) && (PAL_MILLISECONDS() - start_time >= timeout)) {
+        if ((this->available() == 0) && (timeout) && (PAL_MILLISECONDS() - start_time >= timeout)) { // `this->available() == 0` so that we don't "cut-off" in the middle of receiving data
             return false;
         }
 

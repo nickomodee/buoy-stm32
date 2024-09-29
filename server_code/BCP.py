@@ -306,7 +306,7 @@ if __name__ == "__main__":
     LORA_COM_PORT: Literal['COM5'] = 'COM5'
     LORA_BAUDRATE: Literal[9600] = 9600
     # LoRa config
-    LORA_TIMEOUT: float = 5.0
+    LORA_TIMEOUT: float = 0.5
     LORA_NUM_RETRIES: Literal[5] = 5
     LORA_LOCAL_ADDR: Literal[102] = 102 # Swapped from the microcontroller end
     LORA_TARGET_ADDR: Literal[101] = 101
@@ -318,8 +318,8 @@ if __name__ == "__main__":
     LORA_IQCONVERTED: IQConverted = IQConverted.OFF
 
     # BCP config
-    BCP_TIMEOUT: float = 10.0
-    BCP_NUM_RETRIES: Literal[5] = 5
+    BCP_TIMEOUT: float = 2.0
+    BCP_NUM_RETRIES: Literal[10] = 10
 
     try:
         lora_serial: serial.Serial = serial.Serial(port=LORA_COM_PORT, baudrate=LORA_BAUDRATE)
