@@ -67,6 +67,7 @@ class PAL_STM32_STREAM {
          */
         const volatile uint8_t* get_rx_byte_ptr() const;
         const uint8_t get_rx_byte() const;
+        virtual ~PAL_STM32_STREAM() = default;
 
     protected:
         volatile uint8_t rx_byte_;

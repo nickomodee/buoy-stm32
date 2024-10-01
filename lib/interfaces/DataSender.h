@@ -18,4 +18,5 @@ class DataSender {
          * @returns A boolean to show if the data was sent successfully
          */
         virtual bool send(const char* data, size_t data_size) = 0;
+        virtual ~DataSender() = default;
 };
