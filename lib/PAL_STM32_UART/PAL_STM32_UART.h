@@ -8,6 +8,8 @@
 
 #include "stm32f3xx_hal.h"
 
+#define UART_MAX_TIMEOUT 10000 // 10 seconds for the timeout for HAL UART events
+
 // For `print(n, base)`
 #define PAL_OCT 8
 #define PAL_DEC 10
@@ -17,11 +19,11 @@ extern void Error_Handler(); // From main STM32 PAL
 
 class PAL_STM32_UART_STREAM : public PAL_STM32_STREAM {
     public:
+        static const uint16_t RX_BUFFER_SIZE = 1024;
         PAL_STM32_UART_STREAM(USART_TypeDef* UART_instance);
         void begin(uint32_t baud_rate);
         size_t write(const uint8_t data) override;
-        size_t write(const char* str) override;
-        size_t write(const char* buffer, const size_t size) override;
+        using PAL_STM32_STREAM::write; // don't override some virtual `write()` methods
         size_t write(const uint8_t* buffer, const size_t size) override; // We override so that we can transmit the entire buffer at once, instead of chunks like the base class does
 
         // PRINTS

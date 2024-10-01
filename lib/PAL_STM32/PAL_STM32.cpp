@@ -1,6 +1,7 @@
 #include "PAL_STM32.h"
 
 PAL_STM32_UART_STREAM Serial(USART2);
+PAL_STM32_WIRE Wire;
 
 static ADC_HandleTypeDef hadc1;
 

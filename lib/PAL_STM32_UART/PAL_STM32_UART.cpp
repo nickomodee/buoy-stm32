@@ -5,7 +5,7 @@
 static PAL_STM32_UART_STREAM* USART1_STREAM = nullptr;
 static PAL_STM32_UART_STREAM* USART2_STREAM = nullptr;
 
-PAL_STM32_UART_STREAM::PAL_STM32_UART_STREAM(USART_TypeDef* UART_instance) : UART_instance_(UART_instance) {
+PAL_STM32_UART_STREAM::PAL_STM32_UART_STREAM(USART_TypeDef* UART_instance) : PAL_STM32_STREAM(RX_BUFFER_SIZE), UART_instance_(UART_instance) {
 	if (UART_instance == USART1) {
         if (USART1_STREAM != nullptr) {
             Error_Handler(); // There should only be a single Stream tied to a USART instance
@@ -30,7 +30,7 @@ static void UART_MSP_INIT(const USART_TypeDef* UART_instance) {
         __HAL_RCC_GPIOA_CLK_ENABLE();
         /**USART1 GPIO Configuration
         PA9     ------> USART1_TX
-        PA10     ------> USART1_RX
+        PA10    ------> USART1_RX
         */
         GPIO_InitStruct.Pin = GPIO_PIN_9 | GPIO_PIN_10;
         GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
@@ -93,7 +93,7 @@ size_t PAL_STM32_UART_STREAM::write(const uint8_t data) {
     if (wasIrqEnabled) {
         __disable_irq();
     }
-    if (HAL_UART_Transmit(get_huart_ptr(), const_cast<uint8_t*>(&data), 1, HAL_MAX_DELAY)) {
+    if (HAL_UART_Transmit(get_huart_ptr(), const_cast<uint8_t*>(&data), 1, UART_MAX_TIMEOUT)) {
         if (wasIrqEnabled) {
             __enable_irq();
         }
@@ -106,20 +106,12 @@ size_t PAL_STM32_UART_STREAM::write(const uint8_t data) {
     return 0;
 }
 
-size_t PAL_STM32_UART_STREAM::write(const char* str) {
-    return PAL_STM32_STREAM::write(str);
-}
-
-size_t PAL_STM32_UART_STREAM::write(const char* buffer, const size_t size) {
-    return PAL_STM32_STREAM::write(buffer, size);
-}
-
 size_t PAL_STM32_UART_STREAM::write(const uint8_t* buffer, const size_t size) {
     const bool wasIrqEnabled = ~(__get_PRIMASK() & 1);
     if (wasIrqEnabled) {
         __disable_irq();
     }
-    if (HAL_UART_Transmit(get_huart_ptr(), const_cast<uint8_t*>(buffer), size, HAL_MAX_DELAY)) {
+    if (HAL_UART_Transmit(get_huart_ptr(), const_cast<uint8_t*>(buffer), size, UART_MAX_TIMEOUT)) {
     	if (wasIrqEnabled) {
             __enable_irq();
         }
@@ -341,7 +333,7 @@ extern "C" { // BEGIN extern "C"
         }
 
 		// Attempt to store the received byte in the buffer
-		UART_STREAM->put_buffer(); // Warning, this overflows, but this is intentional.
+		UART_STREAM->put_buffer(UART_STREAM->get_rx_byte()); // Warning, this overflows, but this is intentional.
 
 		// Restart UART reception
 		HAL_UART_Receive_IT(UART_STREAM->get_huart_ptr(), const_cast<uint8_t*>(UART_STREAM->get_rx_byte_ptr()), 1);

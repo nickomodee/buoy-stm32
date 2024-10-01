@@ -7,12 +7,11 @@
 
 class PAL_STM32_STREAM_BUFFER {
     public:
-        static const uint16_t BUFFER_SIZE = 1024;
-
-        PAL_STM32_STREAM_BUFFER();
+        PAL_STM32_STREAM_BUFFER(const uint16_t buffer_size);
+        ~PAL_STM32_STREAM_BUFFER();
         void init();
-        bool isEmpty() const;
-        bool isFull() const;
+        bool is_empty() const;
+        bool is_full() const;
         /**
          * @brief Puts the byte into the next position in the buffer.
          *
@@ -20,13 +19,19 @@ class PAL_STM32_STREAM_BUFFER {
          * If it overflows, the data starting from the tail of the buffer will be overwritten.
          * @param data
          */
+        void empty();
+        void reset();
         void put(const uint8_t data);
         bool get(uint8_t &data);
         bool peek(uint8_t &data);
-        uint16_t getCount() const;
+        const uint8_t* get_read_ptr();
+        uint16_t get_count() const;
+        void set_count(const uint16_t count);
+
+        const uint16_t BUFFER_SIZE;
 
     private:
-        volatile uint8_t buffer_[BUFFER_SIZE];
+        volatile uint8_t* buffer_;
         volatile uint16_t head_;
         volatile uint16_t tail_;
 };
@@ -36,6 +41,9 @@ class PAL_STM32_STREAM_BUFFER {
  */
 class PAL_STM32_STREAM {
     public:
+        const uint16_t RX_BUFFER_SIZE;
+        PAL_STM32_STREAM(const uint16_t rx_buffer_size) : RX_BUFFER_SIZE(rx_buffer_size), rx_buffer_(rx_buffer_size) {};
+
         int available();
         int read();
         int peek();
@@ -45,11 +53,9 @@ class PAL_STM32_STREAM {
         virtual size_t write(const char* buffer, const size_t size);
 
         /**
-         * @brief Puts the received byte into the buffer.
-         *
-         * Uses `rx_byte_` to insert into the internal circular buffer.
+         * @brief Puts the byte into the buffer.
          */
-        void put_buffer();
+        void put_buffer(const uint8_t data);
         /**
          * @brief Get the rx byte ptr object.
          *
@@ -60,10 +66,9 @@ class PAL_STM32_STREAM {
          * @returns A const volatile* pointer to the internal rx byte
          */
         const volatile uint8_t* get_rx_byte_ptr() const;
+        const uint8_t get_rx_byte() const;
 
     protected:
         volatile uint8_t rx_byte_;
-
-    private:
-        PAL_STM32_STREAM_BUFFER UART_buffer_;
+        PAL_STM32_STREAM_BUFFER rx_buffer_;
 };
