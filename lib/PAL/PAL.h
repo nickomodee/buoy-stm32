@@ -48,3 +48,4 @@ extern uint32_t PAL_GENERAL_RANDOM(uint32_t howsmall, uint32_t howbig);
 
 #define PAL_GENERAL_WIRE Wire
 #define PAL_WIRE PAL_GENERAL_WIRE
+#define PAL_TWOWIRE PAL_EXPAND(TWOWIRE)
