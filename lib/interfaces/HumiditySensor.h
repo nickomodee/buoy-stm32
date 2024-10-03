@@ -9,7 +9,7 @@ class HumiditySensor {
         /**
          * @brief Read the humidity.
          * 
-         * @returns A double of the value of the humidity in %RH
+         * @returns A double of the value of the humidity in %RH.
          */
         virtual double read_humidity() = 0;
         virtual ~HumiditySensor() = default;

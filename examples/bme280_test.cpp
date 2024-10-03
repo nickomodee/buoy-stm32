@@ -12,7 +12,9 @@ HumiditySensor& humidity_sensor = bme280;
 void setup() {
     Serial.begin(9600);
     Wire.begin();
-    bme280.init();
+    while (!bme280.init()) {
+        PAL_DELAY(1000);
+    }
 }
 
 void loop() {
@@ -32,5 +34,6 @@ void loop() {
     Serial.print(humidity, 2); // 2 d.p.
     Serial.println(" %");
 
+    Serial.println();
     PAL_DELAY(2000);
 }

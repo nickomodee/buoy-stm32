@@ -201,28 +201,28 @@ class BME280 : public TempSensor, public PressureSensor, public HumiditySensor {
     public:
         BME280(const uint8_t i2c_address = BME280_PRIMARY_I2C_ADDRESS, PAL_TWOWIRE* wire = &PAL_WIRE);
         bool init() override;
-        /**
-         * @brief Checks the status of whether the device is busy reading calibration data.
-         * 
-         * @returns A boolean if the device is busy.
-         */
-        bool is_reading_calibration();
         void set_sampling(SensorMode mode = SensorMode::MODE_NORMAL,
                           SensorSampling temp_sampling = SensorSampling::SAMPLING_X16,
                           SensorSampling press_sampling = SensorSampling::SAMPLING_X16,
                           SensorSampling hum_sampling = SensorSampling::SAMPLING_X16,
                           SensorFilter filter = SensorFilter::FILTER_OFF,
                           StandbyDuration duration = StandbyDuration::STANDBY_MS_0_5);
+        double read_temp() override;
+        double read_pressure() override;
+        double read_humidity() override;
+    private:
+        /**
+         * @brief Checks the status of whether the device is busy reading calibration data.
+         * 
+         * @returns A boolean if the device is busy.
+         */
+        bool is_reading_calibration();
         /**
          * @brief Reads the factory-set coefficients.
          * Saves the values in internal `status_`.
          */
         void read_coefficients();
         int32_t read_temp_fine(); // a high resolution temperature value used for the BME280 pressure and humidity calculations
-        double read_temp() override;
-        double read_pressure() override;
-        double read_humidity() override;
-
         // read methods
         /**
          * @brief Read 8 bits from the device on I2C.
@@ -262,11 +262,11 @@ class BME280 : public TempSensor, public PressureSensor, public HumiditySensor {
          * @returns A boolean if the write was successful
          */
         bool write_8(const uint8_t reg, const uint8_t data);
-    private:
+
         const uint8_t i2c_address_;
         PAL_TWOWIRE* wire_;
         BME280Status status_;
-        static Config config_reg;
-        static CtrlMeas meas_reg;
-        static CtrlHum hum_reg;
+        Config config_reg_;
+        CtrlMeas meas_reg_;
+        CtrlHum hum_reg_;
 };

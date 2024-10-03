@@ -1,9 +1,5 @@
 #include "BME280.h"
 
-Config BME280::config_reg;
-CtrlMeas BME280::meas_reg;
-CtrlHum BME280::hum_reg;
-
 BME280::BME280(const uint8_t i2c_address, PAL_TWOWIRE* wire) : i2c_address_(i2c_address), wire_(wire) {};
 
 bool BME280::init() {
@@ -30,22 +26,22 @@ bool BME280::init() {
 
 // Modified from: https://github.com/adafruit/Adafruit_BME280_Library/blob/master/Adafruit_BME280.cpp
 void BME280::set_sampling(SensorMode mode, SensorSampling temp_sampling, SensorSampling press_sampling, SensorSampling hum_sampling, SensorFilter filter, StandbyDuration duration) {
-    BME280::meas_reg.mode = (uint8_t)mode;
-    BME280::meas_reg.osrs_t = (uint8_t)temp_sampling;
-    BME280::meas_reg.osrs_p = (uint8_t)press_sampling;
+    BME280::meas_reg_.mode = (uint8_t)mode;
+    BME280::meas_reg_.osrs_t = (uint8_t)temp_sampling;
+    BME280::meas_reg_.osrs_p = (uint8_t)press_sampling;
 
-    BME280::hum_reg.osrs_h = (uint8_t)hum_sampling;
-    BME280::config_reg.filter = (uint8_t)filter;
-    BME280::config_reg.t_sb = (uint8_t)duration;
-    BME280::config_reg.spi3w_en = 0;
+    BME280::hum_reg_.osrs_h = (uint8_t)hum_sampling;
+    BME280::config_reg_.filter = (uint8_t)filter;
+    BME280::config_reg_.t_sb = (uint8_t)duration;
+    BME280::config_reg_.spi3w_en = 0;
 
     // making sure sensor is in sleep mode before setting configuration as it otherwise may be ignored
     write_8(BME280_REGISTER_CONTROL, (uint8_t)SensorMode::MODE_SLEEP);
 
     // you must make sure to also set REGISTER_CONTROL after setting the CONTROLHUMID register, otherwise the values won't be applied (see DS 5.4.3)
-    write_8(BME280_REGISTER_CONTROLHUMID, BME280::hum_reg.get());
-    write_8(BME280_REGISTER_CONFIG, BME280::config_reg.get());
-    write_8(BME280_REGISTER_CONTROL, BME280::meas_reg.get());
+    write_8(BME280_REGISTER_CONTROLHUMID, BME280::hum_reg_.get());
+    write_8(BME280_REGISTER_CONFIG, BME280::config_reg_.get());
+    write_8(BME280_REGISTER_CONTROL, BME280::meas_reg_.get());
 }
 
 void BME280::read_coefficients() {

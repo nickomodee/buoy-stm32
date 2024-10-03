@@ -9,7 +9,7 @@ class TempSensor {
         /**
          * @brief Read the temperature.
          * 
-         * @returns A double of the value of the temperature in degrees Celsius
+         * @returns A double of the value of the temperature in degrees Celsius.
          */
         virtual double read_temp() = 0;
         virtual ~TempSensor() = default;
