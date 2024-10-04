@@ -5,8 +5,19 @@
 #include <cstring>
 #include <cmath>
 #include "PAL_STM32_STREAM.h"
-
 #include "stm32f3xx_hal.h"
+
+#ifndef STM32_NO_INTERRUPTS
+    #define STM32_NO_INTERRUPTS() const bool was_irq_enabled = ~(__get_PRIMASK() & 1);\
+                                  if (was_irq_enabled) { \
+                                      __disable_irq(); \
+                                  }
+#endif
+#ifndef STM32_INTERRUPTS
+    #define STM32_INTERRUPTS() if (was_irq_enabled) { \
+                                   __enable_irq(); \
+                               }
+#endif
 
 #define UART_MAX_TIMEOUT 10000 // 10 seconds for the timeout for HAL UART events
 

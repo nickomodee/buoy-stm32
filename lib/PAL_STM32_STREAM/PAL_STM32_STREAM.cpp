@@ -96,14 +96,9 @@ int PAL_STM32_STREAM::peek() {
 }
 
 void PAL_STM32_STREAM::put_buffer(const uint8_t data) {
-    const bool wasIrqEnabled = ~(__get_PRIMASK() & 1);
-    if (wasIrqEnabled) {
-        __disable_irq();
-    }
+    STM32_NO_INTERRUPTS();
     this->rx_buffer_.put(data);
-    if (wasIrqEnabled) {
-        __enable_irq();
-    }
+    STM32_INTERRUPTS();
 }
 
 const volatile uint8_t* PAL_STM32_STREAM::get_rx_byte_ptr() const {

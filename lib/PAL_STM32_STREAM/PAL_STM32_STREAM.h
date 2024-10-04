@@ -5,6 +5,18 @@
 #include <cstring>
 #include "stm32f3xx_hal.h"
 
+#ifndef STM32_NO_INTERRUPTS
+    #define STM32_NO_INTERRUPTS() const bool was_irq_enabled = ~(__get_PRIMASK() & 1);\
+                                  if (was_irq_enabled) { \
+                                      __disable_irq(); \
+                                  }
+#endif
+#ifndef STM32_INTERRUPTS
+    #define STM32_INTERRUPTS() if (was_irq_enabled) { \
+                                   __enable_irq(); \
+                               }
+#endif
+
 class PAL_STM32_STREAM_BUFFER {
     public:
         PAL_STM32_STREAM_BUFFER(const uint16_t buffer_size);

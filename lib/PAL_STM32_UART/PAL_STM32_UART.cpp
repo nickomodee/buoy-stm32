@@ -89,38 +89,24 @@ void PAL_STM32_UART_STREAM::begin(uint32_t baud_rate) {
 }
 
 size_t PAL_STM32_UART_STREAM::write(const uint8_t data) {
-    const bool wasIrqEnabled = ~(__get_PRIMASK() & 1);
-    if (wasIrqEnabled) {
-        __disable_irq();
-    }
+    STM32_NO_INTERRUPTS();
     if (HAL_UART_Transmit(get_huart_ptr(), const_cast<uint8_t*>(&data), 1, UART_MAX_TIMEOUT)) {
-        if (wasIrqEnabled) {
-            __enable_irq();
-        }
+        STM32_INTERRUPTS();
     	return 1;
     }
 
-    if (wasIrqEnabled) {
-        __enable_irq();
-    }
+    STM32_INTERRUPTS();
     return 0;
 }
 
 size_t PAL_STM32_UART_STREAM::write(const uint8_t* buffer, const size_t size) {
-    const bool wasIrqEnabled = ~(__get_PRIMASK() & 1);
-    if (wasIrqEnabled) {
-        __disable_irq();
-    }
+    STM32_NO_INTERRUPTS();
     if (HAL_UART_Transmit(get_huart_ptr(), const_cast<uint8_t*>(buffer), size, UART_MAX_TIMEOUT)) {
-    	if (wasIrqEnabled) {
-            __enable_irq();
-        }
+    	STM32_INTERRUPTS();
         return size;
     }
 
-    if (wasIrqEnabled) {
-        __enable_irq();
-    }
+    STM32_INTERRUPTS();
     return 0;
 }
 
@@ -277,46 +263,32 @@ UART_HandleTypeDef* PAL_STM32_UART_STREAM::get_huart_ptr() {
 extern "C" { // BEGIN extern "C"
 	// USART1 Interrupt Handler
 	void USART1_IRQHandler() {
-        const bool wasIrqEnabled = ~(__get_PRIMASK() & 1);
-        if (wasIrqEnabled) {
-            __disable_irq();
-        }
+        STM32_NO_INTERRUPTS();
 		// Check if a stream instance exists tied to USART1
 		if (USART1_STREAM == nullptr) {
-            if (wasIrqEnabled) {
-                __enable_irq();
-            }
+            STM32_INTERRUPTS();
 			return;
 		}
 
 		PAL_STM32_UART_STREAM& UART_Stream = *USART1_STREAM;
 
 		HAL_UART_IRQHandler(UART_Stream.get_huart_ptr());
-        if (wasIrqEnabled) {
-            __enable_irq();
-        }
+        STM32_INTERRUPTS();
 	}
 
     // USART2 Interrupt Handler
     void USART2_IRQHandler() {
-        const bool wasIrqEnabled = ~(__get_PRIMASK() & 1);
-        if (wasIrqEnabled) {
-            __disable_irq();
-        }
+        STM32_NO_INTERRUPTS();
 		// Check if a stream instance exists tied to USART1
 		if (USART2_STREAM == nullptr) {
-            if (wasIrqEnabled) {
-                __enable_irq();
-            }
+            STM32_INTERRUPTS();
 			return;
 		}
 
 		PAL_STM32_UART_STREAM& UART_Stream = *USART2_STREAM;
 
 		HAL_UART_IRQHandler(UART_Stream.get_huart_ptr());
-        if (wasIrqEnabled) {
-            __enable_irq();
-        }
+        STM32_INTERRUPTS();
 	}
     
 	// UART Receive Complete Callback
