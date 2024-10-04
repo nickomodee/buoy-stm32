@@ -82,3 +82,18 @@ uint32_t PAL_STM32_RANDOMSEED_INIT_ENTROPY() {
     PAL_GENERAL_RANDOMSEED(seed);
     return seed;
 }
+
+
+static bool is_dwt_initialised = false;
+
+void PAL_STM32_DELAY_US(const uint32_t us) {
+    if (!is_dwt_initialised) {
+        CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk; // enable DWT
+        DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;            // enable cycle counter
+        is_dwt_initialised = true;
+    }
+    
+    uint32_t start = DWT->CYCCNT;
+    uint32_t ticks = us * (SystemCoreClock / 1000000); // convert us to clock ticks
+    while ((DWT->CYCCNT - start) < ticks) {};
+}

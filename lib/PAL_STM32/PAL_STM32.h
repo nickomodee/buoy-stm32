@@ -20,3 +20,4 @@ extern PAL_STM32_WIRE Wire;
 
 #define PAL_STM32_MILLISECONDS HAL_GetTick
 #define PAL_STM32_DELAY HAL_Delay
+extern void PAL_STM32_DELAY_US(const uint32_t us);
