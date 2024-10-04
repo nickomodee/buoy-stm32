@@ -3,14 +3,14 @@
 
 void setup() {
     Wire.begin();
-    Serial.begin(9600);
+    PAL_SERIAL.begin(9600);
 }
 
 void loop() {
     uint8_t error, address;
     int nDevices;
 
-    Serial.println("Scanning...");
+    PAL_SERIAL.println("Scanning...");
 
     nDevices = 0;
     for(address = 1; address < 127; address++) {
@@ -21,24 +21,24 @@ void loop() {
         error = Wire.endTransmission();
 
         if (error == 0) {
-            Serial.print("I2C device found at address 0x");
+            PAL_SERIAL.print("I2C device found at address 0x");
             if (address < 16)
-                Serial.print("0");
-            Serial.print(address, PAL_HEX);
-            Serial.println("  !");
+                PAL_SERIAL.print("0");
+            PAL_SERIAL.print(address, PAL_HEX);
+            PAL_SERIAL.println("  !");
 
             nDevices++;
         } else if (error==4) {
-            Serial.print("Unknown error at address 0x");
+            PAL_SERIAL.print("Unknown error at address 0x");
             if (address < 16)
-                Serial.print("0");
-            Serial.println(address, PAL_HEX);
+                PAL_SERIAL.print("0");
+            PAL_SERIAL.println(address, PAL_HEX);
         }
     }
     if (nDevices == 0)
-        Serial.println("No I2C devices found\n");
+        PAL_SERIAL.println("No I2C devices found\n");
     else
-        Serial.println("done\n");
+        PAL_SERIAL.println("done\n");
 
     PAL_DELAY(5000); // wait 5 seconds for next scan
 }

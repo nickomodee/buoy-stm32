@@ -7,7 +7,7 @@
 
 void setup() {
     Wire.begin();
-    Serial.begin(9600);
+    PAL_SERIAL.begin(9600);
 
     Wire.beginTransmission(I2C_ADDRESS);
     Wire.write(CHIP_ID_REGISTER);
@@ -16,15 +16,15 @@ void setup() {
     Wire.requestFrom(I2C_ADDRESS, 1);
     if (Wire.available()) {
         const uint8_t chip_id = Wire.read();
-        Serial.print("Chip ID: 0x");
-        Serial.println(chip_id, PAL_HEX);
+        PAL_SERIAL.print("Chip ID: 0x");
+        PAL_SERIAL.println(chip_id, PAL_HEX);
 
         if (chip_id == BME280_CHIP_ID) {
-            Serial.println("BME280 detected");
+            PAL_SERIAL.println("BME280 detected");
         } else if (chip_id == BMP280_CHIP_ID) {
-            Serial.println("BMP280 detected");
+            PAL_SERIAL.println("BMP280 detected");
         } else {
-            Serial.println("Unknown sensor");
+            PAL_SERIAL.println("Unknown sensor");
         }
     }
 }

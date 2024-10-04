@@ -89,18 +89,18 @@ void configure_ctrl_meas() {
     // mode = 3 (normal mode)
     uint8_t ctrl_meas_value = (1 << 5) | (1 << 2) | 0x03;
     write_register(BME280_REG_CTRL_MEAS, ctrl_meas_value);
-    Serial.println("Configured ctrl_meas register");
+    PAL_SERIAL.println("Configured ctrl_meas register");
 }
 
 void configure_ctrl_hum() {
     // osrs_h = 1 (humidity oversampling x1)
     write_register(BME280_REG_CTRL_HUM, 0x01);
-    Serial.println("Configured ctrl_hum register");
+    PAL_SERIAL.println("Configured ctrl_hum register");
 
     // must rewrite ctrl_meas after changing ctrl_hum
     uint8_t ctrl_meas_value = read_register(BME280_REG_CTRL_MEAS);
     write_register(BME280_REG_CTRL_MEAS, ctrl_meas_value);
-    Serial.println("Rewrote ctrl_meas register to apply humidity settings");
+    PAL_SERIAL.println("Rewrote ctrl_meas register to apply humidity settings");
 }
 
 // calibration data reading
@@ -203,16 +203,16 @@ float compensate_humidity(int32_t adc_H) {
 
 void setup() {
     Wire.begin();
-    Serial.begin(9600);
+    PAL_SERIAL.begin(9600);
 
-    Serial.println("BME280 I2C test");
+    PAL_SERIAL.println("BME280 I2C test");
 
     // check chip ID
     uint8_t chipId = read_register(BME280_REG_CHIP_ID);
-    Serial.print("Chip ID: 0x");
-    Serial.println(chipId, PAL_HEX);
+    PAL_SERIAL.print("Chip ID: 0x");
+    PAL_SERIAL.println(chipId, PAL_HEX);
     if (chipId != BME280_CHIP_ID) {
-        Serial.println("BME280 not detected. Please check wiring.");
+        PAL_SERIAL.println("BME280 not detected. Please check wiring.");
         while (1); // halt execution
     }
 
@@ -242,19 +242,19 @@ void loop() {
     float humidity = compensate_humidity(rd.humidity);
 
     // print results
-    Serial.print("Temperature: ");
-    Serial.print(temperature);
-    Serial.println(" °C");
+    PAL_SERIAL.print("Temperature: ");
+    PAL_SERIAL.print(temperature);
+    PAL_SERIAL.println(" °C");
 
-    Serial.print("Pressure: ");
-    Serial.print(pressure);
-    Serial.println(" hPa");
+    PAL_SERIAL.print("Pressure: ");
+    PAL_SERIAL.print(pressure);
+    PAL_SERIAL.println(" hPa");
 
-    Serial.print("Humidity: ");
-    Serial.print(humidity);
-    Serial.println(" %RH");
+    PAL_SERIAL.print("Humidity: ");
+    PAL_SERIAL.print(humidity);
+    PAL_SERIAL.println(" %RH");
 
-    Serial.println("------------------------");
+    PAL_SERIAL.println("------------------------");
 
     // wait before next reading
     PAL_DELAY(2000);
