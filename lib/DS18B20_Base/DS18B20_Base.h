@@ -64,9 +64,9 @@ class DS18B20_Base {
         void setHighRegister(int8_t highRegister);
     private:
         PAL_ONEWIRE oneWire;
-        uint8_t globalResolution;
-        uint8_t globalPowerMode;
         uint8_t numberOfDevices;
+        uint8_t globalPowerMode;
+        uint8_t globalResolution;
         uint8_t selectedAddress[8];
         uint8_t selectedScratchpad[SIZE_SCRATCHPAD];
         uint8_t selectedResolution;
