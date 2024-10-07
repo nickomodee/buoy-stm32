@@ -16,7 +16,7 @@ void setup() {
 }
 
 void loop() {
-    float temperature = temp_sensor.read_temp();
+    const float temperature = temp_sensor.read_temp();
 
     PAL_SERIAL.print("Temperature: ");
     PAL_SERIAL.print(temperature, 2); // 2 d.p.

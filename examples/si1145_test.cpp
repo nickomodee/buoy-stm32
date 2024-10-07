@@ -18,9 +18,9 @@ void setup() {
 }
 
 void loop() {
-    double uv_index = uv_sensor.read_uv_index();
-    double visible_lux = visible_lux_sensor.read_visible_lux();
-    double ir_lux = ir_lux_sensor.read_ir_lux();
+    const double uv_index = uv_sensor.read_uv_index();
+    const double visible_lux = visible_lux_sensor.read_visible_lux();
+    const double ir_lux = ir_lux_sensor.read_ir_lux();
 
     PAL_SERIAL.print("UV Index: ");
     PAL_SERIAL.print(uv_index, 2); // 2 d.p.
