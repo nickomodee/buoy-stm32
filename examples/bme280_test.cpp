@@ -13,6 +13,7 @@ void setup() {
     PAL_SERIAL.begin(9600);
     Wire.begin();
     while (!bme280.init()) {
+        PAL_SERIAL.println("BME280 initialisation failed");
         PAL_DELAY(1000);
     }
 }

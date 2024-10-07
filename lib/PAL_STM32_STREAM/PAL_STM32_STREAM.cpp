@@ -96,9 +96,9 @@ int PAL_STM32_STREAM::peek() {
 }
 
 void PAL_STM32_STREAM::put_buffer(const uint8_t data) {
-    STM32_NO_INTERRUPTS();
+    STM32_NO_INTERRUPTS(1);
     this->rx_buffer_.put(data);
-    STM32_INTERRUPTS();
+    STM32_INTERRUPTS(1);
 }
 
 const volatile uint8_t* PAL_STM32_STREAM::get_rx_byte_ptr() const {

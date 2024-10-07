@@ -5,14 +5,17 @@
 #include <cstring>
 #include "stm32f3xx_hal.h"
 
+#define CONCATENATE_DETAIL(x, y) x##y
+#define CONCATENATE(x, y) CONCATENATE_DETAIL(x, y)
+
 #ifndef STM32_NO_INTERRUPTS
-    #define STM32_NO_INTERRUPTS() const bool was_irq_enabled = ~(__get_PRIMASK() & 1);\
-                                  if (was_irq_enabled) { \
+    #define STM32_NO_INTERRUPTS(count) const bool CONCATENATE(was_irq_enabled_, count) = ~(__get_PRIMASK() & 1);\
+                                  if (CONCATENATE(was_irq_enabled_, count)) { \
                                       __disable_irq(); \
                                   }
 #endif
 #ifndef STM32_INTERRUPTS
-    #define STM32_INTERRUPTS() if (was_irq_enabled) { \
+    #define STM32_INTERRUPTS(count) if (CONCATENATE(was_irq_enabled_, count)) { \
                                    __enable_irq(); \
                                }
 #endif

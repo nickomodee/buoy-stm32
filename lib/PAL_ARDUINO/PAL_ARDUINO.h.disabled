@@ -3,6 +3,7 @@
 #include <Arduino.h>
 #include <Stream.h>
 #include <Wire.h>
+#include "OneWire.h" // need to download this from: https://github.com/PaulStoffregen/OneWire/tree/master
 #include "PAL.h"
 
 #define PAL_OCT 8
@@ -13,7 +14,9 @@ extern uint32_t PAL_STM32_RANDOMSEED_INIT_ENTROPY();
 
 #define PAL_ARDUINO_STREAM Stream
 
-#define PAL_TWOWIRE TwoWire
+#define PAL_ARDUINO_TWOWIRE TwoWire
+
+#define PAL_ARDUINO_ONEWIRE OneWire
 
 #define PAL_ARDUINO_MILLISECONDS millis
 #define PAL_ARDUINO_DELAY delay

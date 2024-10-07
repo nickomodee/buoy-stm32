@@ -22,9 +22,19 @@
 
 #define PAL_GENERAL_MIN(a, b) ((a) < (b) ? (a) : (b))
 #define PAL_GENERAL_MAX(a, b) ((a) > (b) ? (a) : (b))
+#define PAL_GENERAL_CONSTRAIN(amt, low, high) ((amt) < (low) ? (low) : ((amt) > (high) ? (high) : (amt)))
+#define PAL_GENERAL_BIT_READ(value, bit) (((value) >> (bit)) & 1)
+#define PAL_GENERAL_BIT_SET(value, bit) ((value) |= (1UL << (bit)))
+#define PAL_GENERAL_BIT_CLEAR(value, bit) ((value) &= ~(1UL << (bit)))
+#define PAL_GENERAL_BIT_WRITE(value, bit, bitvalue) ((bitvalue) ? PAL_GENERAL_BIT_SET(value, bit) : PAL_GENERAL_BIT_CLEAR(value, bit))
 
 #define PAL_MIN PAL_GENERAL_MIN
 #define PAL_MAX PAL_GENERAL_MAX
+#define PAL_CONSTRAIN PAL_GENERAL_CONSTRAIN
+#define PAL_BIT_READ PAL_GENERAL_BIT_READ
+#define PAL_BIT_SET PAL_GENERAL_BIT_SET
+#define PAL_BIT_CLEAR PAL_GENERAL_BIT_CLEAR
+#define PAL_BIT_WRITE PAL_GENERAL_BIT_WRITE
 
 extern void PAL_GENERAL_RANDOMSEED(uint32_t seed);
 extern uint32_t PAL_GENERAL_RANDOM(uint32_t howbig);
@@ -50,3 +60,5 @@ extern uint32_t PAL_GENERAL_RANDOM(uint32_t howsmall, uint32_t howbig);
 #define PAL_GENERAL_WIRE Wire
 #define PAL_WIRE PAL_GENERAL_WIRE
 #define PAL_TWOWIRE PAL_EXPAND(TWOWIRE)
+
+#define PAL_ONEWIRE PAL_EXPAND(ONEWIRE)
