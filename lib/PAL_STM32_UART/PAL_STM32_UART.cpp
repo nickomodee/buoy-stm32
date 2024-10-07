@@ -89,24 +89,20 @@ void PAL_STM32_UART_STREAM::begin(uint32_t baud_rate) {
 }
 
 size_t PAL_STM32_UART_STREAM::write(const uint8_t data) {
-    STM32_NO_INTERRUPTS(1);
+    STM32_INTERRUPT_GUARD interrupt_guard;
     if (HAL_UART_Transmit(get_huart_ptr(), const_cast<uint8_t*>(&data), 1, UART_MAX_TIMEOUT)) {
-        STM32_INTERRUPTS(1);
     	return 1;
     }
 
-    STM32_INTERRUPTS(1);
     return 0;
 }
 
 size_t PAL_STM32_UART_STREAM::write(const uint8_t* buffer, const size_t size) {
-    STM32_NO_INTERRUPTS(1);
+    STM32_INTERRUPT_GUARD interrupt_guard;
     if (HAL_UART_Transmit(get_huart_ptr(), const_cast<uint8_t*>(buffer), size, UART_MAX_TIMEOUT)) {
-    	STM32_INTERRUPTS(1);
         return size;
     }
 
-    STM32_INTERRUPTS(1);
     return 0;
 }
 
@@ -263,32 +259,28 @@ UART_HandleTypeDef* PAL_STM32_UART_STREAM::get_huart_ptr() {
 extern "C" { // BEGIN extern "C"
 	// USART1 Interrupt Handler
 	void USART1_IRQHandler() {
-        STM32_NO_INTERRUPTS(1);
+        STM32_INTERRUPT_GUARD interrupt_guard;
 		// Check if a stream instance exists tied to USART1
 		if (USART1_STREAM == nullptr) {
-            STM32_INTERRUPTS(1);
 			return;
 		}
 
 		PAL_STM32_UART_STREAM& UART_Stream = *USART1_STREAM;
 
 		HAL_UART_IRQHandler(UART_Stream.get_huart_ptr());
-        STM32_INTERRUPTS(1);
 	}
 
     // USART2 Interrupt Handler
     void USART2_IRQHandler() {
-        STM32_NO_INTERRUPTS(1);
+        STM32_INTERRUPT_GUARD interrupt_guard;
 		// Check if a stream instance exists tied to USART1
 		if (USART2_STREAM == nullptr) {
-            STM32_INTERRUPTS(1);
 			return;
 		}
 
 		PAL_STM32_UART_STREAM& UART_Stream = *USART2_STREAM;
 
 		HAL_UART_IRQHandler(UART_Stream.get_huart_ptr());
-        STM32_INTERRUPTS(1);
 	}
     
 	// UART Receive Complete Callback

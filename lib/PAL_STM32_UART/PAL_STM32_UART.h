@@ -6,28 +6,9 @@
 #include <cmath>
 #include "PAL_STM32_STREAM.h"
 #include "stm32f3xx_hal.h"
-
-#define CONCATENATE_DETAIL(x, y) x##y
-#define CONCATENATE(x, y) CONCATENATE_DETAIL(x, y)
-
-#ifndef STM32_NO_INTERRUPTS
-    #define STM32_NO_INTERRUPTS(count) const bool CONCATENATE(was_irq_enabled_, count) = ~(__get_PRIMASK() & 1);\
-                                  if (CONCATENATE(was_irq_enabled_, count)) { \
-                                      __disable_irq(); \
-                                  }
-#endif
-#ifndef STM32_INTERRUPTS
-    #define STM32_INTERRUPTS(count) if (CONCATENATE(was_irq_enabled_, count)) { \
-                                   __enable_irq(); \
-                               }
-#endif
+#include "PAL_STM32_COMMON.h"
 
 #define UART_MAX_TIMEOUT 10000 // 10 seconds for the timeout for HAL UART events
-
-// For `print(n, base)`
-#define PAL_OCT 8
-#define PAL_DEC 10
-#define PAL_HEX 16
 
 extern void Error_Handler(); // From main STM32 PAL
 

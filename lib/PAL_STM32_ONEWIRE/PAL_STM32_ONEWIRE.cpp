@@ -44,12 +44,12 @@ void PAL_STM32_ONEWIRE::begin(const uint8_t physical_pin) {
 }
 
 void PAL_STM32_ONEWIRE::set_input() {
-    const uint8_t pin_number = GET_PIN_NUMBER(GPIO_pin_);
+    const uint8_t pin_number = STM32_GET_PIN_NUMBER(GPIO_pin_);
     GPIO_port_->MODER &= ~(0x03 << (pin_number << 1));
 }
 
 void PAL_STM32_ONEWIRE::set_output() {
-    const uint8_t pin_number = GET_PIN_NUMBER(GPIO_pin_);
+    const uint8_t pin_number = STM32_GET_PIN_NUMBER(GPIO_pin_);
     GPIO_port_->MODER = (GPIO_port_->MODER & ~(0x03 << (pin_number << 1))) | (0x01 << (pin_number << 1));
 }
 
