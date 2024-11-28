@@ -1,0 +1,334 @@
+#include "SD.h"
+
+SPI_HandleTypeDef hspi;
+
+const SPI_TypeDef* SD::SPI_instance_ = SPI1;
+
+static void SPI_MSP_INIT(const SPI_TypeDef* instance) {
+    GPIO_InitTypeDef GPIO_InitStruct = {0};
+    if (instance == SPI1) {
+        /* Peripheral clock enable */
+        __HAL_RCC_SPI1_CLK_ENABLE();
+
+        __HAL_RCC_GPIOA_CLK_ENABLE();
+        /* SPI1 GPIO Configuration
+        PA5     ------> SPI1_SCK
+        PA6     ------> SPI1_MISO
+        PA7     ------> SPI1_MOSI
+        */
+        GPIO_InitStruct.Pin = GPIO_PIN_5 | GPIO_PIN_6 | GPIO_PIN_7;
+        GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+        GPIO_InitStruct.Pull = GPIO_NOPULL;
+        GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+        GPIO_InitStruct.Alternate = GPIO_AF5_SPI1;
+        HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+    }
+}
+
+SD::SD() {
+    GPIO_InitTypeDef GPIO_InitStruct = {0};
+
+    /* GPIO Ports Clock Enable */
+    if (SD_CS_GPIO_Port == GPIOA) {
+        __HAL_RCC_GPIOA_CLK_ENABLE();
+    } else if (SD_CS_GPIO_Port == GPIOB) {
+        __HAL_RCC_GPIOB_CLK_ENABLE();
+    } else if (SD_CS_GPIO_Port == GPIOC) {
+        __HAL_RCC_GPIOC_CLK_ENABLE();
+    } else if (SD_CS_GPIO_Port == GPIOD) {
+        __HAL_RCC_GPIOD_CLK_ENABLE();
+    } else if (SD_CS_GPIO_Port == GPIOF) {
+        __HAL_RCC_GPIOF_CLK_ENABLE();
+    }
+
+    /*Configure GPIO pin Output Level */
+    HAL_GPIO_WritePin(SD_CS_GPIO_Port, SD_CS_Pin, GPIO_PIN_RESET);
+
+    /*Configure GPIO pin : SD_CS_Pin */
+    GPIO_InitStruct.Pin = SD_CS_Pin;
+    GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+    HAL_GPIO_Init(SD_CS_GPIO_Port, &GPIO_InitStruct);
+
+    hspi.Instance = SPI1;
+    hspi.Init.Mode = SPI_MODE_MASTER;
+    hspi.Init.Direction = SPI_DIRECTION_2LINES;
+    hspi.Init.DataSize = SPI_DATASIZE_8BIT;
+    hspi.Init.CLKPolarity = SPI_POLARITY_LOW;
+    hspi.Init.CLKPhase = SPI_PHASE_1EDGE;
+    hspi.Init.NSS = SPI_NSS_SOFT;
+    hspi.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_128;
+    hspi.Init.FirstBit = SPI_FIRSTBIT_MSB;
+    hspi.Init.TIMode = SPI_TIMODE_DISABLE;
+    hspi.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
+    hspi.Init.CRCPolynomial = 7;
+    hspi.Init.CRCLength = SPI_CRC_LENGTH_DATASIZE;
+    hspi.Init.NSSPMode = SPI_NSS_PULSE_ENABLE;
+
+    // MSP Init
+    SPI_MSP_INIT(this->SPI_instance_);
+
+    // Initialise SPI peripheral
+    if (HAL_SPI_Init(get_hspi_ptr()) != HAL_OK) {
+        Error_Handler();
+    }
+
+    // FatFS Init
+    MX_FATFS_Init();
+}
+
+SD::~SD() {
+    if (dir_open_) {
+        close_dir();
+    }
+
+    if (mounted_) {
+        unmount();
+    }
+}
+
+bool SD::begin() {
+    HAL_Delay(1000);
+
+    return mount();
+}
+
+bool SD::mount() {
+    if (mounted_) {
+        if (!unmount()) {
+            return false;
+        }
+    }
+
+    if (f_mount(&FatFs_, "", 1) == FR_OK) { // 1 = mount now
+        mounted_ = true;
+        return true;
+    }
+
+    return false;
+}
+
+bool SD::unmount() {
+    if(f_mount(nullptr, "", 0) == FR_OK) {
+        mounted_ = false;
+        return true;
+    }
+
+    return false;
+}
+
+bool SD::open(FIL* file, const char* path, const uint8_t mode) {
+    return f_open(file, path, mode) == FR_OK;
+}
+
+bool SD::close(FIL* file) {
+    return f_close(file) == FR_OK;
+}
+
+uint32_t SD::write(FIL* file, const uint8_t* buffer, const size_t size) {
+    size_t count = 0;
+    size_t written_amount = 0;
+    FRESULT status = FR_OK;
+    while (((int32_t)count < (int32_t)size - (int32_t)_MIN_SS) && (status == FR_OK)) {
+        status = f_write(file, buffer + count, _MIN_SS, &written_amount);
+        count += written_amount;
+    }
+    if (count < size) {
+        status = f_write(file, buffer + count, size - count, &written_amount);
+        count += written_amount;
+    }
+    
+    return count;
+}
+
+uint32_t SD::write(FIL* file, const char* buffer, const size_t size) {
+    return write(file, (const uint8_t*)buffer, size);
+}
+
+uint32_t SD::write(FIL* file, const char* str) {
+    const size_t str_length = strlen(str);
+    return write(file, str, str_length);
+}
+
+bool SD::write(FIL* file, const char data) {
+    return f_putc(data, file) == 1;
+}
+
+bool SD::write(FIL* file, const uint8_t data) {
+    return write(file, (const char)data);
+}
+
+uint32_t SD::read(FIL* file, uint8_t* buffer, const size_t size) {
+    size_t count = 0;
+    size_t read_amount = 0;
+    FRESULT status = FR_OK;
+    while (((int32_t)count < (int32_t)size - (int32_t)_MIN_SS) && (status == FR_OK)) {
+        status = f_read(file, buffer + count, _MIN_SS, &read_amount);
+        count += read_amount;
+        if (read_amount < _MIN_SS) { // EOF
+            return count;
+        }
+    }
+    if (count < size) {
+        status = f_read(file, buffer + count, size - count, &read_amount);
+        count += read_amount;
+    }
+    
+    return count;
+}
+
+uint32_t SD::read(FIL* file, char* buffer, const size_t size) {
+    return read(file, (uint8_t*)buffer, size);
+}
+
+int SD::read(FIL* file) {
+    uint8_t data;
+    size_t read_amount;
+    return (f_read(file, &data, 1, &read_amount) == FR_OK && read_amount == 1) ? read_amount : -1;
+}
+
+uint32_t SD::position(FIL* file) {
+    return f_tell(file);
+}
+
+bool SD::seek(FIL* file, const uint32_t position) {
+    return f_lseek(file, position) == FR_OK;
+}
+
+uint32_t SD::file_size(FIL* file) {
+    return f_size(file);
+}
+
+uint32_t SD::file_size() {
+    return file_info_.fsize;
+}
+
+bool SD::remove(const char* path) {
+    return f_unlink(path) == FR_OK;
+}
+
+bool SD::rmdir(const char* path) {
+    return remove(path);
+}
+
+bool SD::mkdir(const char* path) {
+    return f_mkdir(path) == FR_OK;
+}
+
+bool SD::rename(const char* path, const char* new_path) {
+    return f_rename(path, new_path);
+}
+
+bool SD::exists(const char* path) {
+    return f_stat(path, nullptr) == FR_OK;
+}
+
+bool SD::is_dir(const char* path) {
+    return (f_stat(path, &file_info_) == FR_OK) && (file_info_.fattrib & AM_DIR);
+}
+
+bool SD::is_dir() {
+    return file_info_.fattrib & AM_DIR;
+}
+
+bool SD::open_dir(const char* path) {
+    if (dir_open_) {
+        if (!close_dir()) {
+            return false;
+        }
+    }
+
+    if (f_opendir(&dir_, path) == FR_OK) {
+        dir_open_ = true;
+        return true;
+    }
+
+    return false;
+}
+
+bool SD::close_dir() {
+    if (!dir_open_) {
+        return false;
+    }
+
+    if (f_closedir(&dir_) == FR_OK) {
+        dir_open_ = false;
+        return true;
+    }
+
+    return false;
+}
+
+bool SD::next_file() {
+    if (!dir_open_) {
+        return false;
+    }
+
+    return f_readdir(&dir_, &file_info_) == FR_OK;
+}
+
+size_t SD::list_dir(const char* path, char* output, const size_t size) {
+    if (!open_dir(path)) {
+        return 0;
+    }
+    size_t count = 0;
+    output[0] = '\0';
+    while (next_file()) {
+        const char* fname = file_name();
+        const size_t fname_length = strlen(fname);
+        if ((fname_length == 0) || (count + fname_length + 2 + 1 > size)) { // `2` for `"\r\n"` and `1` for `'\0'`
+            close_dir();
+            return count;
+        }
+        strncat(output + count, fname, fname_length);
+        count += fname_length;
+        strncat(output + count, "\r\n", 2);
+        count += 2;
+    }
+
+    close_dir();
+    return count;
+}
+
+const char* SD::file_name() {
+    return file_info_.fname;
+}
+
+uint16_t SD::file_date() {
+    return file_info_.fdate;
+}
+
+uint16_t SD::file_time() {
+    return file_info_.ftime;
+}
+
+uint32_t SD::get_total_space() {
+    FATFS* getFreeFs;
+
+    DWORD free_clusters;
+    if (f_getfree("", &free_clusters, &getFreeFs) != FR_OK) {
+        return 0;
+    }
+
+    DWORD total_sectors = (getFreeFs->n_fatent - 2) * getFreeFs->csize;
+    return (uint32_t)total_sectors / 2; // in KiB
+}
+
+uint32_t SD::get_available_space() {
+    FATFS* getFreeFs;
+
+    DWORD free_clusters;
+    if (f_getfree("", &free_clusters, &getFreeFs) != FR_OK) {
+        return 0;
+    }
+
+    DWORD free_sectors = free_clusters * getFreeFs->csize;
+    return (uint32_t)free_sectors / 2; // in KiB
+}
+
+SPI_HandleTypeDef* SD::get_hspi_ptr() {
+    return &hspi;
+}
+
+SD sd;

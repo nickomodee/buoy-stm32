@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "ff.h": "c",
+        "fatfs.h": "c",
+        "user_diskio_spi.h": "c"
+    }
+}
