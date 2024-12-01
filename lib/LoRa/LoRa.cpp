@@ -192,17 +192,31 @@ bool LoRa::recv() {
         if (!this->lora_serial->expected(expected_buffer, strlen(expected_buffer), serial_buffer, LORA_SERIAL_BUFFER_SIZE, this->timeout)) {
             continue;
         }
-        char c1 = this->lora_serial->read_blocking(timeout);
-        char c2 = this->lora_serial->read_blocking(timeout);
+        int c1 = this->lora_serial->read_blocking(timeout);
+        if (c1 == -1) {
+            goto fail;
+        }
+        int c2 = this->lora_serial->read_blocking(timeout);
+        if (c2 == -1) {
+            goto fail;
+        }
         while (c1 != '\r') {
             if (buffer_counter >= LORA_MAX_SIZE) {
                 goto fail;
             }
             this->buffer[buffer_counter] = (hex_char_to_byte(c1) << 4) | hex_char_to_byte(c2);
             buffer_counter++;
-            this->lora_serial->read_blocking(timeout); // flush ' ' char
+            if (this->lora_serial->read_blocking(timeout) != ' ') { // flush ' ' char
+                goto fail;
+            }
             c1 = this->lora_serial->read_blocking(timeout);
+            if (c1 == -1) {
+                goto fail;
+            }
             c2 = this->lora_serial->read_blocking(timeout);
+            if (c2 == -1) {
+                goto fail;
+            }
         }
         const char expected_buffer_2[] = "\r\n";
         // we need 2 more "\r\n" for RX finish

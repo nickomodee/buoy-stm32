@@ -165,15 +165,29 @@ class LoRa:
             if not self._expected(expected_buffer):
                 continue
             c1: int = self._read_blocking()
+            if c1 == -1:
+                self.set_state(SAVED_STATE)
+                return False
             c2: int = self._read_blocking()
+            if c2 == -1:
+                self.set_state(SAVED_STATE)
+                return False
             while c1 != ord('\r'):
                 if len(self._buffer) >= LORA_MAX_SIZE:
                     self.set_state(SAVED_STATE)
                     return False
                 self._buffer += ((hex_char_to_byte(c1) << 4) | hex_char_to_byte(c2)).to_bytes(1, byteorder='big')
-                self._read_blocking() # flush ' ' char
+                if self._read_blocking() != ord(' '): # flush ' ' char
+                    self.set_state(SAVED_STATE)
+                    return False
                 c1 = self._read_blocking()
+                if c1 == -1:
+                    self.set_state(SAVED_STATE)
+                    return False
                 c2 = self._read_blocking()
+                if c2 == -1:
+                    self.set_state(SAVED_STATE)
+                    return False
             expected_buffer = b"\r\n"
             # we need 2 more "\r\n" for RX finish
             if not self._expected(expected_buffer):
