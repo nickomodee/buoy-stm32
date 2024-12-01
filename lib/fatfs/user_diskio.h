@@ -28,7 +28,7 @@
 /* Exported types ------------------------------------------------------------*/
 /* Exported constants --------------------------------------------------------*/
 /* Exported functions ------------------------------------------------------- */
-extern Diskio_drvTypeDef  USER_Driver;
+extern Diskio_drvTypeDef __FIRMWARE_DATA USER_Driver;
 
 /* USER CODE END 0 */
 

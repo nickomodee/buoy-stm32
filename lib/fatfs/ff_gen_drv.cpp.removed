@@ -31,7 +31,7 @@
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-Disk_drvTypeDef disk = {{0},{0},{0},0};
+Disk_drvTypeDef __FIRMWARE_BSS disk = {{0},{0},{0},0};
 
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
@@ -46,7 +46,7 @@ Disk_drvTypeDef disk = {{0},{0},{0},0};
             else the paramter must be equal to 0
   * @retval Returns 0 in case of success, otherwise 1.
   */
-uint8_t FATFS_LinkDriverEx(Diskio_drvTypeDef *drv, char *path, uint8_t lun)
+uint8_t __FIRMWARE FATFS_LinkDriverEx(Diskio_drvTypeDef *drv, char *path, uint8_t lun)
 {
   uint8_t ret = 1;
   uint8_t DiskNum = 0;
@@ -75,7 +75,7 @@ uint8_t FATFS_LinkDriverEx(Diskio_drvTypeDef *drv, char *path, uint8_t lun)
   * @param  path: pointer to the logical drive path 
   * @retval Returns 0 in case of success, otherwise 1.
   */
-uint8_t FATFS_LinkDriver(Diskio_drvTypeDef *drv, char *path)
+uint8_t __FIRMWARE FATFS_LinkDriver(Diskio_drvTypeDef *drv, char *path)
 {
   return FATFS_LinkDriverEx(drv, path, 0);
 }
@@ -87,7 +87,7 @@ uint8_t FATFS_LinkDriver(Diskio_drvTypeDef *drv, char *path)
   * @param  lun : not used   
   * @retval Returns 0 in case of success, otherwise 1.
   */
-uint8_t FATFS_UnLinkDriverEx(char *path, uint8_t lun)
+uint8_t __FIRMWARE FATFS_UnLinkDriverEx(char *path, uint8_t lun)
 { 
   uint8_t DiskNum = 0;
   uint8_t ret = 1;
@@ -113,7 +113,7 @@ uint8_t FATFS_UnLinkDriverEx(char *path, uint8_t lun)
   * @param  path: pointer to the logical drive path  
   * @retval Returns 0 in case of success, otherwise 1.
   */
-uint8_t FATFS_UnLinkDriver(char *path)
+uint8_t __FIRMWARE FATFS_UnLinkDriver(char *path)
 { 
   return FATFS_UnLinkDriverEx(path, 0);
 }
@@ -123,7 +123,7 @@ uint8_t FATFS_UnLinkDriver(char *path)
   * @param  None
   * @retval Number of attached drivers.
   */
-uint8_t FATFS_GetAttachedDriversNbr(void)
+uint8_t __FIRMWARE FATFS_GetAttachedDriversNbr(void)
 {
   return disk.nbr;
 }

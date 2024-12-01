@@ -42,7 +42,7 @@
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-extern Disk_drvTypeDef  disk;
+extern Disk_drvTypeDef __FIRMWARE_BSS disk;
 
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
@@ -52,7 +52,7 @@ extern Disk_drvTypeDef  disk;
   * @param  pdrv: Physical drive number (0..)
   * @retval DSTATUS: Operation status
   */
-DSTATUS disk_status (
+DSTATUS __FIRMWARE disk_status (
 	BYTE pdrv		/* Physical drive nmuber to identify the drive */
 )
 {
@@ -67,7 +67,7 @@ DSTATUS disk_status (
   * @param  pdrv: Physical drive number (0..)
   * @retval DSTATUS: Operation status
   */
-DSTATUS disk_initialize (
+DSTATUS __FIRMWARE disk_initialize (
 	BYTE pdrv				/* Physical drive nmuber to identify the drive */
 )
 {
@@ -89,7 +89,7 @@ DSTATUS disk_initialize (
   * @param  count: Number of sectors to read (1..128)
   * @retval DRESULT: Operation result
   */
-DRESULT disk_read (
+DRESULT __FIRMWARE disk_read (
 	BYTE pdrv,		/* Physical drive nmuber to identify the drive */
 	BYTE *buff,		/* Data buffer to store read data */
 	DWORD sector,	        /* Sector address in LBA */
@@ -111,7 +111,7 @@ DRESULT disk_read (
   * @retval DRESULT: Operation result
   */
 #if _USE_WRITE == 1
-DRESULT disk_write (
+DRESULT __FIRMWARE disk_write (
 	BYTE pdrv,		/* Physical drive nmuber to identify the drive */
 	const BYTE *buff,	/* Data to be written */
 	DWORD sector,		/* Sector address in LBA */
@@ -133,7 +133,7 @@ DRESULT disk_write (
   * @retval DRESULT: Operation result
   */
 #if _USE_IOCTL == 1
-DRESULT disk_ioctl (
+DRESULT __FIRMWARE disk_ioctl (
 	BYTE pdrv,		/* Physical drive nmuber (0..) */
 	BYTE cmd,		/* Control code */
 	void *buff		/* Buffer to send/receive control data */
@@ -151,7 +151,7 @@ DRESULT disk_ioctl (
   * @param  None
   * @retval Time in DWORD
   */
-__weak DWORD get_fattime (void)
+__weak DWORD __FIRMWARE get_fattime (void)
 {
   return 0;
 }

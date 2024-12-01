@@ -28,12 +28,12 @@
 
 /* USER CODE END Includes */
 
-extern uint8_t retUSER; /* Return value for USER */
-extern char USERPath[4]; /* USER logical drive path */
-extern FATFS USERFatFS; /* File system object for USER logical drive */
-extern FIL USERFile; /* File object for USER */
+extern uint8_t __FIRMWARE_BSS retUSER; /* Return value for USER */
+extern char __FIRMWARE_BSS USERPath[4]; /* USER logical drive path */
+extern FATFS __FIRMWARE_BSS USERFatFS; /* File system object for USER logical drive */
+extern FIL __FIRMWARE_BSS USERFile; /* File object for USER */
 
-void MX_FATFS_Init(void);
+void MX_FATFS_Init(void) __FIRMWARE;
 
 /* USER CODE BEGIN Prototypes */
 

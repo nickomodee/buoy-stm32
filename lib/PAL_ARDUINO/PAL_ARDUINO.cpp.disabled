@@ -16,3 +16,9 @@ uint32_t PAL_ARDUINO_RANDOMSEED_INIT_ENTROPY() {
     PAL_GENERAL_RANDOMSEED(seed);
     return seed;
 }
+
+void PAL_ARDUINO_RESET() {
+    cli(); // disable interrupts
+    wdt_enable(WDTO_15MS);
+    while (1) {} // wait for WDT to reset the system
+}

@@ -4,9 +4,9 @@
 #include <cstdbool>
 #include <cstring>
 #include <cmath>
-#include "PAL_STM32_STREAM.h"
+#include "../PAL_STM32_STREAM/PAL_STM32_STREAM.h"
 #include "stm32f3xx_hal.h"
-#include "PAL_STM32_COMMON.h"
+#include "../PAL_STM32_COMMON/PAL_STM32_COMMON.h"
 
 #define UART_MAX_TIMEOUT 10000 // 10 seconds for the timeout for HAL UART events
 

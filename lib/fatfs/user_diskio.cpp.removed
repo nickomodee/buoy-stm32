@@ -42,22 +42,22 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* Disk status */
-static volatile DSTATUS Stat = STA_NOINIT;
+static volatile DSTATUS __FIRMWARE_DATA Stat = STA_NOINIT;
 
 /* USER CODE END DECL */
 
 /* Private function prototypes -----------------------------------------------*/
-DSTATUS USER_initialize (BYTE pdrv);
-DSTATUS USER_status (BYTE pdrv);
-DRESULT USER_read (BYTE pdrv, BYTE *buff, DWORD sector, UINT count);
+DSTATUS USER_initialize (BYTE pdrv) __FIRMWARE;
+DSTATUS USER_status (BYTE pdrv) __FIRMWARE;
+DRESULT USER_read (BYTE pdrv, BYTE *buff, DWORD sector, UINT count) __FIRMWARE;
 #if _USE_WRITE == 1
-  DRESULT USER_write (BYTE pdrv, const BYTE *buff, DWORD sector, UINT count);
+  DRESULT USER_write (BYTE pdrv, const BYTE *buff, DWORD sector, UINT count) __FIRMWARE;
 #endif /* _USE_WRITE == 1 */
 #if _USE_IOCTL == 1
-  DRESULT USER_ioctl (BYTE pdrv, BYTE cmd, void *buff);
+  DRESULT USER_ioctl (BYTE pdrv, BYTE cmd, void *buff) __FIRMWARE;
 #endif /* _USE_IOCTL == 1 */
 
-Diskio_drvTypeDef  USER_Driver =
+Diskio_drvTypeDef __FIRMWARE_DATA USER_Driver =
 {
   USER_initialize,
   USER_status,
@@ -77,7 +77,7 @@ Diskio_drvTypeDef  USER_Driver =
   * @param  pdrv: Physical drive number (0..)
   * @retval DSTATUS: Operation status
   */
-DSTATUS USER_initialize (
+DSTATUS __FIRMWARE USER_initialize (
 	BYTE pdrv           /* Physical drive nmuber to identify the drive */
 )
 {
@@ -91,7 +91,7 @@ DSTATUS USER_initialize (
   * @param  pdrv: Physical drive number (0..)
   * @retval DSTATUS: Operation status
   */
-DSTATUS USER_status (
+DSTATUS __FIRMWARE USER_status (
 	BYTE pdrv       /* Physical drive number to identify the drive */
 )
 {
@@ -108,7 +108,7 @@ DSTATUS USER_status (
   * @param  count: Number of sectors to read (1..128)
   * @retval DRESULT: Operation result
   */
-DRESULT USER_read (
+DRESULT __FIRMWARE USER_read (
 	BYTE pdrv,      /* Physical drive nmuber to identify the drive */
 	BYTE *buff,     /* Data buffer to store read data */
 	DWORD sector,   /* Sector address in LBA */
@@ -129,7 +129,7 @@ DRESULT USER_read (
   * @retval DRESULT: Operation result
   */
 #if _USE_WRITE == 1
-DRESULT USER_write (
+DRESULT __FIRMWARE USER_write (
 	BYTE pdrv,          /* Physical drive nmuber to identify the drive */
 	const BYTE *buff,   /* Data to be written */
 	DWORD sector,       /* Sector address in LBA */
@@ -151,7 +151,7 @@ DRESULT USER_write (
   * @retval DRESULT: Operation result
   */
 #if _USE_IOCTL == 1
-DRESULT USER_ioctl (
+DRESULT __FIRMWARE USER_ioctl (
 	BYTE pdrv,      /* Physical drive nmuber (0..) */
 	BYTE cmd,       /* Control code */
 	void *buff      /* Buffer to send/receive control data */

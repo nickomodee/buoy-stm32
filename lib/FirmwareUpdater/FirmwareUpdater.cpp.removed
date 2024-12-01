@@ -1,0 +1,315 @@
+#include "FirmwareUpdater.h"
+
+#define PAGE_ALIGN_LEFT(addr)    (((addr)) & ~(FLASH_PAGE_SIZE - 1)) // only works for powers of 2
+#define PAGE_ALIGN_RIGHT(addr)   ((((addr)) + (FLASH_PAGE_SIZE - 1)) & ~(FLASH_PAGE_SIZE - 1)) // only works for powers of 2
+
+const char __FIRMWARE_RODATA firmware_update_path[] = "fw.bin";
+const char __FIRMWARE_RODATA new_firmware_path[] = "fw_new.bin";
+const char __FIRMWARE_RODATA firmware_update_available_path[] = "avail.txt";
+constexpr const char update_is_available_indicator_byte = '1';
+
+uint32_t FirmwareUpdater::current_update_size_ = 0;
+bool FirmwareUpdater::new_firmware_success_ = true;
+
+FirmwareUpdater::FirmwareUpdater() {}
+
+bool __FIRMWARE FirmwareUpdater::flash_erase_page_(const uint32_t address) {
+    uint32_t page_start_address = address & ~(FLASH_PAGE_SIZE - 1);
+    uint32_t offset = address - page_start_address;
+    bool success = true;
+
+    // Unlock flash control register
+    FLASH->KEYR = 0x45670123; // Unlock key 1
+    FLASH->KEYR = 0xCDEF89AB; // Unlock key 2
+
+    // Wait for the flash to be ready
+    while (FLASH->SR & FLASH_SR_BSY);
+
+    if (offset == 0) { // if it is page-aligned we don't need to write anything and just erase
+        // Set the page erase bit
+        FLASH->CR |= FLASH_CR_PER;
+
+        // Set the page address
+        FLASH->AR = page_start_address;
+
+        // Start the erase operation
+        FLASH->CR |= FLASH_CR_STRT;
+
+        // Wait for the erase operation to complete
+        while (FLASH->SR & FLASH_SR_BSY);
+        // Check for errors
+        if (FLASH->SR & (FLASH_SR_PGERR | FLASH_SR_WRPERR)) {
+            FLASH->SR |= (FLASH_SR_PGERR | FLASH_SR_WRPERR); // Clear error flags
+            success = false;
+        }
+
+        // Clear the page erase bit
+        FLASH->CR &= ~FLASH_CR_PER;
+    } else { // address is not page-aligned
+        uint8_t page_buffer[FLASH_PAGE_SIZE];
+
+        // read the whole page into the buffer
+        memcpy(page_buffer, (uint8_t *)page_start_address, FLASH_PAGE_SIZE);
+
+        // only erase from `address` onwards
+        memset(page_buffer + offset, 0xFF, FLASH_PAGE_SIZE - offset); // the erased bytes are 0xff
+
+        // Erase the page
+        FLASH->CR |= FLASH_CR_PER;
+        FLASH->AR = page_start_address;
+        FLASH->CR |= FLASH_CR_STRT;
+
+        // Wait for the erase operation to complete
+        while (FLASH->SR & FLASH_SR_BSY);
+
+        // Check for errors
+        if (FLASH->SR & (FLASH_SR_PGERR | FLASH_SR_WRPERR)) {
+            FLASH->SR |= (FLASH_SR_PGERR | FLASH_SR_WRPERR); // Clear error flags
+            success = false;
+        }
+
+        // Clear the page erase bit
+        FLASH->CR &= ~FLASH_CR_PER;
+
+        if (success) {
+            // Enable programming mode
+            FLASH->CR |= FLASH_CR_PG;
+
+            uint32_t program_address = page_start_address;
+            uint16_t *data = (uint16_t *)page_buffer;
+            uint32_t num_halfwords = FLASH_PAGE_SIZE / 2; // stm32f303k8 uses halfwords ffs
+
+            for (uint32_t i = 0; i < num_halfwords; i++) {
+                *(__IO uint16_t*)program_address = data[i];
+
+                // Wait for the operation to complete
+                while (FLASH->SR & FLASH_SR_BSY);
+
+                // Check for errors
+                if (FLASH->SR & (FLASH_SR_PGERR | FLASH_SR_WRPERR)) {
+                    FLASH->SR |= (FLASH_SR_PGERR | FLASH_SR_WRPERR); // Clear error flags
+                    FLASH->CR &= ~FLASH_CR_PG; // Disable programming mode
+                    FLASH->CR |= FLASH_CR_LOCK; // Lock flash
+                    return false;
+                }
+
+                if (*(uint16_t*)program_address != data[i]) { // verify
+                    success = false;
+                    break;
+                }
+
+                program_address += 2;
+            }
+
+            // Disable programming mode
+            FLASH->CR &= ~FLASH_CR_PG;
+        }
+    }
+    
+    // Lock flash
+    FLASH->CR |= FLASH_CR_LOCK;
+
+    return success;
+}
+
+bool __FIRMWARE FirmwareUpdater::flash_write_byte_(uint32_t address, uint16_t data) { // stm32f303k8 uses halfwords...
+    if (address % 2 != 0) { // address must be 16-bit aligned
+        return false;
+    }
+
+    // Unlock flash control register
+    FLASH->KEYR = 0x45670123; // Unlock key 1
+    FLASH->KEYR = 0xCDEF89AB; // Unlock key 2
+
+    // Wait for the flash to be ready
+    while (FLASH->SR & FLASH_SR_BSY);
+
+    // Enable programming mode
+    FLASH->CR |= FLASH_CR_PG;
+
+    *(__IO uint16_t*)address = data;
+
+    // Wait for the operation to complete
+    while (FLASH->SR & FLASH_SR_BSY);
+
+    // Check for errors
+    if (FLASH->SR & (FLASH_SR_PGERR | FLASH_SR_WRPERR)) {
+        FLASH->SR |= (FLASH_SR_PGERR | FLASH_SR_WRPERR); // Clear error flags
+        FLASH->CR &= ~FLASH_CR_PG; // Disable programming mode
+        FLASH->CR |= FLASH_CR_LOCK; // Lock flash
+        return false;
+    }
+
+    // Disable programming mode
+    FLASH->CR &= ~FLASH_CR_PG;
+
+    // Lock flash
+    FLASH->CR |= FLASH_CR_LOCK;
+
+    return true;
+}
+
+bool __FIRMWARE FirmwareUpdater::begin_() {
+    SD_File firmware_file{firmware_update_path};
+    if (!firmware_file.open(FA_READ)) {
+        return false;
+    }
+
+    const uint32_t firmware_update_size = firmware_file.get_size();
+
+    const uint32_t flash_update_start_address = (uint32_t)&_flash_update_start; // this MUST be the same across all firmwares and SHOULD REALLY also be page aligned (so that we can utilise as much space as possible for updates)
+    const uint32_t flash_update_end_address = (uint32_t)&_flash_update_end; // this MUST be the same across all firmwares and SHOULD REALLY also be page aligned (so that we can utilise as much space as possible for updates)
+
+    const uint32_t flash_update_start_page_aligned_address = PAGE_ALIGN_LEFT(flash_update_start_address);
+    const uint32_t flash_update_end_page_aligned_address = PAGE_ALIGN_RIGHT(flash_update_end_address);
+
+    STM32_INTERRUPT_GUARD interrupt_guard; // really important because we are overwriting the current isr table
+    
+    const uint32_t firmware_end_address = FLASH_BASE + firmware_update_size; // the byte after the end
+
+    for (uint32_t flash_address = FLASH_BASE; flash_address < firmware_end_address; flash_address += 2) {
+        if (flash_address >= flash_update_start_page_aligned_address && flash_address < flash_update_end_page_aligned_address) {
+            continue;
+        }
+
+        if ((flash_address % FLASH_PAGE_SIZE) == 0) {
+            if (!FirmwareUpdater::flash_erase_page_(flash_address)) {
+                return false;
+            }
+        }
+
+        int firmware_byte = firmware_file.read();
+        if (firmware_byte == -1) {
+            return false;
+        }
+        const uint8_t firmware_byte_1 = (uint8_t)firmware_byte;
+        uint8_t firmware_byte_2 = 0xFF;
+        if (flash_address < firmware_end_address - 1) { // since we increment in 2s we may cause a read on a file with no more contents
+            firmware_byte = firmware_file.read();
+            if (firmware_byte == -1) {
+                return false;
+            }
+            firmware_byte_2 = (uint8_t)firmware_byte;
+        }
+
+        const uint16_t firmware_halfword = ((uint16_t)firmware_byte_2 << 8U) | (uint16_t)firmware_byte_1;
+
+        if (!FirmwareUpdater::flash_write_byte_(flash_address, firmware_halfword)) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+bool __FIRMWARE FirmwareUpdater::check() {
+    if (!sd.exists(firmware_update_path) || !sd.exists(firmware_update_available_path)) {
+        return false;
+    }
+
+    SD_File firmware_update_available_file{firmware_update_available_path};
+    if (!firmware_update_available_file.open(FA_READ)) {
+        return false;
+    }
+
+    const int update_available_indicator_byte = firmware_update_available_file.read();
+    if ((update_available_indicator_byte == -1) || ((char)update_available_indicator_byte != update_is_available_indicator_byte)) {
+        return false;
+    }
+
+    return true;
+}
+
+bool __FIRMWARE FirmwareUpdater::update() {
+    if (!check()) {
+        return false;
+    }
+
+    const bool update_status = begin_();
+    if (update_status) {
+        end_();
+    }
+
+    return update_status;
+}
+
+void FirmwareUpdater::firmware_stream(const char* data, size_t size) {
+    if (size == 0) {
+        return;
+    }
+
+    SD_File new_firmware_file{new_firmware_path};
+
+    if ((current_update_size_ == 0) && !initialise_firmware_()) {
+        if (!new_firmware_file.open(FA_WRITE | FA_CREATE_ALWAYS)) {
+            new_firmware_success_ = false;
+            return;
+        }
+    } else {
+        if (!new_firmware_file.open(FA_WRITE | FA_OPEN_ALWAYS)) {
+            new_firmware_success_ = false;
+            return;
+        }
+    }
+
+    if (!new_firmware_file.seek(current_update_size_)) {
+        new_firmware_success_ = false;
+        return;
+    }
+
+    const uint32_t written_amount = new_firmware_file.write(data, size);
+    current_update_size_ += written_amount;
+    if (written_amount != size) {
+        new_firmware_success_ = false;
+        return;
+    }
+}
+
+bool FirmwareUpdater::finish_firmware(const bool success) {
+    if ((current_update_size_ == 0) || !success || !new_firmware_success_) {
+        current_update_size_ = 0;
+        return false;
+    }
+
+    current_update_size_ = 0;
+
+    if (sd.exists(firmware_update_path) && !sd.remove(firmware_update_path)) {
+        return false;
+    }
+
+    if (!sd.rename(new_firmware_path, firmware_update_path)) {
+        return false;
+    }
+
+    SD_File firmware_available_file{firmware_update_available_path};
+    if (!firmware_available_file.open(FA_WRITE | FA_CREATE_ALWAYS)) {
+        return false;
+    }
+
+    if (!firmware_available_file.write(update_is_available_indicator_byte)) {
+        return false;
+    }
+
+    return true;
+}
+
+bool FirmwareUpdater::initialise_firmware_() {
+    new_firmware_success_ = true;
+
+    if (sd.exists(new_firmware_path)) {
+        return sd.remove(new_firmware_path);
+    }
+
+    return true;
+}
+
+void __FIRMWARE FirmwareUpdater::mcu_reset() {
+    __disable_irq();
+    NVIC_SystemReset();
+}
+
+
+void __FIRMWARE FirmwareUpdater::end_() {
+    sd.remove(firmware_update_available_path);
+    mcu_reset();
+}

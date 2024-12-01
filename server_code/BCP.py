@@ -229,6 +229,7 @@ class BCP:
         data_size: int = len(data)
         num_packets: int = int(data_size / MAX_DATA_SIZE) + (1 if data_size % MAX_DATA_SIZE else 0)
         for i in range(num_packets):
+            logger.debug(f"Sending DATA: {i + 1} / {num_packets}")
             new_packet: Packet = self._new_send_packet()
             new_packet.set(PacketType.DATA, -1, data[i * MAX_DATA_SIZE:i * MAX_DATA_SIZE + MAX_DATA_SIZE])
             if self._send_recv(1, PacketType.ACK) != PacketStatus.SUCCESS:
@@ -303,7 +304,7 @@ if __name__ == "__main__":
     handler.setFormatter(formatter)
     root.addHandler(handler)
 
-    LORA_COM_PORT: Literal['COM5'] = 'COM5'
+    LORA_COM_PORT: Literal['COM7'] = 'COM7'
     LORA_BAUDRATE: Literal[9600] = 9600
     # LoRa config
     LORA_TIMEOUT: float = 0.5
@@ -344,7 +345,9 @@ if __name__ == "__main__":
 
             while True:
                 bcp_instance: BCP = BCP(timeout=BCP_TIMEOUT, num_retries=BCP_NUM_RETRIES, lora=lora, encryption=encryption)
-                data: bytes = b"A" * 70
+                # data: bytes = b"A" * 70
+                with open("firmware.bin", 'rb') as f:
+                    data: bytes = f.read()
                 print(f"BCP Message received: {bcp_instance.listen(data)!r}")
         except serial.serialutil.SerialException as e:
             print(f"Serial Error: {e}")

@@ -8,7 +8,7 @@
 #define PLATFORM STM32
 
 #if PLATFORM == STM32
-#include "PAL_STM32.h"
+#include "../PAL_STM32/PAL_STM32.h"
 
 #else
 #include "PAL_ARDUINO.h"
@@ -62,3 +62,5 @@ extern uint32_t PAL_GENERAL_RANDOM(uint32_t howsmall, uint32_t howbig);
 #define PAL_TWOWIRE PAL_EXPAND(TWOWIRE)
 
 #define PAL_ONEWIRE PAL_EXPAND(ONEWIRE)
+
+#define PAL_RESET PAL_EXPAND(RESET)

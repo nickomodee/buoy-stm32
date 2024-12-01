@@ -49,6 +49,7 @@ MEMORY
   CCMRAM    (xrw)    : ORIGIN = 0x10000000,   LENGTH = 4K
   RAM    (xrw)    : ORIGIN = 0x20000000,   LENGTH = 12K
   FLASH    (rx)    : ORIGIN = 0x8000000,   LENGTH = 64K
+  FLASH_UPDATE (rx)    : ORIGIN = 0x8009800,   LENGTH = 26K
 }
 
 /* Sections */
@@ -59,16 +60,6 @@ SECTIONS
   {
     . = ALIGN(4);
     KEEP(*(.isr_vector)) /* Startup code */
-    . = ALIGN(4);
-  } >FLASH
-
-  .firmware_update_section :
-  {
-    . = ALIGN(4);
-    __firmware_update_section_start = .;
-    KEEP(*(.firmware_update_section))       /* Collect all input sections named .firmware_update_section */
-    KEEP(*(.firmware_update_section.*))     /* Collect all input sections named .firmware_update_section.* */
-    __firmware_update_section_end = .;
     . = ALIGN(4);
   } >FLASH
 
@@ -141,6 +132,40 @@ SECTIONS
     . = ALIGN(4);
   } >FLASH
 
+    _flash_update_start = ORIGIN(FLASH_UPDATE);
+    _flash_update_end = ORIGIN(FLASH_UPDATE) + LENGTH(FLASH_UPDATE);
+
+    /* Used by the startup to initialise firmware_update_data */
+    _sifirmware_update_data = LOADADDR(.firmware_update_data);
+
+    /* Initialized data sections into "RAM" Ram type memory */
+    .firmware_update_data :
+    {
+    . = ALIGN(4);
+    _sfirmware_update_data = .;        /* create a global symbol at firmware_update_data start */
+    KEEP(*(SORT(.firmware_update_data)))           /* .firmware_update_data sections */
+    KEEP(*(SORT(.firmware_update_data*)))          /* .firmware_update_data* sections */
+
+    . = ALIGN(4);
+    _efirmware_update_data = .;        /* define a global symbol at firmware_update_data end */
+
+    } >RAM AT> FLASH_UPDATE
+
+    /* Uninitialized data section into "RAM" Ram type memory */
+    . = ALIGN(4);
+    .firmware_update_bss :
+    {
+    /* This is used by the startup in order to initialize the .firmware_update_bss section */
+    _sfirmware_update_bss = .;         /* define a global symbol at firmware_update_bss start */
+    __firmware_update_bss_start__ = _sfirmware_update_bss;
+    KEEP(*(SORT(.firmware_update_bss)))
+    KEEP(*(SORT(.firmware_update_bss*)))
+
+    . = ALIGN(4);
+    _efirmware_update_bss = .;         /* define a global symbol at firmware_update_bss end */
+    __firmware_update_bss_end__ = _efirmware_update_bss;
+    } >RAM
+
   /* Used by the startup to initialize data */
   _sidata = LOADADDR(.data);
 
@@ -212,6 +237,27 @@ SECTIONS
     libm.a ( * )
     libgcc.a ( * )
   }
+
+      /* Firmware update section */
+    .firmware_update_section :
+    {
+        . = ALIGN(2048);                                /* Align to the page */
+        KEEP(*(SORT(.firmware_update_section)))            /* Keep all entries explicitly */
+        KEEP(*(SORT(.firmware_update_section*)))           /* Also keep wildcard entries */
+        . = ALIGN(2048);                                /* Align again to the page */
+    } >FLASH_UPDATE                                  /* Place section in FLASH memory */
+
+    PROVIDE(__firmware_update_section_start = ADDR(.firmware_update_section)); /* Start address of section */
+    PROVIDE(__firmware_update_section_end = ADDR(.firmware_update_section) + SIZEOF(.firmware_update_section)); /* End address */
+
+    /* Constant data into "FLASH_UPDATE" Rom type memory */
+    .firmware_update_rodata :
+    {
+    . = ALIGN(4);
+    KEEP(*(SORT(.firmware_update_rodata)))         /* .firmware_update_rodata sections (constants, strings, etc.) */
+    KEEP(*(SORT(.firmware_update_rodata*)))        /* .firmware_update_rodata* sections (constants, strings, etc.) */
+    . = ALIGN(4);
+    } >FLASH_UPDATE
 
   .ARM.attributes 0 : { *(.ARM.attributes) }
 }

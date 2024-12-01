@@ -17,3 +17,6 @@ __pycache__/
 .vscode/c_cpp_properties.json
 .vscode/launch.json
 .vscode/ipch/
+
+# Build directory for FirmwareUpdater
+firmware_updater_build/

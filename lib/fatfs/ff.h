@@ -22,7 +22,10 @@
 
 #include "integer.h"	/* Basic integer types */
 #include "ffconf.h"		/* FatFs configuration options */
-#include "SD_conf.h"
+#include "../SD/SD_conf.h"
+
+#include "../FirmwareUpdater/firmware_update_linker.h"
+
 #if _FATFS != _FFCONF
 #error Wrong configuration file (ffconf.h).
 #endif
@@ -221,38 +224,38 @@ typedef enum {
 /*--------------------------------------------------------------*/
 /* FatFs module application interface                           */
 
-FRESULT f_open (FIL* fp, const TCHAR* path, BYTE mode);				/* Open or create a file */
-FRESULT f_close (FIL* fp);											/* Close an open file object */
-FRESULT f_read (FIL* fp, void* buff, UINT btr, UINT* br);			/* Read data from a file */
-FRESULT f_write (FIL* fp, const void* buff, UINT btw, UINT* bw);	/* Write data to a file */
-FRESULT f_forward (FIL* fp, UINT(*func)(const BYTE*,UINT), UINT btf, UINT* bf);	/* Forward data to the stream */
-FRESULT f_lseek (FIL* fp, DWORD ofs);								/* Move file pointer of a file object */
-FRESULT f_truncate (FIL* fp);										/* Truncate file */
-FRESULT f_sync (FIL* fp);											/* Flush cached data of a writing file */
-FRESULT f_opendir (DIR* dp, const TCHAR* path);						/* Open a directory */
-FRESULT f_closedir (DIR* dp);										/* Close an open directory */
-FRESULT f_readdir (DIR* dp, FILINFO* fno);							/* Read a directory item */
-FRESULT f_findfirst (DIR* dp, FILINFO* fno, const TCHAR* path, const TCHAR* pattern);	/* Find first file */
-FRESULT f_findnext (DIR* dp, FILINFO* fno);							/* Find next file */
-FRESULT f_mkdir (const TCHAR* path);								/* Create a sub directory */
-FRESULT f_unlink (const TCHAR* path);								/* Delete an existing file or directory */
-FRESULT f_rename (const TCHAR* path_old, const TCHAR* path_new);	/* Rename/Move a file or directory */
-FRESULT f_stat (const TCHAR* path, FILINFO* fno);					/* Get file status */
-FRESULT f_chmod (const TCHAR* path, BYTE attr, BYTE mask);			/* Change attribute of the file/dir */
-FRESULT f_utime (const TCHAR* path, const FILINFO* fno);			/* Change times-tamp of the file/dir */
-FRESULT f_chdir (const TCHAR* path);								/* Change current directory */
-FRESULT f_chdrive (const TCHAR* path);								/* Change current drive */
-FRESULT f_getcwd (TCHAR* buff, UINT len);							/* Get current directory */
-FRESULT f_getfree (const TCHAR* path, DWORD* nclst, FATFS** fatfs);	/* Get number of free clusters on the drive */
-FRESULT f_getlabel (const TCHAR* path, TCHAR* label, DWORD* vsn);	/* Get volume label */
-FRESULT f_setlabel (const TCHAR* label);							/* Set volume label */
-FRESULT f_mount (FATFS* fs, const TCHAR* path, BYTE opt);			/* Mount/Unmount a logical drive */
-FRESULT f_mkfs (const TCHAR* path, BYTE sfd, UINT au);				/* Create a file system on the volume */
-FRESULT f_fdisk (BYTE pdrv, const DWORD szt[], void* work);			/* Divide a physical drive into some partitions */
-int f_putc (TCHAR c, FIL* fp);										/* Put a character to the file */
-int f_puts (const TCHAR* str, FIL* cp);								/* Put a string to the file */
-int f_printf (FIL* fp, const TCHAR* str, ...);						/* Put a formatted string to the file */
-TCHAR* f_gets (TCHAR* buff, int len, FIL* fp);						/* Get a string from the file */
+FRESULT f_open (FIL* fp, const TCHAR* path, BYTE mode) __FIRMWARE;				/* Open or create a file */
+FRESULT f_close (FIL* fp) __FIRMWARE;											/* Close an open file object */
+FRESULT f_read (FIL* fp, void* buff, UINT btr, UINT* br) __FIRMWARE;			/* Read data from a file */
+FRESULT f_write (FIL* fp, const void* buff, UINT btw, UINT* bw) __FIRMWARE;	/* Write data to a file */
+FRESULT f_forward (FIL* fp, UINT(*func)(const BYTE*,UINT), UINT btf, UINT* bf) __FIRMWARE;	/* Forward data to the stream */
+FRESULT f_lseek (FIL* fp, DWORD ofs) __FIRMWARE;								/* Move file pointer of a file object */
+FRESULT f_truncate (FIL* fp) __FIRMWARE;										/* Truncate file */
+FRESULT f_sync (FIL* fp) __FIRMWARE;											/* Flush cached data of a writing file */
+FRESULT f_opendir (DIR* dp, const TCHAR* path) __FIRMWARE;						/* Open a directory */
+FRESULT f_closedir (DIR* dp) __FIRMWARE;										/* Close an open directory */
+FRESULT f_readdir (DIR* dp, FILINFO* fno) __FIRMWARE;							/* Read a directory item */
+FRESULT f_findfirst (DIR* dp, FILINFO* fno, const TCHAR* path, const TCHAR* pattern) __FIRMWARE;	/* Find first file */
+FRESULT f_findnext (DIR* dp, FILINFO* fno) __FIRMWARE;							/* Find next file */
+FRESULT f_mkdir (const TCHAR* path) __FIRMWARE;								/* Create a sub directory */
+FRESULT f_unlink (const TCHAR* path) __FIRMWARE;								/* Delete an existing file or directory */
+FRESULT f_rename (const TCHAR* path_old, const TCHAR* path_new) __FIRMWARE;	/* Rename/Move a file or directory */
+FRESULT f_stat (const TCHAR* path, FILINFO* fno) __FIRMWARE;					/* Get file status */
+FRESULT f_chmod (const TCHAR* path, BYTE attr, BYTE mask) __FIRMWARE;			/* Change attribute of the file/dir */
+FRESULT f_utime (const TCHAR* path, const FILINFO* fno) __FIRMWARE;			/* Change times-tamp of the file/dir */
+FRESULT f_chdir (const TCHAR* path) __FIRMWARE;								/* Change current directory */
+FRESULT f_chdrive (const TCHAR* path) __FIRMWARE;								/* Change current drive */
+FRESULT f_getcwd (TCHAR* buff, UINT len) __FIRMWARE;							/* Get current directory */
+FRESULT f_getfree (const TCHAR* path, DWORD* nclst, FATFS** fatfs) __FIRMWARE;	/* Get number of free clusters on the drive */
+FRESULT f_getlabel (const TCHAR* path, TCHAR* label, DWORD* vsn) __FIRMWARE;	/* Get volume label */
+FRESULT f_setlabel (const TCHAR* label) __FIRMWARE;							/* Set volume label */
+FRESULT f_mount (FATFS* fs, const TCHAR* path, BYTE opt) __FIRMWARE;			/* Mount/Unmount a logical drive */
+FRESULT f_mkfs (const TCHAR* path, BYTE sfd, UINT au) __FIRMWARE;				/* Create a file system on the volume */
+FRESULT f_fdisk (BYTE pdrv, const DWORD szt[], void* work) __FIRMWARE;			/* Divide a physical drive into some partitions */
+int f_putc (TCHAR c, FIL* fp) __FIRMWARE;										/* Put a character to the file */
+int f_puts (const TCHAR* str, FIL* cp) __FIRMWARE;								/* Put a string to the file */
+int f_printf (FIL* fp, const TCHAR* str, ...) __FIRMWARE;						/* Put a formatted string to the file */
+TCHAR* f_gets (TCHAR* buff, int len, FIL* fp) __FIRMWARE;						/* Get a string from the file */
 
 #define f_eof(fp) ((int)((fp)->fptr == (fp)->fsize))
 #define f_error(fp) ((fp)->err)
@@ -273,25 +276,25 @@ TCHAR* f_gets (TCHAR* buff, int len, FIL* fp);						/* Get a string from the fil
 
 /* RTC function */
 #if !_FS_READONLY && !_FS_NORTC
-DWORD get_fattime (void);
+DWORD get_fattime (void) __FIRMWARE;
 #endif
 
 /* Unicode support functions */
 #if _USE_LFN							/* Unicode - OEM code conversion */
-WCHAR ff_convert (WCHAR chr, UINT dir);	/* OEM-Unicode bidirectional conversion */
-WCHAR ff_wtoupper (WCHAR chr);			/* Unicode upper-case conversion */
+WCHAR ff_convert (WCHAR chr, UINT dir) __FIRMWARE;	/* OEM-Unicode bidirectional conversion */
+WCHAR ff_wtoupper (WCHAR chr) __FIRMWARE;			/* Unicode upper-case conversion */
 #if _USE_LFN == 3						/* Memory functions */
-void* ff_memalloc (UINT msize);			/* Allocate memory block */
-void ff_memfree (void* mblock);			/* Free memory block */
+void* ff_memalloc (UINT msize) __FIRMWARE;			/* Allocate memory block */
+void ff_memfree (void* mblock) __FIRMWARE;			/* Free memory block */
 #endif
 #endif
 
 /* Sync functions */
 #if _FS_REENTRANT
-int ff_cre_syncobj (BYTE vol, _SYNC_t* sobj);	/* Create a sync object */
-int ff_req_grant (_SYNC_t sobj);				/* Lock sync object */
-void ff_rel_grant (_SYNC_t sobj);				/* Unlock sync object */
-int ff_del_syncobj (_SYNC_t sobj);				/* Delete a sync object */
+int ff_cre_syncobj (BYTE vol, _SYNC_t* sobj) __FIRMWARE;	/* Create a sync object */
+int ff_req_grant (_SYNC_t sobj) __FIRMWARE;				/* Lock sync object */
+void ff_rel_grant (_SYNC_t sobj) __FIRMWARE;				/* Unlock sync object */
+int ff_del_syncobj (_SYNC_t sobj) __FIRMWARE;				/* Delete a sync object */
 #endif
 
 

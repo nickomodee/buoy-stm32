@@ -102,7 +102,7 @@ void setup() {
     PAL_SERIAL.print(free_sectors / 2);
     PAL_SERIAL.println(" KiB available.");
 
-    //Now let's try to open file "write.txt"
+    //Now let's try to open file
     fres = f_open(&fil, "write.txt", FA_READ);
     if (fres != FR_OK) {
         PAL_SERIAL.print("f_open error (");

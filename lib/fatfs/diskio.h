@@ -9,7 +9,7 @@
 #define _USE_IOCTL	1	/* 1: Enable disk_ioctl fucntion */
 
 #include "integer.h"
-
+#include "../FirmwareUpdater/firmware_update_linker.h"
 
 /* Status of Disk Functions */
 typedef BYTE	DSTATUS;
@@ -28,12 +28,12 @@ typedef enum {
 /* Prototypes for disk control functions */
 
 
-DSTATUS disk_initialize (BYTE pdrv);
-DSTATUS disk_status (BYTE pdrv);
-DRESULT disk_read (BYTE pdrv, BYTE* buff, DWORD sector, UINT count);
-DRESULT disk_write (BYTE pdrv, const BYTE* buff, DWORD sector, UINT count);
-DRESULT disk_ioctl (BYTE pdrv, BYTE cmd, void* buff);
-DWORD get_fattime (void);
+DSTATUS disk_initialize (BYTE pdrv) __FIRMWARE;
+DSTATUS disk_status (BYTE pdrv) __FIRMWARE;
+DRESULT disk_read (BYTE pdrv, BYTE* buff, DWORD sector, UINT count) __FIRMWARE;
+DRESULT disk_write (BYTE pdrv, const BYTE* buff, DWORD sector, UINT count) __FIRMWARE;
+DRESULT disk_ioctl (BYTE pdrv, BYTE cmd, void* buff) __FIRMWARE;
+DWORD get_fattime (void) __FIRMWARE;
 
 /* Disk Status Bits (DSTATUS) */
 

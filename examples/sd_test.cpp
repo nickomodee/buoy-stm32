@@ -1,6 +1,7 @@
 #include "PAL.h"
 #include "SD.h"
 #include "SD_File.h"
+#include "firmware_update.h"
 #include <cstdbool>
 
 #define ARR_SIZE(x) sizeof(x) / sizeof(x[0])
@@ -10,6 +11,8 @@ size_t buffer_size = 0;
 
 void setup() {
     PAL_SERIAL.begin(9600);
+    PAL_DELAY(2000);
+
     uint8_t sd_init_status;
     while (true) {
         sd_init_status = sd.begin();

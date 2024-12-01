@@ -143,7 +143,7 @@ bool BCP::recv_data_desc() {
 bool BCP::recv_data() {
     uint32_t i = 0;
     while (i < this->total_msg_packets) {
-        DEBUG_BCP_PRINT("Receiving Data: "); DEBUG_BCP_PRINT(i + 1); DEBUG_BCP_PRINT(" / "); DEBUG_BCP_PRINTLN(this->total_msg_packets);
+        DEBUG_BCP_PRINT("Receiving DATA: "); DEBUG_BCP_PRINT(i + 1); DEBUG_BCP_PRINT(" / "); DEBUG_BCP_PRINTLN(this->total_msg_packets);
 
         bool timed_out = true;
         unsigned long start_time = PAL_MILLISECONDS();

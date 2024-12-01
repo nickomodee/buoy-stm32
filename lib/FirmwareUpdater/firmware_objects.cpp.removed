@@ -1,0 +1,1122 @@
+#include "firmware_objects.h"
+
+__IO __FIRMWARE_BSS uint32_t uwTick;
+
+__FIRMWARE_DATA HAL_TickFreqTypeDef uwTickFreq = HAL_TICK_FREQ_DEFAULT;
+
+__FIRMWARE_DATA uint32_t SystemCoreClock = 8000000;
+
+__FIRMWARE uint32_t HAL_GetTick(void) {
+    return uwTick;
+}
+
+__FIRMWARE void HAL_Delay(uint32_t Delay) {
+    uint32_t tickstart = HAL_GetTick();
+    uint32_t wait = Delay;
+
+    /* Add freq to guarantee minimum wait */
+    if (wait < HAL_MAX_DELAY) {
+        wait += (uint32_t)(uwTickFreq);
+    }
+
+    while((HAL_GetTick() - tickstart) < wait) {
+    }
+}
+
+__FIRMWARE void HAL_GPIO_Init(GPIO_TypeDef *GPIOx, GPIO_InitTypeDef *GPIO_Init) {
+    uint32_t position = 0x00u;
+    uint32_t iocurrent;
+    uint32_t temp;
+
+    /* Check the parameters */
+    assert_param(IS_GPIO_ALL_INSTANCE(GPIOx));
+    assert_param(IS_GPIO_PIN(GPIO_Init->Pin));
+    assert_param(IS_GPIO_MODE(GPIO_Init->Mode));
+
+    /* Configure the port pins */
+    while (((GPIO_Init->Pin) >> position) != 0x00u) {
+        /* Get current io position */
+        iocurrent = (GPIO_Init->Pin) & (1uL << position);
+
+        if (iocurrent != 0x00u) {
+            /*--------------------- GPIO Mode Configuration ------------------------*/
+            /* In case of Output or Alternate function mode selection */
+            if (((GPIO_Init->Mode & GPIO_MODE) == MODE_OUTPUT) || ((GPIO_Init->Mode & GPIO_MODE) == MODE_AF)) {
+                /* Check the Speed parameter */
+                assert_param(IS_GPIO_SPEED(GPIO_Init->Speed));
+                /* Configure the IO Speed */
+                temp = GPIOx->OSPEEDR;
+                temp &= ~(GPIO_OSPEEDER_OSPEEDR0 << (position * 2u));
+                temp |= (GPIO_Init->Speed << (position * 2u));
+                GPIOx->OSPEEDR = temp;
+
+                /* Configure the IO Output Type */
+                temp = GPIOx->OTYPER;
+                temp &= ~(GPIO_OTYPER_OT_0 << position);
+                temp |= (((GPIO_Init->Mode & OUTPUT_TYPE) >> OUTPUT_TYPE_Pos) << position);
+                GPIOx->OTYPER = temp;
+            }
+
+            if ((GPIO_Init->Mode & GPIO_MODE) != MODE_ANALOG) {
+                /* Check the Pull parameter */
+                assert_param(IS_GPIO_PULL(GPIO_Init->Pull));
+
+                /* Activate the Pull-up or Pull down resistor for the current IO */
+                temp = GPIOx->PUPDR;
+                temp &= ~(GPIO_PUPDR_PUPDR0 << (position * 2u));
+                temp |= ((GPIO_Init->Pull) << (position * 2u));
+                GPIOx->PUPDR = temp;
+            }
+
+            /*--------------------- GPIO Mode Configuration ------------------------*/
+            /* In case of Alternate function mode selection */
+            if ((GPIO_Init->Mode & GPIO_MODE) == MODE_AF) {
+                /* Check the Alternate function parameters */
+                assert_param(IS_GPIO_AF_INSTANCE(GPIOx));
+                assert_param(IS_GPIO_AF(GPIO_Init->Alternate));
+
+                /* Configure Alternate function mapped with the current IO */
+                temp = GPIOx->AFR[position >> 3u];
+                temp &= ~(0xFu << ((position & 0x07u) * 4u));
+                temp |= ((GPIO_Init->Alternate) << ((position & 0x07u) * 4u));
+                GPIOx->AFR[position >> 3u] = temp;
+            }
+
+            /* Configure IO Direction mode (Input, Output, Alternate or Analog) */
+            temp = GPIOx->MODER;
+            temp &= ~(GPIO_MODER_MODER0 << (position * 2u));
+            temp |= ((GPIO_Init->Mode & GPIO_MODE) << (position * 2u));
+            GPIOx->MODER = temp;
+
+            /*--------------------- EXTI Mode Configuration ------------------------*/
+            /* Configure the External Interrupt or event for the current IO */
+            if ((GPIO_Init->Mode & EXTI_MODE) != 0x00u) {
+                /* Enable SYSCFG Clock */
+                __HAL_RCC_SYSCFG_CLK_ENABLE();
+
+                temp = SYSCFG->EXTICR[position >> 2u];
+                temp &= ~(0x0FuL << (4u * (position & 0x03u)));
+                temp |= (GPIO_GET_INDEX(GPIOx) << (4u * (position & 0x03u)));
+                SYSCFG->EXTICR[position >> 2u] = temp;
+
+                /* Clear EXTI line configuration */
+                temp = EXTI->IMR;
+                temp &= ~(iocurrent);
+                if ((GPIO_Init->Mode & EXTI_IT) != 0x00u)
+                {
+                    temp |= iocurrent;
+                }
+                EXTI->IMR = temp;
+
+                temp = EXTI->EMR;
+                temp &= ~(iocurrent);
+                if ((GPIO_Init->Mode & EXTI_EVT) != 0x00u)
+                {
+                    temp |= iocurrent;
+                }
+                EXTI->EMR = temp;
+
+                /* Clear Rising Falling edge configuration */
+                temp = EXTI->RTSR;
+                temp &= ~(iocurrent);
+                if ((GPIO_Init->Mode & TRIGGER_RISING) != 0x00u)
+                {
+                    temp |= iocurrent;
+                }
+                EXTI->RTSR = temp;
+
+                temp = EXTI->FTSR;
+                temp &= ~(iocurrent);
+                if ((GPIO_Init->Mode & TRIGGER_FALLING) != 0x00u)
+                {
+                    temp |= iocurrent;
+                }
+                EXTI->FTSR = temp;
+            }
+        }
+
+        position++;
+    }
+}
+
+__FIRMWARE void HAL_GPIO_WritePin(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin, GPIO_PinState PinState) {
+    /* Check the parameters */
+    assert_param(IS_GPIO_PIN(GPIO_Pin));
+    assert_param(IS_GPIO_PIN_ACTION(PinState));
+
+    if (PinState != GPIO_PIN_RESET)
+    {
+        GPIOx->BSRR = (uint32_t)GPIO_Pin;
+    }
+    else
+    {
+        GPIOx->BRR = (uint32_t)GPIO_Pin;
+    }
+}
+
+__FIRMWARE HAL_StatusTypeDef SPI_WaitFlagStateUntilTimeout(SPI_HandleTypeDef *hspi, uint32_t Flag, FlagStatus State,
+                                                       uint32_t Timeout, uint32_t Tickstart);
+__FIRMWARE HAL_StatusTypeDef SPI_WaitFifoStateUntilTimeout(SPI_HandleTypeDef *hspi, uint32_t Fifo, uint32_t State,
+                                                       uint32_t Timeout, uint32_t Tickstart);
+__FIRMWARE HAL_StatusTypeDef SPI_EndRxTxTransaction(SPI_HandleTypeDef *hspi, uint32_t Timeout, uint32_t Tickstart);
+
+__FIRMWARE HAL_StatusTypeDef HAL_SPI_Init(SPI_HandleTypeDef *hspi) {
+    uint32_t frxth;
+
+    /* Check the SPI handle allocation */
+    if (hspi == NULL) {
+        return HAL_ERROR;
+    }
+
+    /* Check the parameters */
+    assert_param(IS_SPI_ALL_INSTANCE(hspi->Instance));
+    assert_param(IS_SPI_MODE(hspi->Init.Mode));
+    assert_param(IS_SPI_DIRECTION(hspi->Init.Direction));
+    assert_param(IS_SPI_DATASIZE(hspi->Init.DataSize));
+    assert_param(IS_SPI_NSS(hspi->Init.NSS));
+    assert_param(IS_SPI_NSSP(hspi->Init.NSSPMode));
+    assert_param(IS_SPI_BAUDRATE_PRESCALER(hspi->Init.BaudRatePrescaler));
+    assert_param(IS_SPI_FIRST_BIT(hspi->Init.FirstBit));
+    assert_param(IS_SPI_TIMODE(hspi->Init.TIMode));
+    if (hspi->Init.TIMode == SPI_TIMODE_DISABLE) {
+        assert_param(IS_SPI_CPOL(hspi->Init.CLKPolarity));
+        assert_param(IS_SPI_CPHA(hspi->Init.CLKPhase));
+
+        if (hspi->Init.Mode == SPI_MODE_MASTER) {
+            assert_param(IS_SPI_BAUDRATE_PRESCALER(hspi->Init.BaudRatePrescaler));
+        } else {
+            /* Baudrate prescaler not use in Motoraola Slave mode. force to default value */
+            hspi->Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_2;
+        }
+    } else {
+        assert_param(IS_SPI_BAUDRATE_PRESCALER(hspi->Init.BaudRatePrescaler));
+
+        /* Force polarity and phase to TI protocaol requirements */
+        hspi->Init.CLKPolarity = SPI_POLARITY_LOW;
+        hspi->Init.CLKPhase = SPI_PHASE_1EDGE;
+    }
+#if (USE_SPI_CRC != 0U)
+    assert_param(IS_SPI_CRC_CALCULATION(hspi->Init.CRCCalculation));
+    if (hspi->Init.CRCCalculation == SPI_CRCCALCULATION_ENABLE) {
+        assert_param(IS_SPI_CRC_POLYNOMIAL(hspi->Init.CRCPolynomial));
+        assert_param(IS_SPI_CRC_LENGTH(hspi->Init.CRCLength));
+    }
+#else
+    hspi->Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
+#endif /* USE_SPI_CRC */
+
+    if (hspi->State == HAL_SPI_STATE_RESET) {
+        /* Allocate lock resource and initialize it */
+        hspi->Lock = HAL_UNLOCKED;
+
+#if (USE_HAL_SPI_REGISTER_CALLBACKS == 1U)
+        /* Init the SPI Callback settings */
+        hspi->TxCpltCallback = HAL_SPI_TxCpltCallback;             /* Legacy weak TxCpltCallback       */
+        hspi->RxCpltCallback = HAL_SPI_RxCpltCallback;             /* Legacy weak RxCpltCallback       */
+        hspi->TxRxCpltCallback = HAL_SPI_TxRxCpltCallback;         /* Legacy weak TxRxCpltCallback     */
+        hspi->TxHalfCpltCallback = HAL_SPI_TxHalfCpltCallback;     /* Legacy weak TxHalfCpltCallback   */
+        hspi->RxHalfCpltCallback = HAL_SPI_RxHalfCpltCallback;     /* Legacy weak RxHalfCpltCallback   */
+        hspi->TxRxHalfCpltCallback = HAL_SPI_TxRxHalfCpltCallback; /* Legacy weak TxRxHalfCpltCallback */
+        hspi->ErrorCallback = HAL_SPI_ErrorCallback;               /* Legacy weak ErrorCallback        */
+        hspi->AbortCpltCallback = HAL_SPI_AbortCpltCallback;       /* Legacy weak AbortCpltCallback    */
+
+        if (hspi->MspInitCallback == NULL) {
+            hspi->MspInitCallback = HAL_SPI_MspInit; /* Legacy weak MspInit  */
+        }
+
+        /* Init the low level hardware : GPIO, CLOCK, NVIC... */
+        hspi->MspInitCallback(hspi);
+#else
+        /* Init the low level hardware : GPIO, CLOCK, NVIC... */
+        HAL_SPI_MspInit(hspi);
+#endif /* USE_HAL_SPI_REGISTER_CALLBACKS */
+    }
+
+    hspi->State = HAL_SPI_STATE_BUSY;
+
+    /* Disable the selected SPI peripheral */
+    __HAL_SPI_DISABLE(hspi);
+
+    /* Align by default the rs fifo threshold on the data size */
+    if (hspi->Init.DataSize > SPI_DATASIZE_8BIT) {
+        frxth = SPI_RXFIFO_THRESHOLD_HF;
+    } else {
+        frxth = SPI_RXFIFO_THRESHOLD_QF;
+    }
+
+    /* CRC calculation is valid only for 16Bit and 8 Bit */
+    if ((hspi->Init.DataSize != SPI_DATASIZE_16BIT) && (hspi->Init.DataSize != SPI_DATASIZE_8BIT)) {
+        /* CRC must be disabled */
+        hspi->Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
+    }
+
+    /*----------------------- SPIx CR1 & CR2 Configuration ---------------------*/
+    /* Configure : SPI Mode, Communication Mode, Clock polarity and phase, NSS management,
+    Communication speed, First bit and CRC calculation state */
+    WRITE_REG(hspi->Instance->CR1, ((hspi->Init.Mode & (SPI_CR1_MSTR | SPI_CR1_SSI)) |
+                                    (hspi->Init.Direction & (SPI_CR1_RXONLY | SPI_CR1_BIDIMODE)) |
+                                    (hspi->Init.CLKPolarity & SPI_CR1_CPOL) |
+                                    (hspi->Init.CLKPhase & SPI_CR1_CPHA) |
+                                    (hspi->Init.NSS & SPI_CR1_SSM) |
+                                    (hspi->Init.BaudRatePrescaler & SPI_CR1_BR_Msk) |
+                                    (hspi->Init.FirstBit & SPI_CR1_LSBFIRST) |
+                                    (hspi->Init.CRCCalculation & SPI_CR1_CRCEN)));
+#if (USE_SPI_CRC != 0U)
+    /*---------------------------- SPIx CRCL Configuration -------------------*/
+    if (hspi->Init.CRCCalculation == SPI_CRCCALCULATION_ENABLE) {
+        /* Align the CRC Length on the data size */
+        if (hspi->Init.CRCLength == SPI_CRC_LENGTH_DATASIZE) {
+            /* CRC Length aligned on the data size : value set by default */
+            if (hspi->Init.DataSize > SPI_DATASIZE_8BIT) {
+                hspi->Init.CRCLength = SPI_CRC_LENGTH_16BIT;
+            } else {
+                hspi->Init.CRCLength = SPI_CRC_LENGTH_8BIT;
+            }
+        }
+
+        /* Configure : CRC Length */
+        if (hspi->Init.CRCLength == SPI_CRC_LENGTH_16BIT) {
+            SET_BIT(hspi->Instance->CR1, SPI_CR1_CRCL);
+        }
+    }
+#endif /* USE_SPI_CRC */
+
+    /* Configure : NSS management, TI Mode, NSS Pulse, Data size and Rx Fifo threshold */
+    WRITE_REG(hspi->Instance->CR2, (((hspi->Init.NSS >> 16U) & SPI_CR2_SSOE) |
+                                    (hspi->Init.TIMode & SPI_CR2_FRF) |
+                                    (hspi->Init.NSSPMode & SPI_CR2_NSSP) |
+                                    (hspi->Init.DataSize & SPI_CR2_DS_Msk) |
+                                    (frxth & SPI_CR2_FRXTH)));
+
+#if (USE_SPI_CRC != 0U)
+    /*---------------------------- SPIx CRCPOLY Configuration ------------------*/
+    /* Configure : CRC Polynomial */
+    if (hspi->Init.CRCCalculation == SPI_CRCCALCULATION_ENABLE) {
+        WRITE_REG(hspi->Instance->CRCPR, (hspi->Init.CRCPolynomial & SPI_CRCPR_CRCPOLY_Msk));
+    }
+#endif /* USE_SPI_CRC */
+
+#if defined(SPI_I2SCFGR_I2SMOD)
+    /* Activate the SPI mode (Make sure that I2SMOD bit in I2SCFGR register is reset) */
+    CLEAR_BIT(hspi->Instance->I2SCFGR, SPI_I2SCFGR_I2SMOD);
+#endif /* SPI_I2SCFGR_I2SMOD */
+
+    hspi->ErrorCode = HAL_SPI_ERROR_NONE;
+    hspi->State = HAL_SPI_STATE_READY;
+
+    return HAL_OK;
+}
+
+__FIRMWARE void HAL_SPI_MspInit(SPI_HandleTypeDef *hspi)
+{
+    /* Prevent unused argument(s) compilation warning */
+    UNUSED(hspi);
+
+    /* NOTE : This function should not be modified, when the callback is needed,
+              the HAL_SPI_MspInit should be implemented in the user file
+     */
+}
+
+__FIRMWARE HAL_StatusTypeDef HAL_SPI_Transmit(SPI_HandleTypeDef *hspi, uint8_t *pData, uint16_t Size, uint32_t Timeout) {
+    uint32_t tickstart;
+    HAL_StatusTypeDef errorcode = HAL_OK;
+    uint16_t initial_TxXferCount;
+
+    /* Check Direction parameter */
+    assert_param(IS_SPI_DIRECTION_2LINES_OR_1LINE(hspi->Init.Direction));
+
+    /* Process Locked */
+    __HAL_LOCK(hspi);
+
+    /* Init tickstart for timeout management*/
+    tickstart = HAL_GetTick();
+    initial_TxXferCount = Size;
+
+    if (hspi->State != HAL_SPI_STATE_READY) {
+        errorcode = HAL_BUSY;
+        goto error;
+    }
+
+    if ((pData == NULL) || (Size == 0U)) {
+        errorcode = HAL_ERROR;
+        goto error;
+    }
+
+    /* Set the transaction information */
+    hspi->State = HAL_SPI_STATE_BUSY_TX;
+    hspi->ErrorCode = HAL_SPI_ERROR_NONE;
+    hspi->pTxBuffPtr = (uint8_t *)pData;
+    hspi->TxXferSize = Size;
+    hspi->TxXferCount = Size;
+
+    /*Init field not used in handle to zero */
+    hspi->pRxBuffPtr = (uint8_t *)NULL;
+    hspi->RxXferSize = 0U;
+    hspi->RxXferCount = 0U;
+    hspi->TxISR = NULL;
+    hspi->RxISR = NULL;
+
+    /* Configure communication direction : 1Line */
+    if (hspi->Init.Direction == SPI_DIRECTION_1LINE) {
+        /* Disable SPI Peripheral before set 1Line direction (BIDIOE bit) */
+        __HAL_SPI_DISABLE(hspi);
+        SPI_1LINE_TX(hspi);
+    }
+
+#if (USE_SPI_CRC != 0U)
+    /* Reset CRC Calculation */
+    if (hspi->Init.CRCCalculation == SPI_CRCCALCULATION_ENABLE) {
+        SPI_RESET_CRC(hspi);
+    }
+#endif /* USE_SPI_CRC */
+
+    /* Check if the SPI is already enabled */
+    if ((hspi->Instance->CR1 & SPI_CR1_SPE) != SPI_CR1_SPE) {
+        /* Enable SPI peripheral */
+        __HAL_SPI_ENABLE(hspi);
+    }
+
+    /* Transmit data in 16 Bit mode */
+    if (hspi->Init.DataSize > SPI_DATASIZE_8BIT) {
+        if ((hspi->Init.Mode == SPI_MODE_SLAVE) || (initial_TxXferCount == 0x01U)) {
+            hspi->Instance->DR = *((uint16_t *)hspi->pTxBuffPtr);
+            hspi->pTxBuffPtr += sizeof(uint16_t);
+            hspi->TxXferCount--;
+        }
+        /* Transmit data in 16 Bit mode */
+        while (hspi->TxXferCount > 0U) {
+            /* Wait until TXE flag is set to send data */
+            if (__HAL_SPI_GET_FLAG(hspi, SPI_FLAG_TXE)) {
+                hspi->Instance->DR = *((uint16_t *)hspi->pTxBuffPtr);
+                hspi->pTxBuffPtr += sizeof(uint16_t);
+                hspi->TxXferCount--;
+            } else {
+                /* Timeout management */
+                if ((((HAL_GetTick() - tickstart) >= Timeout) && (Timeout != HAL_MAX_DELAY)) || (Timeout == 0U)) {
+                    errorcode = HAL_TIMEOUT;
+                    goto error;
+                }
+            }
+        }
+    } else { /* Transmit data in 8 Bit mode */
+        if ((hspi->Init.Mode == SPI_MODE_SLAVE) || (initial_TxXferCount == 0x01U)) {
+            if (hspi->TxXferCount > 1U) {
+                /* write on the data register in packing mode */
+                hspi->Instance->DR = *((uint16_t *)hspi->pTxBuffPtr);
+                hspi->pTxBuffPtr += sizeof(uint16_t);
+                hspi->TxXferCount -= 2U;
+            } else {
+                *((__IO uint8_t *)&hspi->Instance->DR) = (*hspi->pTxBuffPtr);
+                hspi->pTxBuffPtr++;
+                hspi->TxXferCount--;
+            }
+        }
+        while (hspi->TxXferCount > 0U) {
+            /* Wait until TXE flag is set to send data */
+            if (__HAL_SPI_GET_FLAG(hspi, SPI_FLAG_TXE)) {
+                if (hspi->TxXferCount > 1U) {
+                    /* write on the data register in packing mode */
+                    hspi->Instance->DR = *((uint16_t *)hspi->pTxBuffPtr);
+                    hspi->pTxBuffPtr += sizeof(uint16_t);
+                    hspi->TxXferCount -= 2U;
+                } else {
+                    *((__IO uint8_t *)&hspi->Instance->DR) = (*hspi->pTxBuffPtr);
+                    hspi->pTxBuffPtr++;
+                    hspi->TxXferCount--;
+                }
+            } else {
+                /* Timeout management */
+                if ((((HAL_GetTick() - tickstart) >= Timeout) && (Timeout != HAL_MAX_DELAY)) || (Timeout == 0U)) {
+                    errorcode = HAL_TIMEOUT;
+                    goto error;
+                }
+            }
+        }
+    }
+#if (USE_SPI_CRC != 0U)
+    /* Enable CRC Transmission */
+    if (hspi->Init.CRCCalculation == SPI_CRCCALCULATION_ENABLE) {
+        SET_BIT(hspi->Instance->CR1, SPI_CR1_CRCNEXT);
+    }
+#endif /* USE_SPI_CRC */
+
+    /* Check the end of the transaction */
+    if (SPI_EndRxTxTransaction(hspi, Timeout, tickstart) != HAL_OK) {
+        hspi->ErrorCode = HAL_SPI_ERROR_FLAG;
+    }
+
+    /* Clear overrun flag in 2 Lines communication mode because received is not read */
+    if (hspi->Init.Direction == SPI_DIRECTION_2LINES) {
+        __HAL_SPI_CLEAR_OVRFLAG(hspi);
+    }
+
+    if (hspi->ErrorCode != HAL_SPI_ERROR_NONE) {
+        errorcode = HAL_ERROR;
+    }
+
+error:
+    hspi->State = HAL_SPI_STATE_READY;
+    /* Process Unlocked */
+    __HAL_UNLOCK(hspi);
+    return errorcode;
+}
+
+__FIRMWARE HAL_StatusTypeDef HAL_SPI_TransmitReceive(SPI_HandleTypeDef *hspi, uint8_t *pTxData, uint8_t *pRxData, uint16_t Size,
+                                          uint32_t Timeout) {
+    uint16_t initial_TxXferCount;
+    uint16_t initial_RxXferCount;
+    uint32_t tmp_mode;
+    HAL_SPI_StateTypeDef tmp_state;
+    uint32_t tickstart;
+#if (USE_SPI_CRC != 0U)
+    __IO uint32_t tmpreg = 0U;
+    uint32_t spi_cr1;
+    uint32_t spi_cr2;
+    __IO uint8_t *ptmpreg8;
+    __IO uint8_t tmpreg8 = 0;
+#endif /* USE_SPI_CRC */
+    /* Variable used to alternate Rx and Tx during transfer */
+    uint32_t txallowed = 1U;
+    HAL_StatusTypeDef errorcode = HAL_OK;
+
+    /* Check Direction parameter */
+    assert_param(IS_SPI_DIRECTION_2LINES(hspi->Init.Direction));
+
+    /* Process Locked */
+    __HAL_LOCK(hspi);
+
+    /* Init tickstart for timeout management*/
+    tickstart = HAL_GetTick();
+    
+    /* Init temporary variables */
+    tmp_state = hspi->State;
+    tmp_mode = hspi->Init.Mode;
+    initial_TxXferCount = Size;
+    initial_RxXferCount = Size;
+#if (USE_SPI_CRC != 0U)
+    spi_cr1 = READ_REG(hspi->Instance->CR1);
+    spi_cr2 = READ_REG(hspi->Instance->CR2);
+#endif /* USE_SPI_CRC */
+
+    if (!((tmp_state == HAL_SPI_STATE_READY) ||
+          ((tmp_mode == SPI_MODE_MASTER) && (hspi->Init.Direction == SPI_DIRECTION_2LINES) && (tmp_state == HAL_SPI_STATE_BUSY_RX)))) {
+        errorcode = HAL_BUSY;
+        goto error;
+    }
+
+    if ((pTxData == NULL) || (pRxData == NULL) || (Size == 0U)) {
+        errorcode = HAL_ERROR;
+        goto error;
+    }
+
+    /* Don't overwrite in case of HAL_SPI_STATE_BUSY_RX */
+    if (hspi->State != HAL_SPI_STATE_BUSY_RX) {
+        hspi->State = HAL_SPI_STATE_BUSY_TX_RX;
+    }
+
+    /* Set the transaction information */
+    hspi->ErrorCode = HAL_SPI_ERROR_NONE;
+    hspi->pRxBuffPtr = (uint8_t *)pRxData;
+    hspi->RxXferCount = Size;
+    hspi->RxXferSize = Size;
+    hspi->pTxBuffPtr = (uint8_t *)pTxData;
+    hspi->TxXferCount = Size;
+    hspi->TxXferSize = Size;
+
+    /*Init field not used in handle to zero */
+    hspi->RxISR = NULL;
+    hspi->TxISR = NULL;
+
+#if (USE_SPI_CRC != 0U)
+    /* Reset CRC Calculation */
+    if (hspi->Init.CRCCalculation == SPI_CRCCALCULATION_ENABLE) {
+        SPI_RESET_CRC(hspi);
+    }
+#endif /* USE_SPI_CRC */
+
+    /* Set the Rx Fifo threshold */
+    if ((hspi->Init.DataSize > SPI_DATASIZE_8BIT) || (initial_RxXferCount > 1U)) {
+        /* Set fiforxthreshold according the reception data length: 16bit */
+        CLEAR_BIT(hspi->Instance->CR2, SPI_RXFIFO_THRESHOLD);
+    } else {
+        /* Set fiforxthreshold according the reception data length: 8bit */
+        SET_BIT(hspi->Instance->CR2, SPI_RXFIFO_THRESHOLD);
+    }
+
+    /* Check if the SPI is already enabled */
+    if ((hspi->Instance->CR1 & SPI_CR1_SPE) != SPI_CR1_SPE) {
+        /* Enable SPI peripheral */
+        __HAL_SPI_ENABLE(hspi);
+    }
+
+    /* Transmit and Receive data in 16 Bit mode */
+    if (hspi->Init.DataSize > SPI_DATASIZE_8BIT) {
+        if ((hspi->Init.Mode == SPI_MODE_SLAVE) || (initial_TxXferCount == 0x01U)) {
+            hspi->Instance->DR = *((uint16_t *)hspi->pTxBuffPtr);
+            hspi->pTxBuffPtr += sizeof(uint16_t);
+            hspi->TxXferCount--;
+        } while ((hspi->TxXferCount > 0U) || (hspi->RxXferCount > 0U)) {
+            /* Check TXE flag */
+            if ((__HAL_SPI_GET_FLAG(hspi, SPI_FLAG_TXE)) && (hspi->TxXferCount > 0U) && (txallowed == 1U)) {
+                hspi->Instance->DR = *((uint16_t *)hspi->pTxBuffPtr);
+                hspi->pTxBuffPtr += sizeof(uint16_t);
+                hspi->TxXferCount--;
+                /* Next Data is a reception (Rx). Tx not allowed */
+                txallowed = 0U;
+
+#if (USE_SPI_CRC != 0U)
+                /* Enable CRC Transmission */
+                if ((hspi->TxXferCount == 0U) && (hspi->Init.CRCCalculation == SPI_CRCCALCULATION_ENABLE)) {
+                    /* Set NSS Soft to received correctly the CRC on slave mode with NSS pulse activated */
+                    if ((READ_BIT(spi_cr1, SPI_CR1_MSTR) == 0U) && (READ_BIT(spi_cr2, SPI_CR2_NSSP) == SPI_CR2_NSSP)) {
+                        SET_BIT(hspi->Instance->CR1, SPI_CR1_SSM);
+                    }
+                    SET_BIT(hspi->Instance->CR1, SPI_CR1_CRCNEXT);
+                }
+#endif /* USE_SPI_CRC */
+            }
+
+            /* Check RXNE flag */
+            if ((__HAL_SPI_GET_FLAG(hspi, SPI_FLAG_RXNE)) && (hspi->RxXferCount > 0U)) {
+                *((uint16_t *)hspi->pRxBuffPtr) = (uint16_t)hspi->Instance->DR;
+                hspi->pRxBuffPtr += sizeof(uint16_t);
+                hspi->RxXferCount--;
+                /* Next Data is a Transmission (Tx). Tx is allowed */
+                txallowed = 1U;
+            }
+            if (((HAL_GetTick() - tickstart) >= Timeout) && (Timeout != HAL_MAX_DELAY)) {
+                errorcode = HAL_TIMEOUT;
+                goto error;
+            }
+        }
+    } else { /* Transmit and Receive data in 8 Bit mode */
+        if ((hspi->Init.Mode == SPI_MODE_SLAVE) || (initial_TxXferCount == 0x01U)) {
+            if (hspi->TxXferCount > 1U) {
+                hspi->Instance->DR = *((uint16_t *)hspi->pTxBuffPtr);
+                hspi->pTxBuffPtr += sizeof(uint16_t);
+                hspi->TxXferCount -= 2U;
+            } else {
+                *(__IO uint8_t *)&hspi->Instance->DR = (*hspi->pTxBuffPtr);
+                hspi->pTxBuffPtr++;
+                hspi->TxXferCount--;
+            }
+        } while ((hspi->TxXferCount > 0U) || (hspi->RxXferCount > 0U)) {
+            /* Check TXE flag */
+            if ((__HAL_SPI_GET_FLAG(hspi, SPI_FLAG_TXE)) && (hspi->TxXferCount > 0U) && (txallowed == 1U)) {
+                if (hspi->TxXferCount > 1U) {
+                    hspi->Instance->DR = *((uint16_t *)hspi->pTxBuffPtr);
+                    hspi->pTxBuffPtr += sizeof(uint16_t);
+                    hspi->TxXferCount -= 2U;
+                } else {
+                    *(__IO uint8_t *)&hspi->Instance->DR = (*hspi->pTxBuffPtr);
+                    hspi->pTxBuffPtr++;
+                    hspi->TxXferCount--;
+                }
+                /* Next Data is a reception (Rx). Tx not allowed */
+                txallowed = 0U;
+
+#if (USE_SPI_CRC != 0U)
+                /* Enable CRC Transmission */
+                if ((hspi->TxXferCount == 0U) && (hspi->Init.CRCCalculation == SPI_CRCCALCULATION_ENABLE)) {
+                    /* Set NSS Soft to received correctly the CRC on slave mode with NSS pulse activated */
+                    if ((READ_BIT(spi_cr1, SPI_CR1_MSTR) == 0U) && (READ_BIT(spi_cr2, SPI_CR2_NSSP) == SPI_CR2_NSSP)) {
+                        SET_BIT(hspi->Instance->CR1, SPI_CR1_SSM);
+                    }
+                    SET_BIT(hspi->Instance->CR1, SPI_CR1_CRCNEXT);
+                }
+#endif /* USE_SPI_CRC */
+            }
+
+            /* Wait until RXNE flag is reset */
+            if ((__HAL_SPI_GET_FLAG(hspi, SPI_FLAG_RXNE)) && (hspi->RxXferCount > 0U)) {
+                if (hspi->RxXferCount > 1U) {
+                    *((uint16_t *)hspi->pRxBuffPtr) = (uint16_t)hspi->Instance->DR;
+                    hspi->pRxBuffPtr += sizeof(uint16_t);
+                    hspi->RxXferCount -= 2U;
+                    if (hspi->RxXferCount <= 1U) {
+                        /* Set RX Fifo threshold before to switch on 8 bit data size */
+                        SET_BIT(hspi->Instance->CR2, SPI_RXFIFO_THRESHOLD);
+                    }
+                } else {
+                    (*(uint8_t *)hspi->pRxBuffPtr) = *(__IO uint8_t *)&hspi->Instance->DR;
+                    hspi->pRxBuffPtr++;
+                    hspi->RxXferCount--;
+                }
+                /* Next Data is a Transmission (Tx). Tx is allowed */
+                txallowed = 1U;
+            }
+            if ((((HAL_GetTick() - tickstart) >= Timeout) && ((Timeout != HAL_MAX_DELAY))) || (Timeout == 0U)) {
+                errorcode = HAL_TIMEOUT;
+                goto error;
+            }
+        }
+    }
+
+#if (USE_SPI_CRC != 0U)
+    /* Read CRC from DR to close CRC calculation process */
+    if (hspi->Init.CRCCalculation == SPI_CRCCALCULATION_ENABLE) {
+        /* Wait until TXE flag */
+        if (SPI_WaitFlagStateUntilTimeout(hspi, SPI_FLAG_RXNE, SET, Timeout, tickstart) != HAL_OK) {
+            /* Error on the CRC reception */
+            SET_BIT(hspi->ErrorCode, HAL_SPI_ERROR_CRC);
+            errorcode = HAL_TIMEOUT;
+            goto error;
+        }
+        /* Read CRC */
+        if (hspi->Init.DataSize == SPI_DATASIZE_16BIT) {
+            /* Read 16bit CRC */
+            tmpreg = READ_REG(hspi->Instance->DR);
+            /* To avoid GCC warning */
+            UNUSED(tmpreg);
+        } else {
+            /* Initialize the 8bit temporary pointer */
+            ptmpreg8 = (__IO uint8_t *)&hspi->Instance->DR;
+            /* Read 8bit CRC */
+            tmpreg8 = *ptmpreg8;
+            /* To avoid GCC warning */
+            UNUSED(tmpreg8);
+
+            if (hspi->Init.CRCLength == SPI_CRC_LENGTH_16BIT) {
+                if (SPI_WaitFlagStateUntilTimeout(hspi, SPI_FLAG_RXNE, SET, Timeout, tickstart) != HAL_OK) {
+                    /* Error on the CRC reception */
+                    SET_BIT(hspi->ErrorCode, HAL_SPI_ERROR_CRC);
+                    errorcode = HAL_TIMEOUT;
+                    goto error;
+                }
+                /* Read 8bit CRC again in case of 16bit CRC in 8bit Data mode */
+                tmpreg8 = *ptmpreg8;
+                /* To avoid GCC warning */
+                UNUSED(tmpreg8);
+            }
+        }
+    }
+
+    /* Check if CRC error occurred */
+    if (__HAL_SPI_GET_FLAG(hspi, SPI_FLAG_CRCERR)) {
+        SET_BIT(hspi->ErrorCode, HAL_SPI_ERROR_CRC);
+        /* Clear CRC Flag */
+        __HAL_SPI_CLEAR_CRCERRFLAG(hspi);
+
+        errorcode = HAL_ERROR;
+    }
+#endif /* USE_SPI_CRC */
+
+    /* Check the end of the transaction */
+    if (SPI_EndRxTxTransaction(hspi, Timeout, tickstart) != HAL_OK) {
+        errorcode = HAL_ERROR;
+        hspi->ErrorCode = HAL_SPI_ERROR_FLAG;
+    }
+
+error:
+    hspi->State = HAL_SPI_STATE_READY;
+    __HAL_UNLOCK(hspi);
+    return errorcode;
+}
+
+__FIRMWARE HAL_StatusTypeDef SPI_WaitFlagStateUntilTimeout(SPI_HandleTypeDef *hspi, uint32_t Flag, FlagStatus State,
+                                                       uint32_t Timeout, uint32_t Tickstart) {
+    __IO uint32_t count;
+    uint32_t tmp_timeout;
+    uint32_t tmp_tickstart;
+
+    /* Adjust Timeout value  in case of end of transfer */
+    tmp_timeout = Timeout - (HAL_GetTick() - Tickstart);
+    tmp_tickstart = HAL_GetTick();
+
+    /* Calculate Timeout based on a software loop to avoid blocking issue if Systick is disabled */
+    count = tmp_timeout * ((SystemCoreClock * 32U) >> 20U);
+
+    while ((__HAL_SPI_GET_FLAG(hspi, Flag) ? SET : RESET) != State) {
+        if (Timeout != HAL_MAX_DELAY) {
+            if (((HAL_GetTick() - tmp_tickstart) >= tmp_timeout) || (tmp_timeout == 0U)) {
+                /* Disable the SPI and reset the CRC: the CRC value should be cleared
+                   on both master and slave sides in order to resynchronize the master
+                   and slave for their respective CRC calculation */
+
+                /* Disable TXE, RXNE and ERR interrupts for the interrupt process */
+                __HAL_SPI_DISABLE_IT(hspi, (SPI_IT_TXE | SPI_IT_RXNE | SPI_IT_ERR));
+
+                if ((hspi->Init.Mode == SPI_MODE_MASTER) && ((hspi->Init.Direction == SPI_DIRECTION_1LINE) || (hspi->Init.Direction == SPI_DIRECTION_2LINES_RXONLY))) {
+                    /* Disable SPI peripheral */
+                    __HAL_SPI_DISABLE(hspi);
+                }
+
+                /* Reset CRC Calculation */
+                if (hspi->Init.CRCCalculation == SPI_CRCCALCULATION_ENABLE) {
+                    SPI_RESET_CRC(hspi);
+                }
+
+                hspi->State = HAL_SPI_STATE_READY;
+
+                /* Process Unlocked */
+                __HAL_UNLOCK(hspi);
+
+                return HAL_TIMEOUT;
+            }
+            /* If Systick is disabled or not incremented, deactivate timeout to go in disable loop procedure */
+            if (count == 0U) {
+                tmp_timeout = 0U;
+            }
+            count--;
+        }
+    }
+
+    return HAL_OK;
+}
+
+__FIRMWARE HAL_StatusTypeDef SPI_WaitFifoStateUntilTimeout(SPI_HandleTypeDef *hspi, uint32_t Fifo, uint32_t State,
+                                                uint32_t Timeout, uint32_t Tickstart) {
+    __IO uint32_t count;
+    uint32_t tmp_timeout;
+    uint32_t tmp_tickstart;
+    __IO uint8_t *ptmpreg8;
+    __IO uint8_t tmpreg8 = 0;
+
+    /* Adjust Timeout value  in case of end of transfer */
+    tmp_timeout = Timeout - (HAL_GetTick() - Tickstart);
+    tmp_tickstart = HAL_GetTick();
+
+    /* Initialize the 8bit temporary pointer */
+    ptmpreg8 = (__IO uint8_t *)&hspi->Instance->DR;
+
+    /* Calculate Timeout based on a software loop to avoid blocking issue if Systick is disabled */
+    count = tmp_timeout * ((SystemCoreClock * 35U) >> 20U);
+
+    while ((hspi->Instance->SR & Fifo) != State) {
+        if ((Fifo == SPI_SR_FRLVL) && (State == SPI_FRLVL_EMPTY)) {
+            /* Flush Data Register by a blank read */
+            tmpreg8 = *ptmpreg8;
+            /* To avoid GCC warning */
+            UNUSED(tmpreg8);
+        }
+
+        if (Timeout != HAL_MAX_DELAY) {
+            if (((HAL_GetTick() - tmp_tickstart) >= tmp_timeout) || (tmp_timeout == 0U)) {
+                /* Disable the SPI and reset the CRC: the CRC value should be cleared
+                   on both master and slave sides in order to resynchronize the master
+                   and slave for their respective CRC calculation */
+
+                /* Disable TXE, RXNE and ERR interrupts for the interrupt process */
+                __HAL_SPI_DISABLE_IT(hspi, (SPI_IT_TXE | SPI_IT_RXNE | SPI_IT_ERR));
+
+                if ((hspi->Init.Mode == SPI_MODE_MASTER) && ((hspi->Init.Direction == SPI_DIRECTION_1LINE) || (hspi->Init.Direction == SPI_DIRECTION_2LINES_RXONLY))) {
+                    /* Disable SPI peripheral */
+                    __HAL_SPI_DISABLE(hspi);
+                }
+
+                /* Reset CRC Calculation */
+                if (hspi->Init.CRCCalculation == SPI_CRCCALCULATION_ENABLE) {
+                    SPI_RESET_CRC(hspi);
+                }
+
+                hspi->State = HAL_SPI_STATE_READY;
+
+                /* Process Unlocked */
+                __HAL_UNLOCK(hspi);
+
+                return HAL_TIMEOUT;
+            }
+            /* If Systick is disabled or not incremented, deactivate timeout to go in disable loop procedure */
+            if (count == 0U) {
+                tmp_timeout = 0U;
+            }
+            count--;
+        }
+    }
+
+    return HAL_OK;
+}
+
+__FIRMWARE HAL_StatusTypeDef SPI_EndRxTxTransaction(SPI_HandleTypeDef *hspi, uint32_t Timeout, uint32_t Tickstart) {
+    /* Control if the TX fifo is empty */
+    if (SPI_WaitFifoStateUntilTimeout(hspi, SPI_FLAG_FTLVL, SPI_FTLVL_EMPTY, Timeout, Tickstart) != HAL_OK) {
+        SET_BIT(hspi->ErrorCode, HAL_SPI_ERROR_FLAG);
+        return HAL_TIMEOUT;
+    }
+
+    /* Control the BSY flag */
+    if (SPI_WaitFlagStateUntilTimeout(hspi, SPI_FLAG_BSY, RESET, Timeout, Tickstart) != HAL_OK) {
+        SET_BIT(hspi->ErrorCode, HAL_SPI_ERROR_FLAG);
+        return HAL_TIMEOUT;
+    }
+
+    /* Control if the RX fifo is empty */
+    if (SPI_WaitFifoStateUntilTimeout(hspi, SPI_FLAG_FRLVL, SPI_FRLVL_EMPTY, Timeout, Tickstart) != HAL_OK) {
+        SET_BIT(hspi->ErrorCode, HAL_SPI_ERROR_FLAG);
+        return HAL_TIMEOUT;
+    }
+
+    return HAL_OK;
+}
+
+__FIRMWARE __NO_RETURN void __NVIC_SystemReset(void) {
+    __DSB(); /* Ensure all outstanding memory accesses included
+                buffered write are completed before reset */
+    SCB->AIRCR = (uint32_t)((0x5FAUL << SCB_AIRCR_VECTKEY_Pos) |
+                            (SCB->AIRCR & SCB_AIRCR_PRIGROUP_Msk) |
+                            SCB_AIRCR_SYSRESETREQ_Msk); /* Keep priority group unchanged */
+    __DSB();                                            /* Ensure completion of memory access */
+
+    for (;;) { /* wait until reset */
+        __NOP();
+    }
+}
+
+__FIRMWARE void __enable_irq(void) {
+    __ASM volatile ("cpsie i" : : : "memory");
+}
+
+__FIRMWARE void __disable_irq(void) {
+    __ASM volatile ("cpsid i" : : : "memory");
+}
+
+__FIRMWARE uint32_t __get_PRIMASK(void) {
+    uint32_t result;
+
+    __ASM volatile ("MRS %0, primask" : "=r" (result) :: "memory");
+    return(result);
+}
+
+__FIRMWARE void __DSB(void) {
+    __ASM volatile ("dsb 0xF":::"memory");
+}
+
+extern "C" {
+    void* __FIRMWARE memcpy(void *dest, const void *src, size_t n) {
+        unsigned char *d = (unsigned char *)dest;
+        const unsigned char *s = (const unsigned char *)src;
+
+        for (size_t i = 0; i < n; i++) {
+            d[i] = s[i];
+        }
+
+        return dest;
+    }
+
+    void* __FIRMWARE memset(void *s, int c, size_t n) {
+        unsigned char *p = (unsigned char *)s;
+
+        for (size_t i = 0; i < n; i++) {
+            p[i] = (unsigned char)c;
+        }
+
+        return s;
+    }
+
+    void* __FIRMWARE memmove(void *dest, const void *src, size_t n) {
+        unsigned char *d = (unsigned char*)dest;
+        const unsigned char *s = (const unsigned char*)src;
+
+        if (d < s) {
+            for (size_t i = 0; i < n; i++)
+                d[i] = s[i];
+        } else if (d > s) {
+            for (size_t i = n; i != 0; i--)
+                d[i - 1] = s[i - 1];
+        }
+
+        return dest;
+    }
+
+    int __FIRMWARE memcmp(const void *s1, const void *s2, size_t n) {
+        const unsigned char *p1 = (const unsigned char*)s1, *p2 = (const unsigned char*)s2;
+
+        for (size_t i = 0; i < n; i++) {
+            if (p1[i] != p2[i])
+                return (int)(p1[i] - p2[i]);
+        }
+
+        return 0;
+    }
+
+    size_t __FIRMWARE strlen(const char *s) {
+        const char *p = s;
+
+        while (*p)
+            p++;
+
+        return (size_t)(p - s);
+    }
+
+    char* __FIRMWARE strcpy(char *dest, const char *src) {
+        char *d = dest;
+
+        while ((*d++ = *src++));
+
+        return dest;
+    }
+
+    char* __FIRMWARE strncpy(char *dest, const char *src, size_t n) {
+        char *d = dest;
+
+        while (n && (*d++ = *src++))
+            n--;
+
+        while (n--)
+            *d++ = '\0';
+
+        return dest;
+    }
+
+    char* __FIRMWARE strcat(char *dest, const char *src) {
+        char *d = dest;
+
+        while (*d)
+            d++;
+
+        while ((*d++ = *src++));
+
+        return dest;
+    }
+
+    char* __FIRMWARE strncat(char *dest, const char *src, size_t n) {
+        char *d = dest;
+
+        while (*d)
+            d++;
+
+        while (n-- && (*d++ = *src++));
+
+        *d = '\0';
+
+        return dest;
+    }
+
+    int __FIRMWARE strcmp(const char *s1, const char *s2) {
+        while (*s1 && (*s1 == *s2)) {
+            s1++;
+            s2++;
+        }
+
+        return (int)(*(unsigned char *)s1 - *(unsigned char *)s2);
+    }
+
+    int __FIRMWARE strncmp(const char *s1, const char *s2, size_t n) {
+        while (n--) {
+            if (*s1 != *s2)
+                return (int)(*(unsigned char *)s1 - *(unsigned char *)s2);
+            if (!*s1)
+                return 0;
+            s1++;
+            s2++;
+        }
+
+        return 0;
+    }
+
+    char* __FIRMWARE strchr(const char *s, int c) {
+        char ch = (char)c;
+
+        while (*s) {
+            if (*s == ch)
+                return (char *)s;
+            s++;
+        }
+
+        if (ch == '\0')
+            return (char *)s;
+
+        return NULL;
+    }
+
+    char* __FIRMWARE strrchr(const char *s, int c) {
+        const char *last = NULL;
+        char ch = (char)c;
+
+        while (*s) {
+            if (*s == ch)
+                last = s;
+            s++;
+        }
+
+        if (ch == '\0')
+            return (char *)s;
+
+        return (char *)last;
+    }
+
+    void* __FIRMWARE memchr(const void *s, int c, size_t n) {
+        const unsigned char *p = (const unsigned char*)s;
+        unsigned char ch = (unsigned char)c;
+
+        for (size_t i = 0; i < n; i++) {
+            if (p[i] == ch)
+                return (void *)(p + i);
+        }
+
+        return NULL;
+    }
+
+    char* __FIRMWARE strstr(const char *haystack, const char *needle) {
+        if (!*needle)
+            return (char *)haystack;
+
+        for (; *haystack; haystack++) {
+            const char *h = haystack, *n = needle;
+
+            while (*h && *n && (*h == *n)) {
+                h++;
+                n++;
+            }
+
+            if (!*n)
+                return (char *)haystack;
+        }
+
+        return NULL;
+    }
+
+    size_t __FIRMWARE strspn(const char *s, const char *accept) {
+        const char *p = s;
+
+        while (*p && strchr(accept, *p))
+            p++;
+
+        return (size_t)(p - s);
+    }
+
+    size_t __FIRMWARE strcspn(const char *s, const char *reject) {
+        const char *p = s;
+
+        while (*p) {
+            if (strchr(reject, *p))
+                break;
+            p++;
+        }
+
+        return (size_t)(p - s);
+    }
+
+    char* __FIRMWARE strtok(char *str, const char *delim) {
+        static char* __FIRMWARE_BSS static_str = NULL;
+
+        if (str)
+            static_str = str;
+        else if (!static_str)
+            return NULL;
+
+        char *token_start = static_str;
+
+        while (*static_str && strchr(delim, *static_str))
+            static_str++;
+
+        if (!*static_str) {
+            static_str = NULL;
+            return NULL;
+        }
+
+        token_start = static_str;
+
+        while (*static_str && !strchr(delim, *static_str))
+            static_str++;
+
+        if (*static_str) {
+            *static_str = '\0';
+            static_str++;
+        } else {
+            static_str = NULL;
+        }
+
+        return token_start;
+    }
+}

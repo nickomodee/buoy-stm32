@@ -76,21 +76,21 @@
 #define CT_BLOCK	0x08		/* Block addressing */
 
 static volatile
-DSTATUS Stat = STA_NOINIT;	/* Physical drive status */
+DSTATUS __FIRMWARE_DATA Stat = STA_NOINIT;	/* Physical drive status */
 
 
 static
-BYTE CardType;			/* Card type flags */
+BYTE __FIRMWARE_BSS CardType;			/* Card type flags */
 
-uint32_t spiTimerTickStart;
-uint32_t spiTimerTickDelay;
+uint32_t __FIRMWARE_BSS spiTimerTickStart;
+uint32_t __FIRMWARE_BSS spiTimerTickDelay;
 
-void SPI_Timer_On(uint32_t waitTicks) {
+void __FIRMWARE SPI_Timer_On(uint32_t waitTicks) {
     spiTimerTickStart = HAL_GetTick();
     spiTimerTickDelay = waitTicks;
 }
 
-uint8_t SPI_Timer_Status() {
+uint8_t __FIRMWARE SPI_Timer_Status() {
     return ((HAL_GetTick() - spiTimerTickStart) < spiTimerTickDelay);
 }
 
@@ -100,7 +100,7 @@ uint8_t SPI_Timer_Status() {
 
 /* Exchange a byte */
 static
-BYTE xchg_spi (
+BYTE __FIRMWARE xchg_spi (
 	BYTE dat	/* Data to send */
 )
 {
@@ -112,7 +112,7 @@ BYTE xchg_spi (
 
 /* Receive multiple byte */
 static
-void rcvr_spi_multi (
+void __FIRMWARE rcvr_spi_multi (
 	BYTE *buff,		/* Pointer to data buffer */
 	UINT btr		/* Number of bytes to receive (even number) */
 )
@@ -126,7 +126,7 @@ void rcvr_spi_multi (
 #if _USE_WRITE
 /* Send multiple byte */
 static
-void xmit_spi_multi (
+void __FIRMWARE xmit_spi_multi (
 	const BYTE *buff,	/* Pointer to the data */
 	UINT btx			/* Number of bytes to send (even number) */
 )
@@ -141,7 +141,7 @@ void xmit_spi_multi (
 /*-----------------------------------------------------------------------*/
 
 static
-int wait_ready (	/* 1:Ready, 0:Timeout */
+int __FIRMWARE wait_ready (	/* 1:Ready, 0:Timeout */
 	UINT wt			/* Timeout [ms] */
 )
 {
@@ -168,7 +168,7 @@ int wait_ready (	/* 1:Ready, 0:Timeout */
 /*-----------------------------------------------------------------------*/
 
 static
-void despiselect (void)
+void __FIRMWARE despiselect (void)
 {
 	CS_HIGH();		/* Set CS# high */
 	xchg_spi(0xFF);	/* Dummy clock (force DO hi-z for multiple slave SPI) */
@@ -182,7 +182,7 @@ void despiselect (void)
 /*-----------------------------------------------------------------------*/
 
 static
-int spiselect (void)	/* 1:OK, 0:Timeout */
+int __FIRMWARE spiselect (void)	/* 1:OK, 0:Timeout */
 {
 	CS_LOW();		/* Set CS# low */
 	xchg_spi(0xFF);	/* Dummy clock (force DO enabled) */
@@ -199,7 +199,7 @@ int spiselect (void)	/* 1:OK, 0:Timeout */
 /*-----------------------------------------------------------------------*/
 
 static
-int rcvr_datablock (	/* 1:OK, 0:Error */
+int __FIRMWARE rcvr_datablock (	/* 1:OK, 0:Error */
 	BYTE *buff,			/* Data buffer */
 	UINT btr			/* Data block length (byte) */
 )
@@ -228,7 +228,7 @@ int rcvr_datablock (	/* 1:OK, 0:Error */
 
 #if _USE_WRITE
 static
-int xmit_datablock (	/* 1:OK, 0:Failed */
+int __FIRMWARE xmit_datablock (	/* 1:OK, 0:Failed */
 	const BYTE *buff,	/* Ponter to 512 byte data to be sent */
 	BYTE token			/* Token */
 )
@@ -256,7 +256,7 @@ int xmit_datablock (	/* 1:OK, 0:Failed */
 /*-----------------------------------------------------------------------*/
 
 static
-BYTE send_cmd (		/* Return value: R1 resp (bit7==1:Failed to send) */
+BYTE __FIRMWARE send_cmd (		/* Return value: R1 resp (bit7==1:Failed to send) */
 	BYTE cmd,		/* Command index */
 	DWORD arg		/* Argument */
 )
@@ -315,7 +315,7 @@ BYTE send_cmd (		/* Return value: R1 resp (bit7==1:Failed to send) */
 /* Initialize disk drive                                                 */
 /*-----------------------------------------------------------------------*/
 
-DSTATUS USER_SPI_initialize (
+DSTATUS __FIRMWARE USER_SPI_initialize (
 	BYTE drv		/* Physical drive number (0) */
 )
 {
@@ -371,7 +371,7 @@ DSTATUS USER_SPI_initialize (
 /* Get disk status                                                       */
 /*-----------------------------------------------------------------------*/
 
-DSTATUS USER_SPI_status (
+DSTATUS __FIRMWARE USER_SPI_status (
 	BYTE drv		/* Physical drive number (0) */
 )
 {
@@ -386,7 +386,7 @@ DSTATUS USER_SPI_status (
 /* Read sector(s)                                                        */
 /*-----------------------------------------------------------------------*/
 
-DRESULT USER_SPI_read (
+DRESULT __FIRMWARE USER_SPI_read (
 	BYTE drv,		/* Physical drive number (0) */
 	BYTE *buff,		/* Pointer to the data buffer to store read data */
 	DWORD sector,	/* Start sector number (LBA) */
@@ -425,7 +425,7 @@ DRESULT USER_SPI_read (
 /*-----------------------------------------------------------------------*/
 
 #if _USE_WRITE
-DRESULT USER_SPI_write (
+DRESULT __FIRMWARE USER_SPI_write (
 	BYTE drv,			/* Physical drive number (0) */
 	const BYTE *buff,	/* Ponter to the data to write */
 	DWORD sector,		/* Start sector number (LBA) */
@@ -466,7 +466,7 @@ DRESULT USER_SPI_write (
 /*-----------------------------------------------------------------------*/
 
 #if _USE_IOCTL
-DRESULT USER_SPI_ioctl (
+DRESULT __FIRMWARE USER_SPI_ioctl (
 	BYTE drv,		/* Physical drive number (0) */
 	BYTE cmd,		/* Control command code */
 	void *buff		/* Pointer to the conrtol data */

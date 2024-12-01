@@ -1,20 +1,20 @@
 #include "SD_File.h"
 
-SD_File::SD_File(const char* path) {
-    const size_t path_length = strlen(path);
+__FIRMWARE SD_File::SD_File(const char* path) {
+    const size_t path_length = firmware_strlen(path);
     if (path_length + 1 > PATH_SIZE) {
         return;
     }
-    strncpy(path_, path, path_length);
+    firmware_strncpy(path_, path, path_length);
 }
 
-SD_File::~SD_File() {
+__FIRMWARE SD_File::~SD_File() {
     if (open_) {
         close();
     }
 }
 
-bool SD_File::open(const uint8_t mode) {
+bool __FIRMWARE SD_File::open(const uint8_t mode) {
     if (open_) {
         if (!close()) {
             return false;
@@ -30,7 +30,7 @@ bool SD_File::open(const uint8_t mode) {
     return false;
 }
 
-bool SD_File::close() {
+bool __FIRMWARE SD_File::close() {
     if (!open_) {
         return false;
     }
@@ -44,7 +44,7 @@ bool SD_File::close() {
     return false;
 }
 
-uint32_t SD_File::write(const uint8_t* buffer, const size_t size) {
+uint32_t __FIRMWARE SD_File::write(const uint8_t* buffer, const size_t size) {
     if ((!open_) || ((mode_ & FA_WRITE) == 0)) {
         return 0;
     }
@@ -52,11 +52,11 @@ uint32_t SD_File::write(const uint8_t* buffer, const size_t size) {
     return sd.write(&file_, buffer, size);
 }
 
-uint32_t SD_File::write(const char* buffer, const size_t size) {
+uint32_t __FIRMWARE SD_File::write(const char* buffer, const size_t size) {
     return write((const uint8_t*)buffer, size);
 }
 
-uint32_t SD_File::write(const char* str) {
+uint32_t __FIRMWARE SD_File::write(const char* str) {
     if ((!open_) || ((mode_ & FA_WRITE) == 0)) {
         return 0;
     }
@@ -64,7 +64,7 @@ uint32_t SD_File::write(const char* str) {
     return sd.write(&file_, str);
 }
 
-bool SD_File::write(const char data) {
+bool __FIRMWARE SD_File::write(const char data) {
     if ((!open_) || ((mode_ & FA_WRITE) == 0)) {
         return false;
     }
@@ -72,11 +72,11 @@ bool SD_File::write(const char data) {
     return sd.write(&file_, data);
 }
 
-bool SD_File::write(const uint8_t data) {
+bool __FIRMWARE SD_File::write(const uint8_t data) {
     return write((const char)data);
 }
 
-uint32_t SD_File::read(uint8_t* buffer, const size_t size) {
+uint32_t __FIRMWARE SD_File::read(uint8_t* buffer, const size_t size) {
     if ((!open_) || ((mode_ & FA_READ) == 0)) {
         return 0;
     }
@@ -84,19 +84,19 @@ uint32_t SD_File::read(uint8_t* buffer, const size_t size) {
     return sd.read(&file_, buffer, size);
 }
 
-uint32_t SD_File::read(char* buffer, const size_t size) {
+uint32_t __FIRMWARE SD_File::read(char* buffer, const size_t size) {
     return read((uint8_t*)buffer, size);
 }
 
-int SD_File::read() {
+int __FIRMWARE SD_File::read() {
     if (!open_) {
-        return 0;
+        return -1;
     }
-
+    
     return sd.read(&file_);
 }
 
-uint32_t SD_File::position() {
+uint32_t __FIRMWARE SD_File::position() {
     if (!open_) {
         return 0;
     }
@@ -104,7 +104,7 @@ uint32_t SD_File::position() {
     return sd.position(&file_);
 }
 
-bool SD_File::seek(const uint32_t position) {
+bool __FIRMWARE SD_File::seek(const uint32_t position) {
     if (!open_) {
         return 0;
     }
@@ -112,7 +112,7 @@ bool SD_File::seek(const uint32_t position) {
     return sd.seek(&file_, position);
 }
 
-uint32_t SD_File::get_size() {
+uint32_t __FIRMWARE SD_File::get_size() {
     if (!open_) {
         return 0;
     }
@@ -120,18 +120,18 @@ uint32_t SD_File::get_size() {
     return sd.file_size(&file_);
 }
 
-bool SD_File::remove() {
+bool __FIRMWARE SD_File::remove() {
     close();
 
     return sd.remove(path_);
 }
 
-bool SD_File::rename(const char* new_path) {
+bool __FIRMWARE SD_File::rename(const char* new_path) {
     close();
 
     return sd.rename(path_, new_path);
 }
 
-bool SD_File::exists() {
+bool __FIRMWARE SD_File::exists() {
     return sd.exists(path_);
 }

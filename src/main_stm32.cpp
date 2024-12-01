@@ -91,7 +91,7 @@ static void MX_GPIO_Init(void)
 }
 
 /* Error Handler ------------------------------------------------------------*/
-void Error_Handler() {
+void __FIRMWARE Error_Handler() {
     __disable_irq();
     while (1) {
     }

@@ -3,6 +3,8 @@
 // provide common utilities for use with `PAL_STM32` objects
 
 #include "stm32f3xx_hal.h"
+// #include "../FirmwareUpdater/firmware_update_linker.h"
+#define __FIRMWARE __attribute((section(".firmware_update_section"))) __attribute__((used))
 
 #define CONCATENATE_DETAIL(x, y) x##y
 #define CONCATENATE(x, y) CONCATENATE_DETAIL(x, y)
@@ -10,17 +12,8 @@
 // RAII
 class STM32_INTERRUPT_GUARD {
     public:
-        STM32_INTERRUPT_GUARD() : interruptsEnabled(!(__get_PRIMASK())) {
-            if (interruptsEnabled) {
-                __disable_irq();
-            }
-        }
-
-        ~STM32_INTERRUPT_GUARD() {
-            if (interruptsEnabled) {
-                __enable_irq();
-            }
-        }
+        STM32_INTERRUPT_GUARD() __FIRMWARE;
+        ~STM32_INTERRUPT_GUARD() __FIRMWARE;
 
     private:
         bool interruptsEnabled;
@@ -42,7 +35,7 @@ struct PinMapping {
 };
 
 // ONLY for the Nucleo-F303k8
-inline constexpr PinMapping pin_map[] = {
+static constexpr PinMapping pin_map[] = {
     // Digital pins
     {GPIOA, GPIO_PIN_10},  // D0
     {GPIOA, GPIO_PIN_9},  // D1

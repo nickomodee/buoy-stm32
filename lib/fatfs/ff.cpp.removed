@@ -507,15 +507,15 @@ typedef struct {
 #if _VOLUMES < 1 || _VOLUMES > 9
 #error Wrong _VOLUMES setting
 #endif
-static FATFS *FatFs[_VOLUMES];	/* Pointer to the file system objects (logical drives) */
-static WORD Fsid;				/* File system mount ID */
+static FATFS* __FIRMWARE_BSS FatFs[_VOLUMES];	/* Pointer to the file system objects (logical drives) */
+static WORD __FIRMWARE_BSS Fsid;				/* File system mount ID */
 
 #if _FS_RPATH && _VOLUMES >= 2
-static BYTE CurrVol;			/* Current drive */
+static BYTE __FIRMWARE_BSS CurrVol;			/* Current drive */
 #endif
 
 #if _FS_LOCK
-static FILESEM Files[_FS_LOCK];	/* Open object lock semaphores */
+static FILESEM __FIRMWARE_BSS Files[_FS_LOCK];	/* Open object lock semaphores */
 #endif
 
 #if _USE_LFN == 0			/* Non LFN feature */
@@ -527,7 +527,7 @@ static FILESEM Files[_FS_LOCK];	/* Open object lock semaphores */
 #error Wrong _MAX_LFN setting
 #endif
 #if _USE_LFN == 1			/* LFN feature with static working buffer */
-static WCHAR LfnBuf[_MAX_LFN + 1];
+static WCHAR __FIRMWARE_BSS LfnBuf[_MAX_LFN + 1];
 #define	DEFINE_NAMEBUF		BYTE sfn[12]
 #define INIT_BUF(dobj)		{ (dobj).fn = sfn; (dobj).lfn = LfnBuf; }
 #define	FREE_BUF()
@@ -545,7 +545,7 @@ static WCHAR LfnBuf[_MAX_LFN + 1];
 #endif
 
 #ifdef _EXCVT
-static const BYTE ExCvt[] = _EXCVT;	/* Upper conversion table for extended characters */
+static const BYTE __FIRMWARE_RODATA ExCvt[] = _EXCVT;	/* Upper conversion table for extended characters */
 #endif
 
 
@@ -558,15 +558,15 @@ static const BYTE ExCvt[] = _EXCVT;	/* Upper conversion table for extended chara
    Module Private Functions
 
 ---------------------------------------------------------------------------*/
-DWORD clust2sect (FATFS* fs, DWORD clst);
-DWORD get_fat (FATFS* fs,	DWORD clst);
+DWORD clust2sect (FATFS* fs, DWORD clst) __FIRMWARE;
+DWORD get_fat (FATFS* fs,	DWORD clst) __FIRMWARE;
 
 #if !_FS_READONLY
-FRESULT put_fat (FATFS* fs,	DWORD clst,	DWORD val);
+FRESULT put_fat (FATFS* fs,	DWORD clst,	DWORD val) __FIRMWARE;
 #endif /* !_FS_READONLY */
 
 #if _USE_LFN
-static void gen_numname (BYTE* dst, const BYTE* src, const WCHAR* lfn, UINT seq);
+static void gen_numname (BYTE* dst, const BYTE* src, const WCHAR* lfn, UINT seq) __FIRMWARE;
 #endif /* !_USE_LFN */
 
 
@@ -577,7 +577,7 @@ static void gen_numname (BYTE* dst, const BYTE* src, const WCHAR* lfn, UINT seq)
 
 /* Copy memory to memory */
 static
-void mem_cpy (void* dst, const void* src, UINT cnt) {
+void __FIRMWARE mem_cpy (void* dst, const void* src, UINT cnt) {
 	BYTE *d = (BYTE*)dst;
 	const BYTE *s = (const BYTE*)src;
 
@@ -594,7 +594,7 @@ void mem_cpy (void* dst, const void* src, UINT cnt) {
 
 /* Fill memory */
 static
-void mem_set (void* dst, int val, UINT cnt) {
+void __FIRMWARE mem_set (void* dst, int val, UINT cnt) {
 	BYTE *d = (BYTE*)dst;
 
 	while (cnt--)
@@ -603,7 +603,7 @@ void mem_set (void* dst, int val, UINT cnt) {
 
 /* Compare memory to memory */
 static
-int mem_cmp (const void* dst, const void* src, UINT cnt) {
+int __FIRMWARE mem_cmp (const void* dst, const void* src, UINT cnt) {
 	const BYTE *d = (const BYTE *)dst, *s = (const BYTE *)src;
 	int r = 0;
 
@@ -613,7 +613,7 @@ int mem_cmp (const void* dst, const void* src, UINT cnt) {
 
 /* Check if chr is contained in the string */
 static
-int chk_chr (const char* str, int chr) {
+int __FIRMWARE chk_chr (const char* str, int chr) {
 	while (*str && *str != chr) str++;
 	return *str;
 }
@@ -626,7 +626,7 @@ int chk_chr (const char* str, int chr) {
 /*-----------------------------------------------------------------------*/
 #if _FS_REENTRANT
 static
-int lock_fs (
+int __FIRMWARE lock_fs (
 	FATFS* fs		/* File system object */
 )
 {
@@ -635,7 +635,7 @@ int lock_fs (
 
 
 static
-void unlock_fs (
+void __FIRMWARE unlock_fs (
 	FATFS* fs,		/* File system object */
 	FRESULT res		/* Result code to be returned */
 )
@@ -659,7 +659,7 @@ void unlock_fs (
 #if _FS_LOCK
 
 static
-FRESULT chk_lock (	/* Check if the file can be accessed */
+FRESULT __FIRMWARE chk_lock (	/* Check if the file can be accessed */
 	DIR* dp,		/* Directory object pointing the file to be checked */
 	int acc			/* Desired access type (0:Read, 1:Write, 2:Delete/Rename) */
 )
@@ -685,7 +685,7 @@ FRESULT chk_lock (	/* Check if the file can be accessed */
 
 
 static
-int enq_lock (void)	/* Check if an entry is available for a new object */
+int __FIRMWARE enq_lock (void)	/* Check if an entry is available for a new object */
 {
 	UINT i;
 
@@ -695,7 +695,7 @@ int enq_lock (void)	/* Check if an entry is available for a new object */
 
 
 static
-UINT inc_lock (	/* Increment object open counter and returns its index (0:Internal error) */
+UINT __FIRMWARE inc_lock (	/* Increment object open counter and returns its index (0:Internal error) */
 	DIR* dp,	/* Directory object pointing the file to register or increment */
 	int acc		/* Desired access (0:Read, 1:Write, 2:Delete/Rename) */
 )
@@ -727,7 +727,7 @@ UINT inc_lock (	/* Increment object open counter and returns its index (0:Intern
 
 
 static
-FRESULT dec_lock (	/* Decrement object open counter */
+FRESULT __FIRMWARE dec_lock (	/* Decrement object open counter */
 	UINT i			/* Semaphore index (1..) */
 )
 {
@@ -750,7 +750,7 @@ FRESULT dec_lock (	/* Decrement object open counter */
 
 
 static
-void clear_lock (	/* Clear lock entries of the volume */
+void __FIRMWARE clear_lock (	/* Clear lock entries of the volume */
 	FATFS *fs
 )
 {
@@ -770,7 +770,7 @@ void clear_lock (	/* Clear lock entries of the volume */
 /*-----------------------------------------------------------------------*/
 #if !_FS_READONLY
 static
-FRESULT sync_window (
+FRESULT __FIRMWARE sync_window (
 	FATFS* fs		/* File system object */
 )
 {
@@ -799,7 +799,7 @@ FRESULT sync_window (
 
 
 static
-FRESULT move_window (
+FRESULT __FIRMWARE move_window (
 	FATFS* fs,		/* File system object */
 	DWORD sector	/* Sector number to make appearance in the fs->win[].d8 */
 )
@@ -830,7 +830,7 @@ FRESULT move_window (
 /*-----------------------------------------------------------------------*/
 #if !_FS_READONLY
 static
-FRESULT sync_fs (	/* FR_OK: successful, FR_DISK_ERR: failed */
+FRESULT __FIRMWARE sync_fs (	/* FR_OK: successful, FR_DISK_ERR: failed */
 	FATFS* fs		/* File system object */
 )
 {
@@ -870,7 +870,7 @@ FRESULT sync_fs (	/* FR_OK: successful, FR_DISK_ERR: failed */
 /*-----------------------------------------------------------------------*/
 /* Hidden API for hacks and disk tools */
 
-DWORD clust2sect (	/* !=0: Sector number, 0: Failed - invalid cluster# */
+DWORD __FIRMWARE clust2sect (	/* !=0: Sector number, 0: Failed - invalid cluster# */
 	FATFS* fs,		/* File system object */
 	DWORD clst		/* Cluster# to be converted */
 )
@@ -888,7 +888,7 @@ DWORD clust2sect (	/* !=0: Sector number, 0: Failed - invalid cluster# */
 /*-----------------------------------------------------------------------*/
 /* Hidden API for hacks and disk tools */
 
-DWORD get_fat (	/* 0xFFFFFFFF:Disk error, 1:Internal error, 2..0x0FFFFFFF:Cluster status */
+DWORD __FIRMWARE get_fat (	/* 0xFFFFFFFF:Disk error, 1:Internal error, 2..0x0FFFFFFF:Cluster status */
 	FATFS* fs,	/* File system object */
 	DWORD clst	/* FAT index number (cluster number) to get the value */
 )
@@ -943,7 +943,7 @@ DWORD get_fat (	/* 0xFFFFFFFF:Disk error, 1:Internal error, 2..0x0FFFFFFF:Cluste
 /* Hidden API for hacks and disk tools */
 
 #if !_FS_READONLY
-FRESULT put_fat (
+FRESULT __FIRMWARE put_fat (
 	FATFS* fs,	/* File system object */
 	DWORD clst,	/* FAT index number (cluster number) to be changed */
 	DWORD val	/* New value to be set to the entry */
@@ -1007,7 +1007,7 @@ FRESULT put_fat (
 /*-----------------------------------------------------------------------*/
 #if !_FS_READONLY
 static
-FRESULT remove_chain (
+FRESULT __FIRMWARE remove_chain (
 	FATFS* fs,			/* File system object */
 	DWORD clst			/* Cluster# to remove a chain from */
 )
@@ -1060,7 +1060,7 @@ FRESULT remove_chain (
 /*-----------------------------------------------------------------------*/
 #if !_FS_READONLY
 static
-DWORD create_chain (	/* 0:No free cluster, 1:Internal error, 0xFFFFFFFF:Disk error, >=2:New cluster# */
+DWORD __FIRMWARE create_chain (	/* 0:No free cluster, 1:Internal error, 0xFFFFFFFF:Disk error, >=2:New cluster# */
 	FATFS* fs,			/* File system object */
 	DWORD clst			/* Cluster# to stretch. 0 means create a new chain. */
 )
@@ -1122,7 +1122,7 @@ DWORD create_chain (	/* 0:No free cluster, 1:Internal error, 0xFFFFFFFF:Disk err
 
 #if _USE_FASTSEEK
 static
-DWORD clmt_clust (	/* <2:Error, >=2:Cluster number */
+DWORD __FIRMWARE clmt_clust (	/* <2:Error, >=2:Cluster number */
 	FIL* fp,		/* Pointer to the file object */
 	DWORD ofs		/* File offset to be converted to cluster# */
 )
@@ -1150,7 +1150,7 @@ DWORD clmt_clust (	/* <2:Error, >=2:Cluster number */
 /*-----------------------------------------------------------------------*/
 
 static
-FRESULT dir_sdi (
+FRESULT __FIRMWARE dir_sdi (
 	DIR* dp,		/* Pointer to directory object */
 	UINT idx		/* Index of directory table */
 )
@@ -1198,7 +1198,7 @@ FRESULT dir_sdi (
 /*-----------------------------------------------------------------------*/
 
 static
-FRESULT dir_next (	/* FR_OK:Succeeded, FR_NO_FILE:End of table, FR_DENIED:Could not stretch */
+FRESULT __FIRMWARE dir_next (	/* FR_OK:Succeeded, FR_NO_FILE:End of table, FR_DENIED:Could not stretch */
 	DIR* dp,		/* Pointer to the directory object */
 	int stretch		/* 0: Do not stretch table, 1: Stretch table if needed */
 )
@@ -1269,7 +1269,7 @@ FRESULT dir_next (	/* FR_OK:Succeeded, FR_NO_FILE:End of table, FR_DENIED:Could 
 
 #if !_FS_READONLY
 static
-FRESULT dir_alloc (
+FRESULT __FIRMWARE dir_alloc (
 	DIR* dp,	/* Pointer to the directory object */
 	UINT nent	/* Number of contiguous entries to allocate (1-21) */
 )
@@ -1305,7 +1305,7 @@ FRESULT dir_alloc (
 /*-----------------------------------------------------------------------*/
 
 static
-DWORD ld_clust (
+DWORD __FIRMWARE ld_clust (
 	FATFS* fs,	/* Pointer to the fs object */
 	BYTE* dir	/* Pointer to the directory entry */
 )
@@ -1340,11 +1340,11 @@ void st_clust (
 /*-----------------------------------------------------------------------*/
 #if _USE_LFN
 static
-const BYTE LfnOfs[] = {1,3,5,7,9,14,16,18,20,22,24,28,30};	/* Offset of LFN characters in the directory entry */
+const BYTE __FIRMWARE_RODATA LfnOfs[] = {1,3,5,7,9,14,16,18,20,22,24,28,30};	/* Offset of LFN characters in the directory entry */
 
 
 static
-int cmp_lfn (			/* 1:Matched, 0:Not matched */
+int __FIRMWARE cmp_lfn (			/* 1:Matched, 0:Not matched */
 	WCHAR* lfnbuf,		/* Pointer to the LFN to be compared */
 	BYTE* dir			/* Pointer to the directory entry containing a part of LFN */
 )
@@ -1375,7 +1375,7 @@ int cmp_lfn (			/* 1:Matched, 0:Not matched */
 
 
 static
-int pick_lfn (			/* 1:Succeeded, 0:Buffer overflow */
+int __FIRMWARE pick_lfn (			/* 1:Succeeded, 0:Buffer overflow */
 	WCHAR* lfnbuf,		/* Pointer to the Unicode-LFN buffer */
 	BYTE* dir			/* Pointer to the directory entry */
 )
@@ -1408,7 +1408,7 @@ int pick_lfn (			/* 1:Succeeded, 0:Buffer overflow */
 
 #if !_FS_READONLY
 static
-void fit_lfn (
+void __FIRMWARE fit_lfn (
 	const WCHAR* lfnbuf,	/* Pointer to the LFN buffer */
 	BYTE* dir,				/* Pointer to the directory entry */
 	BYTE ord,				/* LFN order (1-20) */
@@ -1446,7 +1446,7 @@ void fit_lfn (
 /*-----------------------------------------------------------------------*/
 #if _USE_LFN
 static
-void gen_numname (
+void __FIRMWARE gen_numname (
 	BYTE* dst,			/* Pointer to the buffer to store numbered SFN */
 	const BYTE* src,	/* Pointer to SFN */
 	const WCHAR* lfn,	/* Pointer to LFN */
@@ -1505,7 +1505,7 @@ void gen_numname (
 /*-----------------------------------------------------------------------*/
 #if _USE_LFN
 static
-BYTE sum_sfn (
+BYTE __FIRMWARE sum_sfn (
 	const BYTE* dir		/* Pointer to the SFN entry */
 )
 {
@@ -1525,7 +1525,7 @@ BYTE sum_sfn (
 /*-----------------------------------------------------------------------*/
 
 static
-FRESULT dir_find (
+FRESULT __FIRMWARE dir_find (
 	DIR* dp			/* Pointer to the directory object linked to the file name */
 )
 {
@@ -1586,7 +1586,7 @@ FRESULT dir_find (
 /*-----------------------------------------------------------------------*/
 #if _FS_MINIMIZE <= 1 || _USE_LABEL || _FS_RPATH >= 2
 static
-FRESULT dir_read (
+FRESULT __FIRMWARE dir_read (
 	DIR* dp,		/* Pointer to the directory object */
 	int vol			/* Filtered by 0:file/directory or 1:volume label */
 )
@@ -1645,7 +1645,7 @@ FRESULT dir_read (
 /*-----------------------------------------------------------------------*/
 #if !_FS_READONLY
 static
-FRESULT dir_register (	/* FR_OK:Successful, FR_DENIED:No free entry or too many SFN collision, FR_DISK_ERR:Disk error */
+FRESULT __FIRMWARE dir_register (	/* FR_OK:Successful, FR_DENIED:No free entry or too many SFN collision, FR_DISK_ERR:Disk error */
 	DIR* dp				/* Target directory with object name to be created */
 )
 {
@@ -1723,7 +1723,7 @@ FRESULT dir_register (	/* FR_OK:Successful, FR_DENIED:No free entry or too many 
 /*-----------------------------------------------------------------------*/
 #if !_FS_READONLY && !_FS_MINIMIZE
 static
-FRESULT dir_remove (	/* FR_OK: Successful, FR_DISK_ERR: A disk error */
+FRESULT __FIRMWARE dir_remove (	/* FR_OK: Successful, FR_DISK_ERR: A disk error */
 	DIR* dp				/* Directory object pointing the entry to be removed */
 )
 {
@@ -1770,7 +1770,7 @@ FRESULT dir_remove (	/* FR_OK: Successful, FR_DISK_ERR: A disk error */
 /*-----------------------------------------------------------------------*/
 #if _FS_MINIMIZE <= 1 || _FS_RPATH >= 2
 static
-void get_fileinfo (		/* No return code */
+void __FIRMWARE get_fileinfo (		/* No return code */
 	DIR* dp,			/* Pointer to the directory object */
 	FILINFO* fno	 	/* Pointer to the file information to be filled */
 )
@@ -1840,7 +1840,7 @@ void get_fileinfo (		/* No return code */
 /*-----------------------------------------------------------------------*/
 #if _USE_FIND && _FS_MINIMIZE <= 1
 static
-WCHAR get_achar (		/* Get a character and advances ptr 1 or 2 */
+WCHAR __FIRMWARE get_achar (		/* Get a character and advances ptr 1 or 2 */
 	const TCHAR** ptr	/* Pointer to pointer to the SBCS/DBCS/Unicode string */
 )
 {
@@ -1862,7 +1862,7 @@ WCHAR get_achar (		/* Get a character and advances ptr 1 or 2 */
 
 
 static
-int pattern_matching (	/* Return value: 0:mismatched, 1:matched */
+int __FIRMWARE pattern_matching (	/* Return value: 0:mismatched, 1:matched */
 	const TCHAR* pat,	/* Matching pattern */
 	const TCHAR* nam,	/* String to be tested */
 	int skip,			/* Number of pre-skip chars (number of ?s) */
@@ -1910,7 +1910,7 @@ int pattern_matching (	/* Return value: 0:mismatched, 1:matched */
 /*-----------------------------------------------------------------------*/
 
 static
-FRESULT create_name (
+FRESULT __FIRMWARE create_name (
 	DIR* dp,			/* Pointer to the directory object */
 	const TCHAR** path	/* Pointer to pointer to the segment in the path string */
 )
@@ -1943,7 +1943,7 @@ FRESULT create_name (
 		w = ff_convert(w, 1);			/* Convert ANSI/OEM to Unicode */
 		if (!w) return FR_INVALID_NAME;	/* Reject invalid code */
 #endif
-		if (w < 0x80 && chk_chr("\"*:<>\?|\x7F", w)) /* Reject illegal characters for LFN */
+		if (w < 0x80 && chk_chr(firmware_illegal_chars, w)) /* Reject illegal characters for LFN */
 			return FR_INVALID_NAME;
 		lfn[di++] = w;					/* Store the Unicode character */
 	}
@@ -2008,7 +2008,7 @@ FRESULT create_name (
 			}
 			dp->fn[i++] = (BYTE)(w >> 8);
 		} else {						/* SBC */
-			if (!w || chk_chr("+,;=[]", w)) {	/* Replace illegal characters for SFN */
+			if (!w || chk_chr(firmware_illegal_chars_2, w)) {	/* Replace illegal characters for SFN */
 				w = '_'; cf |= NS_LOSS | NS_LFN;/* Lossy conversion */
 			} else {
 				if (IsUpper(w)) {		/* ASCII large capital */
@@ -2086,7 +2086,7 @@ FRESULT create_name (
 			sfn[i++] = c;
 			sfn[i++] = d;
 		} else {						/* SBC */
-			if (chk_chr("\"*+,:;<=>\?[]|\x7F", c))	/* Reject illegal chrs for SFN */
+			if (chk_chr(firmware_illegal_chars, c))	/* Reject illegal chrs for SFN */
 				return FR_INVALID_NAME;
 			if (IsUpper(c)) {			/* ASCII large capital? */
 				b |= 2;
@@ -2122,7 +2122,7 @@ FRESULT create_name (
 /*-----------------------------------------------------------------------*/
 
 static
-FRESULT follow_path (	/* FR_OK(0): successful, !=0: error code */
+FRESULT __FIRMWARE follow_path (	/* FR_OK(0): successful, !=0: error code */
 	DIR* dp,			/* Directory object to return last directory and found object */
 	const TCHAR* path	/* Full-path string to find a file or directory */
 )
@@ -2184,7 +2184,7 @@ FRESULT follow_path (	/* FR_OK(0): successful, !=0: error code */
 /*-----------------------------------------------------------------------*/
 
 static
-int get_ldnumber (		/* Returns logical drive number (-1:invalid drive) */
+int __FIRMWARE get_ldnumber (		/* Returns logical drive number (-1:invalid drive) */
 	const TCHAR** path	/* Pointer to pointer to the path name */
 )
 {
@@ -2192,7 +2192,7 @@ int get_ldnumber (		/* Returns logical drive number (-1:invalid drive) */
 	UINT i;
 	int vol = -1;
 #if _STR_VOLUME_ID		/* Find string drive id */
-	static const char* const str[] = {_VOLUME_STRS};
+	static const char* const __FIRMWARE_RODATA str[] = {_VOLUME_STRS};
 	const char *sp;
 	char c;
 	TCHAR tc;
@@ -2245,7 +2245,7 @@ int get_ldnumber (		/* Returns logical drive number (-1:invalid drive) */
 /*-----------------------------------------------------------------------*/
 
 static
-BYTE check_fs (	/* 0:FAT boor sector, 1:Valid boor sector but not FAT, 2:Not a boot sector, 3:Disk error */
+BYTE __FIRMWARE check_fs (	/* 0:FAT boor sector, 1:Valid boor sector but not FAT, 2:Not a boot sector, 3:Disk error */
 	FATFS* fs,	/* File system object */
 	DWORD sect	/* Sector# (lba) to check if it is an FAT boot record or not */
 )
@@ -2273,7 +2273,7 @@ BYTE check_fs (	/* 0:FAT boor sector, 1:Valid boor sector but not FAT, 2:Not a b
 /*-----------------------------------------------------------------------*/
 
 static
-FRESULT find_volume (	/* FR_OK(0): successful, !=0: any error occurred */
+FRESULT __FIRMWARE find_volume (	/* FR_OK(0): successful, !=0: any error occurred */
 	FATFS** rfs,		/* Pointer to pointer to the found file system object */
 	const TCHAR** path,	/* Pointer to pointer to the path name (drive number) */
 	BYTE wmode			/* !=0: Check write protection for write access */
@@ -2442,7 +2442,7 @@ FRESULT find_volume (	/* FR_OK(0): successful, !=0: any error occurred */
 /*-----------------------------------------------------------------------*/
 
 static
-FRESULT validate (	/* FR_OK(0): The object is valid, !=0: Invalid */
+FRESULT __FIRMWARE validate (	/* FR_OK(0): The object is valid, !=0: Invalid */
 	void* obj		/* Pointer to the object FIL/DIR to check validity */
 )
 {
@@ -2472,7 +2472,7 @@ FRESULT validate (	/* FR_OK(0): The object is valid, !=0: Invalid */
 /* Mount/Unmount a Logical Drive                                         */
 /*-----------------------------------------------------------------------*/
 
-FRESULT f_mount (
+FRESULT __FIRMWARE f_mount (
 	FATFS* fs,			/* Pointer to the file system object (NULL:unmount)*/
 	const TCHAR* path,	/* Logical drive number to be mounted/unmounted */
 	BYTE opt			/* 0:Do not mount (delayed mount), 1:Mount immediately */
@@ -2519,7 +2519,7 @@ FRESULT f_mount (
 /* Open or Create a File                                                 */
 /*-----------------------------------------------------------------------*/
 
-FRESULT f_open (
+FRESULT __FIRMWARE f_open (
 	FIL* fp,			/* Pointer to the blank file object */
 	const TCHAR* path,	/* Pointer to the file name */
 	BYTE mode			/* Access mode and file open mode flags */
@@ -2655,7 +2655,7 @@ FRESULT f_open (
 /* Read File                                                             */
 /*-----------------------------------------------------------------------*/
 
-FRESULT f_read (
+FRESULT __FIRMWARE f_read (
 	FIL* fp, 		/* Pointer to the file object */
 	void* buff,		/* Pointer to data buffer */
 	UINT btr,		/* Number of bytes to read */
@@ -2671,6 +2671,7 @@ FRESULT f_read (
 	*br = 0;	/* Clear read byte counter */
 
 	res = validate(fp);							/* Check validity */
+
 	if (res != FR_OK) LEAVE_FF(fp->fs, res);
 	if (fp->err)								/* Check error */
 		LEAVE_FF(fp->fs, (FRESULT)fp->err);
@@ -2682,7 +2683,7 @@ FRESULT f_read (
 	for ( ;  btr;								/* Repeat until all data read */
 		rbuff += rcnt, fp->fptr += rcnt, *br += rcnt, btr -= rcnt) {
 		if ((fp->fptr % SS(fp->fs)) == 0) {		/* On the sector boundary? */
-			csect = (BYTE)(fp->fptr / SS(fp->fs) & (fp->fs->csize - 1));	/* Sector offset in the cluster */
+            csect = (BYTE)(fp->fptr / SS(fp->fs) & (fp->fs->csize - 1));	/* Sector offset in the cluster */
 			if (!csect) {						/* On the cluster boundary? */
 				if (fp->fptr == 0) {			/* On the top of the file? */
 					clst = fp->sclust;			/* Follow from the origin */
@@ -2756,7 +2757,7 @@ FRESULT f_read (
 /* Write File                                                            */
 /*-----------------------------------------------------------------------*/
 
-FRESULT f_write (
+FRESULT __FIRMWARE f_write (
 	FIL* fp,			/* Pointer to the file object */
 	const void *buff,	/* Pointer to the data to be written */
 	UINT btw,			/* Number of bytes to write */
@@ -2878,7 +2879,7 @@ FRESULT f_write (
 /* Synchronize the File                                                  */
 /*-----------------------------------------------------------------------*/
 
-FRESULT f_sync (
+FRESULT __FIRMWARE f_sync (
 	FIL* fp		/* Pointer to the file object */
 )
 {
@@ -2927,7 +2928,7 @@ FRESULT f_sync (
 /* Close File                                                            */
 /*-----------------------------------------------------------------------*/
 
-FRESULT f_close (
+FRESULT __FIRMWARE f_close (
 	FIL *fp		/* Pointer to the file object to be closed */
 )
 {
@@ -2966,7 +2967,7 @@ FRESULT f_close (
 
 #if _FS_RPATH >= 1
 #if _VOLUMES >= 2
-FRESULT f_chdrive (
+FRESULT __FIRMWARE f_chdrive (
 	const TCHAR* path		/* Drive number */
 )
 {
@@ -2983,7 +2984,7 @@ FRESULT f_chdrive (
 #endif
 
 
-FRESULT f_chdir (
+FRESULT __FIRMWARE f_chdir (
 	const TCHAR* path	/* Pointer to the directory path */
 )
 {
@@ -3016,7 +3017,7 @@ FRESULT f_chdir (
 
 
 #if _FS_RPATH >= 2
-FRESULT f_getcwd (
+FRESULT __FIRMWARE f_getcwd (
 	TCHAR* buff,	/* Pointer to the directory path */
 	UINT len		/* Size of path */
 )
@@ -3099,7 +3100,7 @@ FRESULT f_getcwd (
 /* Seek File R/W Pointer                                                 */
 /*-----------------------------------------------------------------------*/
 
-FRESULT f_lseek (
+FRESULT __FIRMWARE f_lseek (
 	FIL* fp,		/* Pointer to the file object */
 	DWORD ofs		/* File pointer from top of file */
 )
@@ -3257,7 +3258,7 @@ FRESULT f_lseek (
 /* Create a Directory Object                                             */
 /*-----------------------------------------------------------------------*/
 
-FRESULT f_opendir (
+FRESULT __FIRMWARE f_opendir (
 	DIR* dp,			/* Pointer to directory object to create */
 	const TCHAR* path	/* Pointer to the directory path */
 )
@@ -3313,7 +3314,7 @@ FRESULT f_opendir (
 /* Close Directory                                                       */
 /*-----------------------------------------------------------------------*/
 
-FRESULT f_closedir (
+FRESULT __FIRMWARE f_closedir (
 	DIR *dp		/* Pointer to the directory object to be closed */
 )
 {
@@ -3345,7 +3346,7 @@ FRESULT f_closedir (
 /* Read Directory Entries in Sequence                                    */
 /*-----------------------------------------------------------------------*/
 
-FRESULT f_readdir (
+FRESULT __FIRMWARE f_readdir (
 	DIR* dp,			/* Pointer to the open directory object */
 	FILINFO* fno		/* Pointer to file information to return */
 )
@@ -3387,7 +3388,7 @@ FRESULT f_readdir (
 /* Find next file                                                        */
 /*-----------------------------------------------------------------------*/
 
-FRESULT f_findnext (
+FRESULT __FIRMWARE f_findnext (
 	DIR* dp,		/* Pointer to the open directory object */
 	FILINFO* fno	/* Pointer to the file information structure */
 )
@@ -3413,7 +3414,7 @@ FRESULT f_findnext (
 /* Find first file                                                       */
 /*-----------------------------------------------------------------------*/
 
-FRESULT f_findfirst (
+FRESULT __FIRMWARE f_findfirst (
 	DIR* dp,				/* Pointer to the blank directory object */
 	FILINFO* fno,			/* Pointer to the file information structure */
 	const TCHAR* path,		/* Pointer to the directory to open */
@@ -3439,7 +3440,7 @@ FRESULT f_findfirst (
 /* Get File Status                                                       */
 /*-----------------------------------------------------------------------*/
 
-FRESULT f_stat (
+FRESULT __FIRMWARE f_stat (
 	const TCHAR* path,	/* Pointer to the file path */
 	FILINFO* fno		/* Pointer to file information to return */
 )
@@ -3474,7 +3475,7 @@ FRESULT f_stat (
 /* Get Number of Free Clusters                                           */
 /*-----------------------------------------------------------------------*/
 
-FRESULT f_getfree (
+FRESULT __FIRMWARE f_getfree (
 	const TCHAR* path,	/* Path name of the logical drive number */
 	DWORD* nclst,		/* Pointer to a variable to return number of free clusters */
 	FATFS** fatfs		/* Pointer to return pointer to corresponding file system object */
@@ -3541,7 +3542,7 @@ FRESULT f_getfree (
 /* Truncate File                                                         */
 /*-----------------------------------------------------------------------*/
 
-FRESULT f_truncate (
+FRESULT __FIRMWARE f_truncate (
 	FIL* fp		/* Pointer to the file object */
 )
 {
@@ -3597,7 +3598,7 @@ FRESULT f_truncate (
 /* Delete a File or Directory                                            */
 /*-----------------------------------------------------------------------*/
 
-FRESULT f_unlink (
+FRESULT __FIRMWARE f_unlink (
 	const TCHAR* path		/* Pointer to the file or directory path */
 )
 {
@@ -3666,7 +3667,7 @@ FRESULT f_unlink (
 /* Create a Directory                                                    */
 /*-----------------------------------------------------------------------*/
 
-FRESULT f_mkdir (
+FRESULT __FIRMWARE f_mkdir (
 	const TCHAR* path		/* Pointer to the directory path */
 )
 {
@@ -3740,7 +3741,7 @@ FRESULT f_mkdir (
 /* Change Attribute                                                      */
 /*-----------------------------------------------------------------------*/
 
-FRESULT f_chmod (
+FRESULT __FIRMWARE f_chmod (
 	const TCHAR* path,	/* Pointer to the file path */
 	BYTE attr,			/* Attribute bits */
 	BYTE mask			/* Attribute mask to change */
@@ -3783,7 +3784,7 @@ FRESULT f_chmod (
 /* Rename File/Directory                                                 */
 /*-----------------------------------------------------------------------*/
 
-FRESULT f_rename (
+FRESULT __FIRMWARE f_rename (
 	const TCHAR* path_old,	/* Pointer to the object to be renamed */
 	const TCHAR* path_new	/* Pointer to the new name */
 )
@@ -3861,7 +3862,7 @@ FRESULT f_rename (
 /* Change Timestamp                                                      */
 /*-----------------------------------------------------------------------*/
 
-FRESULT f_utime (
+FRESULT __FIRMWARE f_utime (
 	const TCHAR* path,	/* Pointer to the file/directory name */
 	const FILINFO* fno	/* Pointer to the time stamp to be set */
 )
@@ -3909,7 +3910,7 @@ FRESULT f_utime (
 /* Get volume label                                                      */
 /*-----------------------------------------------------------------------*/
 
-FRESULT f_getlabel (
+FRESULT __FIRMWARE f_getlabel (
 	const TCHAR* path,	/* Path name of the logical drive number */
 	TCHAR* label,		/* Pointer to a buffer to return the volume label */
 	DWORD* vsn			/* Pointer to a variable to return the volume serial number */
@@ -3976,7 +3977,7 @@ FRESULT f_getlabel (
 /* Set volume label                                                      */
 /*-----------------------------------------------------------------------*/
 
-FRESULT f_setlabel (
+FRESULT __FIRMWARE f_setlabel (
 	const TCHAR* label	/* Pointer to the volume label to set */
 )
 {
@@ -4016,7 +4017,7 @@ FRESULT f_setlabel (
 #endif
 #endif
 #endif
-			if (!w || chk_chr("\"*+,.:;<=>\?[]|\x7F", w) || j >= (UINT)((w >= 0x100) ? 10 : 11)) /* Reject invalid characters for volume label */
+			if (!w || chk_chr(firmware_illegal_chars, w) || j >= (UINT)((w >= 0x100) ? 10 : 11)) /* Reject invalid characters for volume label */
 				LEAVE_FF(dj.fs, FR_INVALID_NAME);
 			if (w >= 0x100) vn[j++] = (BYTE)(w >> 8);
 			vn[j++] = (BYTE)w;
@@ -4072,7 +4073,7 @@ FRESULT f_setlabel (
 /*-----------------------------------------------------------------------*/
 #if _USE_FORWARD && _FS_TINY
 
-FRESULT f_forward (
+FRESULT __FIRMWARE f_forward (
 	FIL* fp, 						/* Pointer to the file object */
 	UINT (*func)(const BYTE*,UINT),	/* Pointer to the streaming function */
 	UINT btf,						/* Number of bytes to forward */
@@ -4135,14 +4136,14 @@ FRESULT f_forward (
 #define N_FATS		1		/* Number of FATs (1 or 2) */
 
 
-FRESULT f_mkfs (
+FRESULT __FIRMWARE f_mkfs (
 	const TCHAR* path,	/* Logical drive number */
 	BYTE sfd,			/* Partitioning rule 0:FDISK, 1:SFD */
 	UINT au				/* Size of allocation unit in unit of byte or sector */
 )
 {
-	static const WORD vst[] = { 1024,   512,  256,  128,   64,    32,   16,    8,    4,    2,   0};
-	static const WORD cst[] = {32768, 16384, 8192, 4096, 2048, 16384, 8192, 4096, 2048, 1024, 512};
+	static const WORD __FIRMWARE_RODATA vst[] = { 1024,   512,  256,  128,   64,    32,   16,    8,    4,    2,   0};
+	static const WORD __FIRMWARE_RODATA cst[] = {32768, 16384, 8192, 4096, 2048, 16384, 8192, 4096, 2048, 1024, 512};
 	int vol;
 	BYTE fmt, md, sys, *tbl, pdrv, part;
 	DWORD n_clst, vs, n, wsect;
@@ -4152,7 +4153,7 @@ FRESULT f_mkfs (
 	FATFS *fs;
 	DSTATUS stat;
 #if _USE_TRIM
-	DWORD eb[2];
+	DWORD __FIRMWARE_BSS eb[2];
 #endif
 
 
@@ -4283,7 +4284,7 @@ FRESULT f_mkfs (
 	/* Create BPB in the VBR */
 	tbl = fs->win.d8;							/* Clear sector */
 	mem_set(tbl, 0, SS(fs));
-	mem_cpy(tbl, "\xEB\xFE\x90" "MSDOS5.0", 11);/* Boot jump code, OEM name */
+	mem_cpy(tbl, firmware_boot_jump_code_oem_name, 11);/* Boot jump code, OEM name */
 	i = SS(fs);								/* Sector size */
 	ST_WORD(tbl + BPB_BytsPerSec, i);
 	tbl[BPB_SecPerClus] = (BYTE)au;			/* Sectors per cluster */
@@ -4309,13 +4310,13 @@ FRESULT f_mkfs (
 		ST_WORD(tbl + BPB_BkBootSec, 6);	/* Backup boot record offset (VBR + 6) */
 		tbl[BS_DrvNum32] = 0x80;			/* Drive number */
 		tbl[BS_BootSig32] = 0x29;			/* Extended boot signature */
-		mem_cpy(tbl + BS_VolLab32, "NO NAME    " "FAT32   ", 19);	/* Volume label, FAT signature */
+		mem_cpy(tbl + BS_VolLab32, firmware_volume_label_fat32_signature, 19);	/* Volume label, FAT signature */
 	} else {
 		ST_DWORD(tbl + BS_VolID, n);		/* VSN */
 		ST_WORD(tbl + BPB_FATSz16, n_fat);	/* Number of sectors per FAT */
 		tbl[BS_DrvNum] = 0x80;				/* Drive number */
 		tbl[BS_BootSig] = 0x29;				/* Extended boot signature */
-		mem_cpy(tbl + BS_VolLab, "NO NAME    " "FAT     ", 19);	/* Volume label, FAT signature */
+		mem_cpy(tbl + BS_VolLab, firmware_volume_label_fat_signature, 19);	/* Volume label, FAT signature */
 	}
 	ST_WORD(tbl + BS_55AA, 0xAA55);			/* Signature (Offset is fixed here regardless of sector size) */
 	if (disk_write(pdrv, tbl, b_vol, 1) != RES_OK)	/* Write it to the VBR sector */
@@ -4381,7 +4382,7 @@ FRESULT f_mkfs (
 /* Create partition table on the physical drive                          */
 /*-----------------------------------------------------------------------*/
 
-FRESULT f_fdisk (
+FRESULT __FIRMWARE f_fdisk (
 	BYTE pdrv,			/* Physical drive number */
 	const DWORD szt[],	/* Pointer to the size table for each partitions */
 	void* work			/* Pointer to the working buffer */
@@ -4454,7 +4455,7 @@ FRESULT f_fdisk (
 /* Get a string from the file                                            */
 /*-----------------------------------------------------------------------*/
 
-TCHAR* f_gets (
+TCHAR* __FIRMWARE f_gets (
 	TCHAR* buff,	/* Pointer to the string buffer to read */
 	int len,		/* Size of string buffer (characters) */
 	FIL* fp			/* Pointer to the file object */
@@ -4541,7 +4542,7 @@ typedef struct {
 
 
 static
-void putc_bfd (
+void __FIRMWARE putc_bfd (
 	putbuff* pb,
 	TCHAR c
 )
@@ -4596,7 +4597,7 @@ void putc_bfd (
 
 
 
-int f_putc (
+int __FIRMWARE f_putc (
 	TCHAR c,	/* A character to be output */
 	FIL* fp		/* Pointer to the file object */
 )
@@ -4623,7 +4624,7 @@ int f_putc (
 /* Put a string to the file                                              */
 /*-----------------------------------------------------------------------*/
 
-int f_puts (
+int __FIRMWARE f_puts (
 	const TCHAR* str,	/* Pointer to the string to be output */
 	FIL* fp				/* Pointer to the file object */
 )
@@ -4651,7 +4652,7 @@ int f_puts (
 /* Put a formatted string to the file                                    */
 /*-----------------------------------------------------------------------*/
 
-int f_printf (
+int __FIRMWARE f_printf (
 	FIL* fp,			/* Pointer to the file object */
 	const TCHAR* fmt,	/* Pointer to the format string */
 	...					/* Optional arguments... */
