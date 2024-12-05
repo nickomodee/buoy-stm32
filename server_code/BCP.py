@@ -50,6 +50,8 @@ class BCP:
 
     def listen(self, data: bytes) -> bytes:
         while True:
+            if not self._lora.begin():
+                continue
             saved_state: LoRaState = self._lora.get_state()
             self._current_index = 0
             self._recv_buffer = b""
@@ -319,8 +321,11 @@ if __name__ == "__main__":
     LORA_IQCONVERTED: IQConverted = IQConverted.OFF
 
     # BCP config
-    BCP_TIMEOUT: float = 2.0
-    BCP_NUM_RETRIES: Literal[10] = 10
+    BCP_TIMEOUT: float = 5.0 # these should be different between the buoy and the server and ideally prime to avoid getting stuck
+    BCP_NUM_RETRIES: Literal[6] = 6 # `timeout * num_retries` should be equal between the buoy and the server
+
+    # Firmware path for the bin file for OTA update (MAKE SURE THAT THE FIRMWARE UPDATE CRITICAL SECTION IS CONSISTENT!!)
+    FIRMWARE_PATH = "firmware.bin"
 
     try:
         lora_serial: serial.Serial = serial.Serial(port=LORA_COM_PORT, baudrate=LORA_BAUDRATE)
@@ -333,21 +338,32 @@ if __name__ == "__main__":
     encryption_key: List[int] = [0x41] * 16
     encryption: Encryption = Encryption(encryption_key)
 
+    def calculate_additive_16bit_checksum(data: bytes): # TODO: USE CRC32
+        checksum: int = 0
+        for datum in data:
+            checksum += datum
+        checksum &= 0xFFFF # 16 bit
+        return checksum
+
+    def generate_BCP_data_for_firmware(firmware_path: str): # we need to prepend the 4 bytes of the file size and the 2 bytes for the checksum
+        with open(firmware_path, 'rb') as f:
+            firmware_data: bytes = f.read()
+            firmware_size: int = len(firmware_data)
+            firmware_size_bytes: bytes = firmware_size.to_bytes(4, byteorder='little') # `uint32_t` in little endian format
+            firmware_checksum = calculate_additive_16bit_checksum(firmware_data)
+            firmware_checksum_bytes = firmware_checksum.to_bytes(2, byteorder='little') # `uint16_t` in little endian format
+            output: bytes = firmware_size_bytes + firmware_checksum_bytes + firmware_data
+            print(f"Firmware Size: {firmware_size}, Firmware Checksum: {firmware_checksum}")
+            return output
+
     while True:
         try:
             lora_serial.close()
             lora_serial.open()
-            lora_begin_status: bool = lora.begin()
-            print(f"LoRa begin: {lora_begin_status}")
-            if not lora_begin_status:
-                time.sleep(5)
-                continue
-
             while True:
                 bcp_instance: BCP = BCP(timeout=BCP_TIMEOUT, num_retries=BCP_NUM_RETRIES, lora=lora, encryption=encryption)
                 # data: bytes = b"A" * 70
-                with open("firmware.bin", 'rb') as f:
-                    data: bytes = f.read()
+                data: bytes = generate_BCP_data_for_firmware(FIRMWARE_PATH)
                 print(f"BCP Message received: {bcp_instance.listen(data)!r}")
         except serial.serialutil.SerialException as e:
             print(f"Serial Error: {e}")

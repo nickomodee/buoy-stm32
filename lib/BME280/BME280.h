@@ -1,9 +1,9 @@
 #pragma once
 
-#include "TempSensor.h"
-#include "PressureSensor.h"
-#include "HumiditySensor.h"
-#include "PAL.h"
+#include "../interfaces/TempSensor.h"
+#include "../interfaces/PressureSensor.h"
+#include "../interfaces/HumiditySensor.h"
+#include "../PAL/PAL.h"
 
 #define BME280_PRIMARY_I2C_ADDRESS (0x76)
 

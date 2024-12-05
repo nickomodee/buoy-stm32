@@ -1,8 +1,8 @@
 #pragma once
 
-#include "Encryption.h"
-#include "PAL.h"
-#include "Debug.h"
+#include "../Encryption/Encryption.h"
+#include "../PAL/PAL.h"
+#include "../Debug/Debug.h"
 #include <cstdint>
 
 #define MAX_PACKET_SIZE 53
@@ -16,7 +16,7 @@
 #define MESSAGE_INDEX_2_INDEX 2
 #define MESSAGE_INDEX_3_INDEX 3
 #define MESSAGE_INDEX_4_INDEX 4
-#define MESSAGE_CHECKSUM_INDEX 5
+#define MESSAGE_CHECKSUM_INDEX 5 // TODO: MAKE THE CHECKSUM 16 bit
 #define MESSAGE_DATA_SIZE_INDEX 6
 #define MESSAGE_DATA_START_INDEX 7
 
@@ -63,7 +63,7 @@ class Packet {
          * @param[in] data_size The size of the data in the packet.
          * @param[in] data The actual data to be transmitted.
          */
-        Packet(Encryption* encryption, PacketType type, uint32_t index, uint8_t data_size, const char* data);
+        Packet(Encryption* encryption, const PacketType type, const uint32_t index, const uint8_t data_size, const char* data);
 
         /**
          * @brief Sets packet parameters for transmission.
@@ -73,14 +73,14 @@ class Packet {
          * @param[in] data_size The size of the data in the packet.
          * @param[in] data The actual data to be transmitted.
          */
-        void set(PacketType type, uint32_t index, uint8_t data_size, const char* data);
+        void set(const PacketType type, const uint32_t index, const uint8_t data_size, const char* data);
 
         /**
          * @brief Sets the type of packet.
          * 
          * @param[in] type The type of packet.
          */
-        void set_type(PacketType type);
+        void set_type(const PacketType type);
 
         /**
          * @brief Gets the packet type.
@@ -358,7 +358,7 @@ class Packet {
         char illegal_char_replacement; ///< Replacement character for illegal characters in the packet.
         uint8_t packet_size; ///< The size of the packet in bytes.
         char packet[MAX_PACKET_SIZE]; ///< The full packet content, including overhead and data.
-        Encryption* encryption; ///< Pointer to the Encryption object for data encryption/decryption.
+        Encryption* encryption_; ///< Pointer to the Encryption object for data encryption/decryption.
         const static char illegal_char = '\r'; ///< The character '\r' is illegal (it will trigger the LoRa device to try to send the data) and must be replaced in the packet.
         
         /**

@@ -76,7 +76,13 @@ class LoRa:
         self._flush_serial()
         if not self._set_local_addr(self._local_addr):
             return False
-        return self._set_target_addr(self._target_addr)
+        if not self._set_target_addr(self._target_addr):
+            return False
+        self._state = LoRaState.IDLE
+        # this is the only way to actually exit `RX` mode and go `IDLE``
+        if not self.set_state(LoRaState.TX):
+            return False
+        return self.set_state(LoRaState.IDLE)
 
     def send(self, data: bytes | List[int]) -> bool:
         if len(data) > LORA_MAX_SIZE:

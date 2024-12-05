@@ -49,7 +49,7 @@ MEMORY
   CCMRAM    (xrw)    : ORIGIN = 0x10000000,   LENGTH = 4K
   RAM    (xrw)    : ORIGIN = 0x20000000,   LENGTH = 12K
   FLASH    (rx)    : ORIGIN = 0x8000000,   LENGTH = 64K
-  FLASH_UPDATE (rx)    : ORIGIN = 0x8009800,   LENGTH = 26K
+  FLASH_UPDATE (rx)    : ORIGIN = 0x800A000,   LENGTH = 24K
 }
 
 /* Sections */
@@ -241,10 +241,10 @@ SECTIONS
       /* Firmware update section */
     .firmware_update_section :
     {
-        . = ALIGN(2048);                                /* Align to the page */
+        . = ALIGN(4);
         KEEP(*(SORT(.firmware_update_section)))            /* Keep all entries explicitly */
         KEEP(*(SORT(.firmware_update_section*)))           /* Also keep wildcard entries */
-        . = ALIGN(2048);                                /* Align again to the page */
+        . = ALIGN(4);
     } >FLASH_UPDATE                                  /* Place section in FLASH memory */
 
     PROVIDE(__firmware_update_section_start = ADDR(.firmware_update_section)); /* Start address of section */

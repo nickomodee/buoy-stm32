@@ -1,7 +1,7 @@
 #pragma once
 
-#include "LoRaSerial.h"
-#include "Debug.h"
+#include "../LoRaSerial/LoRaSerial.h"
+#include "../Debug/Debug.h"
 
 #define ARR_SIZE(x) sizeof(x) / sizeof(x[0])
 #define LORA_SERIAL_BUFFER_SIZE 512

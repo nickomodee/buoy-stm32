@@ -4,7 +4,7 @@
 #include <inttypes.h>
 #include <cstring>
 #include <cstdint>
-#include "PAL.h"
+#include "../PAL/PAL.h"
 
 /**
  * @brief A wrapper class for serial communication with LoRa devices using a PAL_STREAM object.

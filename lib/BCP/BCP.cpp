@@ -1,28 +1,22 @@
 #include "BCP.h"
 
-BCP::BCP(uint16_t timeout, uint8_t num_retries, LoRa* lora, void (*data_stream_func)(const char* data, size_t data_size), Encryption* encryption) {
-    this->timeout = timeout;
-    this->num_retries = num_retries;
-    this->lora = lora;
-    this->data_stream_func = data_stream_func;
-    this->encryption = encryption;
-}
+BCP::BCP(const uint16_t timeout, const uint8_t num_retries, LoRa* lora, const BCPDataStreamFunc data_stream_func, Encryption* encryption) : timeout_(timeout), num_retries_(num_retries), lora_(lora), data_stream_func_(data_stream_func), encryption_(encryption) {}
 
 PacketStatus BCP::send_packet(uint8_t history_index) {
     if (history_index >= BCP_SENT_HISTORY_SIZE) {
         return PacketStatus::INVALID;
     }
 
-    Packet& packet = this->sent_packet_history[history_index];
+    Packet& packet = this->sent_packet_history_[history_index];
     packet.generate_raw();
     const char* packet_data = packet.get_packet();
     const uint8_t packet_size = packet.get_packet_size();
-    this->current_index = packet.get_index() + 1; // in some cases on retransmission this is necessary
+    this->current_index_ = packet.get_index() + 1; // in some cases on retransmission this is necessary
     DEBUG_BCP_PRINT(F("Sending: "));
     DEBUG_BCP_PRINT((uint8_t)packet.get_type());
     DEBUG_BCP_PRINT(F(", Index: "));
     DEBUG_BCP_PRINTLN(packet.get_index());
-    const bool packet_send_status = this->lora->send(packet_data, packet_size);
+    const bool packet_send_status = this->lora_->send(packet_data, packet_size);
     DEBUG_BCP_PRINT(F("Packet Send Status: "));
     DEBUG_BCP_PRINTLN(packet_send_status);
     return packet_send_status ? PacketStatus::SUCCESS : PacketStatus::TIMEOUT;
@@ -30,22 +24,22 @@ PacketStatus BCP::send_packet(uint8_t history_index) {
 
 Packet* BCP::new_send_packet() {
     for (size_t i = BCP_SENT_HISTORY_SIZE - 1; i > 0; --i) { // we don't want to include 0
-        this->sent_packet_history[i] = this->sent_packet_history[i - 1];
+        this->sent_packet_history_[i] = this->sent_packet_history_[i - 1];
     }
-    Packet& new_packet = this->sent_packet_history[0];
-    new_packet = Packet(this->encryption);
-    new_packet.set_index(this->current_index);
-    this->current_index++;
+    Packet& new_packet = this->sent_packet_history_[0];
+    new_packet = Packet(this->encryption_);
+    new_packet.set_index(this->current_index_);
+    this->current_index_++;
     return &new_packet;
 }
 
 Packet* BCP::new_recv_packet() {
     for (size_t i = BCP_RECVD_HISTORY_SIZE - 1; i > 0; --i) { // we don't want to include 0
-        this->recvd_packet_history[i] = this->recvd_packet_history[i - 1];
+        this->recvd_packet_history_[i] = this->recvd_packet_history_[i - 1];
     }
-    Packet& new_packet = this->recvd_packet_history[0];
-    new_packet = Packet(this->encryption);
-    this->current_index++;
+    Packet& new_packet = this->recvd_packet_history_[0];
+    new_packet = Packet(this->encryption_);
+    this->current_index_++;
     return &new_packet;
 }
 
@@ -54,7 +48,7 @@ PacketStatus BCP::send_recv(uint8_t num_packets, PacketType expected_packet_type
         return PacketStatus::INVALID;
     }
 
-    for (uint8_t i = 0; i < this->num_retries; ++i) {
+    for (uint8_t i = 0; i < this->num_retries_; ++i) {
         bool send_failed = false;
         for (int8_t packet_index = num_packets - 1; packet_index >= 0; --packet_index) {
             if (this->send_packet(packet_index) != PacketStatus::SUCCESS) {
@@ -66,9 +60,9 @@ PacketStatus BCP::send_recv(uint8_t num_packets, PacketType expected_packet_type
             continue;
         }
         unsigned long start_time = PAL_MILLISECONDS();
-        while (PAL_MILLISECONDS() - start_time < this->timeout) {
+        while (PAL_MILLISECONDS() - start_time < this->timeout_) {
             if (this->recv_packet() == PacketStatus::SUCCESS) { // retransmission is not possible, so only check for success
-                if (this->recvd_packet_history[0].get_type() != expected_packet_type) {
+                if (this->recvd_packet_history_[0].get_type() != expected_packet_type) {
                     this->reject_recvd_packet();
                     continue;
                 }
@@ -82,7 +76,7 @@ PacketStatus BCP::send_recv(uint8_t num_packets, PacketType expected_packet_type
 }
 
 bool BCP::synchronise() {
-    this->current_index = 0;
+    this->current_index_ = 0;
     Packet* new_packet = this->new_send_packet();
     new_packet->set(PacketType::SYN, -1, 0, "");
     if (this->send_recv(1, PacketType::SYNACK) != PacketStatus::SUCCESS) {
@@ -120,16 +114,16 @@ bool BCP::send_data(const char* data, size_t data_size) {
 
 bool BCP::recv_data_desc() {
     unsigned long start_time = PAL_MILLISECONDS();
-    while (PAL_MILLISECONDS() - start_time < this->num_retries * this->timeout) { // now, transmission control is up to the server, so timeout should be multiplied by num of retries to allow server to send packet in case of packet loss
+    while (PAL_MILLISECONDS() - start_time < this->num_retries_ * this->timeout_) { // now, transmission control is up to the server, so timeout should be multiplied by num of retries to allow server to send packet in case of packet loss
         const PacketStatus packet_status = this->recv_packet();
         if (packet_status == PacketStatus::SUCCESS) { // retransmission is not possible, so only check for success
-            if (this->recvd_packet_history[0].get_type() != PacketType::DATA_DESC) {
+            if (this->recvd_packet_history_[0].get_type() != PacketType::DATA_DESC) {
                 this->reject_recvd_packet();
                 continue;
             }
-            this->total_msg_packets = ((const uint32_t*)this->recvd_packet_history[0].get_data())[0];
+            this->total_msg_packets_ = ((const uint32_t*)this->recvd_packet_history_[0].get_data())[0];
             DEBUG_BCP_PRINT(F("Recv DATA_DESC, Num packets: "));
-            DEBUG_BCP_PRINTLN(this->total_msg_packets);
+            DEBUG_BCP_PRINTLN(this->total_msg_packets_);
 
             Packet* new_packet = this->new_send_packet();
             new_packet->set(PacketType::ACK, -1, 0, "");
@@ -142,12 +136,12 @@ bool BCP::recv_data_desc() {
 
 bool BCP::recv_data() {
     uint32_t i = 0;
-    while (i < this->total_msg_packets) {
-        DEBUG_BCP_PRINT("Receiving DATA: "); DEBUG_BCP_PRINT(i + 1); DEBUG_BCP_PRINT(" / "); DEBUG_BCP_PRINTLN(this->total_msg_packets);
+    while (i < this->total_msg_packets_) {
+        DEBUG_BCP_PRINT("Receiving DATA: "); DEBUG_BCP_PRINT(i + 1); DEBUG_BCP_PRINT(" / "); DEBUG_BCP_PRINTLN(this->total_msg_packets_);
 
         bool timed_out = true;
         unsigned long start_time = PAL_MILLISECONDS();
-        while (PAL_MILLISECONDS() - start_time < this->num_retries * this->timeout) { // now, transmission control is up to the server, so timeout should be multiplied by num of retries to allow server to send packet in case of packet loss
+        while (PAL_MILLISECONDS() - start_time < this->num_retries_ * this->timeout_) { // now, transmission control is up to the server, so timeout should be multiplied by num of retries to allow server to send packet in case of packet loss
             const PacketStatus packet_status = this->recv_packet();
             if (packet_status == PacketStatus::RETRANSMISSION) { // if this is a retransmission just resend last sent packet, but we don't break, as we need to keep checking for the expected next packet
                 this->send_packet(0); // doesn't matter if this fails
@@ -156,13 +150,13 @@ bool BCP::recv_data() {
             }
 
             if (packet_status == PacketStatus::SUCCESS) {
-                if (this->recvd_packet_history[0].get_type() == PacketType::DATA) {
-                    this->data_stream_func(this->recvd_packet_history[0].get_data(), this->recvd_packet_history[0].get_data_size());
+                if (this->recvd_packet_history_[0].get_type() == PacketType::DATA) {
+                    this->data_stream_func_(this->recvd_packet_history_[0].get_data(), this->recvd_packet_history_[0].get_data_size(), i, this->total_msg_packets_ - 1);
 
                     Packet* new_packet = this->new_send_packet();
                     new_packet->set(PacketType::ACK, -1, 0, "");
 
-                    if (i == this->total_msg_packets - 1) { // if this is the last data packet, don't send the ACK, as we will do this in `finish()` (similar to how we send the ACK and DATA_DESC in `send_data_desc(size_t)`)
+                    if (i == this->total_msg_packets_ - 1) { // if this is the last data packet, don't send the ACK, as we will do this in `finish()` (similar to how we send the ACK and DATA_DESC in `send_data_desc(size_t)`)
                         return true;
                     }
                     if (this->send_packet(0) != PacketStatus::SUCCESS) {
@@ -193,9 +187,9 @@ bool BCP::finish() {
     }
 
     unsigned long start_time = PAL_MILLISECONDS();
-    while (PAL_MILLISECONDS() - start_time < this->num_retries * this->timeout) { // now, transmission control is up to the server, so timeout should be multiplied by num of retries to allow server to send packet in case of packet loss
+    while (PAL_MILLISECONDS() - start_time < this->num_retries_ * this->timeout_) { // now, transmission control is up to the server, so timeout should be multiplied by num of retries to allow server to send packet in case of packet loss
         if (this->recv_packet() == PacketStatus::SUCCESS) { // retransmission is not possible, so only check for success
-            if (this->recvd_packet_history[0].get_type() != PacketType::FIN) {
+            if (this->recvd_packet_history_[0].get_type() != PacketType::FIN) {
                 this->reject_recvd_packet();
                 continue;
             }
@@ -211,9 +205,9 @@ bool BCP::finish() {
 
 PacketStatus BCP::recv_packet() {
     unsigned long start_time = PAL_MILLISECONDS();
-    while (PAL_MILLISECONDS() - start_time < this->timeout) {
-        if (this->lora->recv()) {
-            const char* data = this->lora->get_buffer();
+    while (PAL_MILLISECONDS() - start_time < this->timeout_) {
+        if (this->lora_->recv()) {
+            const char* data = this->lora_->get_buffer();
             Packet* new_packet = this->new_recv_packet();
             new_packet->set_packet_size(data[PACKET_SIZE_INDEX]);
             new_packet->set_packet(data);
@@ -247,72 +241,82 @@ static void print_hex(const char* str, size_t str_length) {
 }
 
 PacketStatus BCP::validate_recvd_packet() {
-    if (!this->recvd_packet_history[0].validate_message_checksum() || !this->recvd_packet_history[0].validate_packet_checksum()) {
+    if (!this->recvd_packet_history_[0].validate_message_checksum() || !this->recvd_packet_history_[0].validate_packet_checksum()) {
         DEBUG_BCP_PRINT(F("Packet invalidated, Checksum failed Message checksum success: "));
-        DEBUG_BCP_PRINT(this->recvd_packet_history[0].validate_message_checksum());
+        DEBUG_BCP_PRINT(this->recvd_packet_history_[0].validate_message_checksum());
         DEBUG_BCP_PRINT(F(" Packet checksum success: "));
-        DEBUG_BCP_PRINTLN(this->recvd_packet_history[0].validate_packet_checksum());
-        print_hex(this->recvd_packet_history[0].get_packet(), this->recvd_packet_history[0].get_packet_size());
-        print_hex(this->recvd_packet_history[0].get_data(), this->recvd_packet_history[0].get_data_size());
+        DEBUG_BCP_PRINTLN(this->recvd_packet_history_[0].validate_packet_checksum());
+        print_hex(this->recvd_packet_history_[0].get_packet(), this->recvd_packet_history_[0].get_packet_size());
+        print_hex(this->recvd_packet_history_[0].get_data(), this->recvd_packet_history_[0].get_data_size());
         return PacketStatus::INVALID;
     }
 
-    if (this->recvd_packet_history[0].get_index() == this->current_index - 1) {
+    if (this->recvd_packet_history_[0].get_index() == this->current_index_ - 1) {
         return PacketStatus::SUCCESS;
     }
 
-    if (this->retransmission_control == RetransmissionController::SERVER && this->recvd_packet_history[0] == this->recvd_packet_history[1] && this->recvd_packet_history[0].get_iv() != this->recvd_packet_history[1].get_iv()) { // probably a duplicate NOT A RETRANSMISSION if the IVs are equal (duplicate meaning it could be reflected off a mountain but arriving at a later time). if server controls retransmission, it may miss our packet, so we may receive an already received packet
+    if (this->retransmission_control_ == RetransmissionController::SERVER && this->recvd_packet_history_[0] == this->recvd_packet_history_[1] && this->recvd_packet_history_[0].get_iv() != this->recvd_packet_history_[1].get_iv()) { // probably a duplicate NOT A RETRANSMISSION if the IVs are equal (duplicate meaning it could be reflected off a mountain but arriving at a later time). if server controls retransmission, it may miss our packet, so we may receive an already received packet
         DEBUG_BCP_PRINTLN(F("Retransmission packet received"));
-        this->current_index = this->recvd_packet_history[0].get_index() + 1;
+        this->current_index_ = this->recvd_packet_history_[0].get_index() + 1;
         return PacketStatus::RETRANSMISSION;
     }
     DEBUG_BCP_PRINT(F("Packet invalidated, Current index: "));
-    DEBUG_BCP_PRINT(this->current_index);
+    DEBUG_BCP_PRINT(this->current_index_);
     DEBUG_BCP_PRINT(F(" Packet index: "));
-    DEBUG_BCP_PRINT(this->recvd_packet_history[0].get_index());
+    DEBUG_BCP_PRINT(this->recvd_packet_history_[0].get_index());
     DEBUG_BCP_PRINT(F(" Other packet index: "));
-    DEBUG_BCP_PRINT(this->recvd_packet_history[1].get_index());
+    DEBUG_BCP_PRINT(this->recvd_packet_history_[1].get_index());
     DEBUG_BCP_PRINT(F(" This packet == other packet: "));
-    DEBUG_BCP_PRINT(this->recvd_packet_history[0] == this->recvd_packet_history[1]);
+    DEBUG_BCP_PRINT(this->recvd_packet_history_[0] == this->recvd_packet_history_[1]);
     DEBUG_BCP_PRINT(F(" This packet type: "));
-    DEBUG_BCP_PRINT((uint8_t)this->recvd_packet_history[0].get_type());
+    DEBUG_BCP_PRINT((uint8_t)this->recvd_packet_history_[0].get_type());
     DEBUG_BCP_PRINT(F(" Other packet type: "));
-    DEBUG_BCP_PRINT((uint8_t)this->recvd_packet_history[1].get_type());
+    DEBUG_BCP_PRINT((uint8_t)this->recvd_packet_history_[1].get_type());
     DEBUG_BCP_PRINT(F(" This packet data size: "));
-    DEBUG_BCP_PRINT(this->recvd_packet_history[0].get_data_size());
+    DEBUG_BCP_PRINT(this->recvd_packet_history_[0].get_data_size());
     DEBUG_BCP_PRINT(F(" Other packet data size: "));
-    DEBUG_BCP_PRINT(this->recvd_packet_history[1].get_data_size());
+    DEBUG_BCP_PRINT(this->recvd_packet_history_[1].get_data_size());
     DEBUG_BCP_PRINT(F(" This packet IV: "));
-    DEBUG_BCP_PRINT(this->recvd_packet_history[0].get_iv());
+    DEBUG_BCP_PRINT(this->recvd_packet_history_[0].get_iv());
     DEBUG_BCP_PRINT(F(" Other packet IV: "));
-    DEBUG_BCP_PRINT(this->recvd_packet_history[1].get_iv());
+    DEBUG_BCP_PRINT(this->recvd_packet_history_[1].get_iv());
     DEBUG_BCP_PRINT(F(" This packet data: "));
-    DEBUG_BCP_WRITE(this->recvd_packet_history[0].get_data(), this->recvd_packet_history[0].get_data_size());
+    DEBUG_BCP_WRITE(this->recvd_packet_history_[0].get_data(), this->recvd_packet_history_[0].get_data_size());
     DEBUG_BCP_PRINT(F(" Other packet data: "));
-    DEBUG_BCP_WRITE(this->recvd_packet_history[1].get_data(), this->recvd_packet_history[1].get_data_size());
+    DEBUG_BCP_WRITE(this->recvd_packet_history_[1].get_data(), this->recvd_packet_history_[1].get_data_size());
     DEBUG_BCP_PRINTLN();
     return PacketStatus::INVALID;
 }
 
 void BCP::reject_recvd_packet() {
     for (size_t i = 0; i < BCP_RECVD_HISTORY_SIZE - 1; ++i) {
-        this->recvd_packet_history[i] = this->recvd_packet_history[i + 1];
+        this->recvd_packet_history_[i] = this->recvd_packet_history_[i + 1];
     }
-    this->recvd_packet_history[BCP_RECVD_HISTORY_SIZE - 1] = Packet(this->encryption);
-    this->current_index--;
+    this->recvd_packet_history_[BCP_RECVD_HISTORY_SIZE - 1] = Packet(this->encryption_);
+    this->current_index_--;
     DEBUG_BCP_PRINTLN(F("Packet rejected"));
 }
 
 void BCP::set_retransmission_control(RetransmissionController controller) {
-    this->retransmission_control = controller;
+    this->retransmission_control_ = controller;
 }
 
 bool BCP::send(const char* data, size_t data_size) {
-    const LoRaState saved_state = this->lora->get_state();
-    this->lora->set_state(LoRaState::RX); // we do this so that after TX, we immediately revert to RX to catch packets
-    this->current_index = 0;
+    bool LoRa_begin_success = false;
+    for (uint8_t i = 0; i < this-> num_retries_; ++i) {
+        if (this->lora_->begin()) {
+            LoRa_begin_success = true;
+            break;
+        }
+    }
+    if (!LoRa_begin_success) {
+        return false;
+    }
+    const LoRaState saved_state = this->lora_->get_state();
+    this->lora_->set_state(LoRaState::RX); // we do this so that after TX, we immediately revert to RX to catch packets
+    this->current_index_ = 0;
     this->set_retransmission_control(RetransmissionController::BUOY);
-    for (uint8_t i = 0; i < this->num_retries; ++i) {
+    for (uint8_t i = 0; i < this->num_retries_; ++i) {
         DEBUG_BCP_PRINTLN(F("Synchronising"));
         if (!this->synchronise()) {
             continue;
@@ -340,9 +344,9 @@ bool BCP::send(const char* data, size_t data_size) {
             continue;
         }
         DEBUG_BCP_PRINTLN(F("Finished"));
-        this->lora->set_state(saved_state);
+        this->lora_->set_state(saved_state);
         return true;
     }
-    this->lora->set_state(saved_state);
+    this->lora_->set_state(saved_state);
     return false;
 }

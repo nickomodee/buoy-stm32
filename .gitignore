@@ -20,3 +20,9 @@ __pycache__/
 
 # Build directory for FirmwareUpdater
 firmware_updater_build/
+
+# Build artifacts
+firmware.bin
+firmware.elf
+firmware.hex
+firmware.map

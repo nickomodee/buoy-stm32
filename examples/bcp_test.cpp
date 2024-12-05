@@ -17,8 +17,8 @@
 #define LORA_IQCONVERTED IQConverted::OFF
 
 // BCP config
-#define BCP_TIMEOUT 2000
-#define BCP_NUM_RETRIES 10
+#define BCP_TIMEOUT 3000 // these should be different between the buoy and the server and ideally prime to avoid getting stuck
+#define BCP_NUM_RETRIES 10 // `timeout * num_retries` should be equal between the buoy and the server
 
 #if PLATFORM == STM32
     PAL_STM32_UART_STREAM LoRaSerial_UART_STM32(USART1); // USART2 is used for the default 'Serial'
@@ -55,19 +55,15 @@ void setup() {
 //     LORA_DATA_RATE = (DataRate)new_data_rate_num;
 // }
 
-void data_stream_func(const char* data, size_t data_size) {
+void data_stream_func(const char* data, const size_t data_size, const uint32_t current_index, const uint32_t final_index) {
     PAL_SERIAL.write(data, data_size);
+    PAL_SERIAL.print(" @ ");
+    PAL_SERIAL.print(current_index + 1);
+    PAL_SERIAL.print(" / ");
+    PAL_SERIAL.println(final_index + 1);
 }
 
 void loop() {
-    bool lora_begin_status;
-    do {
-        lora_begin_status = lora.begin();
-        PAL_SERIAL.print(F("LoRa begin: "));
-        PAL_SERIAL.println(lora_begin_status);
-        PAL_DELAY(5000);
-    } while (!lora_begin_status);
-
     BCP bcp_instance(BCP_TIMEOUT, BCP_NUM_RETRIES, &lora, &data_stream_func, &encryption);
     const char data[] = "hello world PADDING PADDING PADDING PADDING PADDING PADDING PADDING PADDING";
     if (!bcp_instance.send(data, strlen(data))) {

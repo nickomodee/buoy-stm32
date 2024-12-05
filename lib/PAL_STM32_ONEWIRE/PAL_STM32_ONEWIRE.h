@@ -2,7 +2,7 @@
 
 #include <cstdint>
 #include "stm32f3xx_hal.h"
-#include "PAL_STM32_COMMON.h"
+#include "../PAL_STM32_COMMON/PAL_STM32_COMMON.h"
 #include <cstring>
 
 extern void PAL_STM32_DELAY_US(const uint32_t us); // we can't import `PAL_STM32.h` due to circular imports

@@ -10,7 +10,7 @@ project_dir = env.subst("$PROJECT_DIR")
 build_lib_path = os.path.join(project_dir, "firmware_updater_build", "libFirmwareUpdater.a")
 lib_path = os.path.join(project_dir, "lib", "FirmwareUpdater", "libFirmwareUpdater.a")
 
-os.remove(lib_path)
+# os.remove(lib_path)
 remove_temp()
 main()
 append_temp()

@@ -22,7 +22,14 @@ bool LoRa::begin() {
     if (!this->set_local_addr(this->local_addr)) {
         return false;
     }
-    return this->set_target_addr(this->target_addr);
+    if (!this->set_target_addr(this->target_addr)) {
+        return false;
+    }
+    this->state = LoRaState::IDLE;
+    if (!this->set_state(LoRaState::TX)) {
+        return false;
+    }
+    return this->set_state(LoRaState::IDLE);
 }
 
 bool LoRa::send_command(const char* command, size_t command_length, const char* expected, size_t expected_length) {

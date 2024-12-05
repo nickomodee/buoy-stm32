@@ -1,12 +1,14 @@
 #pragma once
 
-#include "DataSender.h"
-#include "Packet.h"
-#include "Encryption.h"
-#include "LoRa.h"
-#include "Debug.h"
-#include "PAL.h"
+#include "../interfaces/DataSender.h"
+#include "../Packet/Packet.h"
+#include "../Encryption/Encryption.h"
+#include "../LoRa/LoRa.h"
+#include "../Debug/Debug.h"
+#include "../PAL/PAL.h"
 #include <cstddef>
+
+typedef void (*BCPDataStreamFunc)(const char* data, const size_t size, const uint32_t current_index, const uint32_t final_index);
 
 #define BCP_SENT_HISTORY_SIZE 2
 #define BCP_RECVD_HISTORY_SIZE 2
@@ -63,22 +65,22 @@ class BCP : public DataSender {
          * @param[in] data_stream_func The function that is called when data is received. It is sent in chunks per `DATA` packet.
          * @param[in] encryption The object to use for encryption with the encryption key set.
          */
-        BCP(uint16_t timeout, uint8_t num_retries, LoRa* lora, void (*data_stream_func)(const char* data, size_t data_size), Encryption* encryption);
+        BCP(const uint16_t timeout, const uint8_t num_retries, LoRa* lora, BCPDataStreamFunc data_stream_func, Encryption* encryption);
         /**
          * @copydoc DataSender::send
          */
         bool send(const char* data, size_t data_size) override;
     private:
-        uint16_t timeout; ///< Timeout duration in milliseconds for receiving LoRa packets.
-        uint8_t num_retries; ///< Number of retries for sending or receiving packets.
-        LoRa* lora; ///< Pointer to the LoRa object for communication.
-        uint32_t current_index; ///< The current index for packets in the communication stream.
-        Packet sent_packet_history[BCP_SENT_HISTORY_SIZE] {Packet(this->encryption), Packet(this->encryption)}; ///< Buffer storing sent packets for retransmission purposes.
-        Packet recvd_packet_history[BCP_RECVD_HISTORY_SIZE] {Packet(this->encryption), Packet(this->encryption)}; ///< Buffer storing received packets for validation and retransmission handling.
-        uint32_t total_msg_packets; ///< The total number of packets to be sent or received in the current communication.
-        void (*data_stream_func)(const char* data, size_t data_size); ///< Function pointer for handling received data chunks.
-        Encryption* encryption; ///< Pointer to the `Encryption` object for encrypting and decrypting packet data.
-        RetransmissionController retransmission_control; ///< Control object to manage which device controls packet transmission.
+        const uint16_t timeout_; ///< Timeout duration in milliseconds for receiving LoRa packets.
+        const uint8_t num_retries_; ///< Number of retries for sending or receiving packets.
+        LoRa* lora_; ///< Pointer to the LoRa object for communication.
+        uint32_t current_index_; ///< The current index for packets in the communication stream.
+        Packet sent_packet_history_[BCP_SENT_HISTORY_SIZE] {Packet(this->encryption_), Packet(this->encryption_)}; ///< Buffer storing sent packets for retransmission purposes.
+        Packet recvd_packet_history_[BCP_RECVD_HISTORY_SIZE] {Packet(this->encryption_), Packet(this->encryption_)}; ///< Buffer storing received packets for validation and retransmission handling.
+        uint32_t total_msg_packets_; ///< The total number of packets to be sent or received in the current communication.
+        const BCPDataStreamFunc data_stream_func_; ///< Function pointer for handling received data chunks.
+        Encryption* encryption_; ///< Pointer to the `Encryption` object for encrypting and decrypting packet data.
+        RetransmissionController retransmission_control_; ///< Control object to manage which device controls packet transmission.
 
         /**
          * @brief Send the packet that is at the index in the `sent_packet_history[]` buffer.

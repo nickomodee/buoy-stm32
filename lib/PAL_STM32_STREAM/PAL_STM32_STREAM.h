@@ -4,7 +4,7 @@
 #include <cstddef>
 #include <cstring>
 #include "stm32f3xx_hal.h"
-#include "PAL_STM32_COMMON.h"
+#include "../PAL_STM32_COMMON/PAL_STM32_COMMON.h"
 
 class PAL_STM32_STREAM_BUFFER {
     public:

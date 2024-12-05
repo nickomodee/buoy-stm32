@@ -1,7 +1,6 @@
 #include "PAL.h"
 #include "SD.h"
 #include "SD_File.h"
-#include "firmware_update.h"
 #include <cstdbool>
 
 #define ARR_SIZE(x) sizeof(x) / sizeof(x[0])

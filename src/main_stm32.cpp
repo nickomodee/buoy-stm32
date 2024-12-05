@@ -91,11 +91,7 @@ static void MX_GPIO_Init(void)
 }
 
 /* Error Handler ------------------------------------------------------------*/
-void __FIRMWARE Error_Handler() {
-    __disable_irq();
-    while (1) {
-    }
-}
+extern void error_handler();
 
 extern "C" void SysTick_Handler() { // make this visible to C files
     HAL_IncTick();

@@ -5,7 +5,7 @@
 #include <cstring>
 #include <cstdint>
 
-static constexpr size_t PATH_SIZE = 32;
+static constexpr const size_t PATH_SIZE = 32;
 
 class SD_File {
     public:

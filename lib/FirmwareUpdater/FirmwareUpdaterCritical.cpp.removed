@@ -5,13 +5,13 @@
 
 const char __FIRMWARE_RODATA firmware_update_path[] = "fw.bin";
 const char __FIRMWARE_RODATA new_firmware_path[] = "fw_new.bin";
+const char __FIRMWARE_RODATA firmware_update_size_path[] = "fw_size.bin";
+const char __FIRMWARE_RODATA firmware_update_checksum_path[] = "checksum.bin";
 const char __FIRMWARE_RODATA firmware_update_available_path[] = "avail.txt";
-constexpr const char update_is_available_indicator_byte = '1';
-
-uint32_t FirmwareUpdater::current_update_size_ = 0;
-bool FirmwareUpdater::new_firmware_success_ = true;
-
-FirmwareUpdater::FirmwareUpdater() {}
+constexpr const char __FIRMWARE_RODATA update_is_available_indicator_byte = '1';
+constexpr const uint8_t __FIRMWARE_RODATA update_checksum_size = sizeof(firmware_checksum_type);
+constexpr const uint8_t __FIRMWARE_RODATA update_size_size = sizeof(firmware_size_type);
+constexpr const uint8_t __FIRMWARE_RODATA firmware_update_retries = 16;
 
 bool __FIRMWARE FirmwareUpdater::flash_erase_page_(const uint32_t address) {
     uint32_t page_start_address = address & ~(FLASH_PAGE_SIZE - 1);
@@ -149,13 +149,39 @@ bool __FIRMWARE FirmwareUpdater::flash_write_byte_(uint32_t address, uint16_t da
     return true;
 }
 
-bool __FIRMWARE FirmwareUpdater::begin_() {
+firmware_checksum_type __FIRMWARE FirmwareUpdater::calculate_flash_firmware_checksum_(const uint32_t start_flash_address, const uint32_t end_flash_address) { // `flash_end_address` is the next byte after
+    firmware_checksum_type flash_checksum = 0;
+    for (uint32_t flash_address = start_flash_address; flash_address < end_flash_address; flash_address++) {
+        flash_checksum += *((uint8_t*)flash_address);
+    }
+    return flash_checksum;
+}
+
+void __FIRMWARE FirmwareUpdater::begin_() {
+    SD_File firmware_update_checksum_file{firmware_update_checksum_path};
+    if (!firmware_update_checksum_file.open(FA_READ)) {
+        return;
+    }
+    if (firmware_update_checksum_file.get_size() != update_checksum_size) {
+        return;
+    }
+    firmware_checksum_type expected_firmware_checksum = 0;
+    int checksum_byte;
+    for (uint8_t i = 0; i < update_checksum_size; i++) {
+        checksum_byte = firmware_update_checksum_file.read();
+        if (checksum_byte == -1) {
+            return;
+        }
+        expected_firmware_checksum |= (uint8_t)checksum_byte << (i * 8); // little endian format
+    }
+    firmware_update_checksum_file.close();
+
     SD_File firmware_file{firmware_update_path};
     if (!firmware_file.open(FA_READ)) {
-        return false;
+        return;
     }
 
-    const uint32_t firmware_update_size = firmware_file.get_size();
+    const firmware_size_type firmware_update_size = firmware_file.get_size();
 
     const uint32_t flash_update_start_address = (uint32_t)&_flash_update_start; // this MUST be the same across all firmwares and SHOULD REALLY also be page aligned (so that we can utilise as much space as possible for updates)
     const uint32_t flash_update_end_address = (uint32_t)&_flash_update_end; // this MUST be the same across all firmwares and SHOULD REALLY also be page aligned (so that we can utilise as much space as possible for updates)
@@ -167,143 +193,50 @@ bool __FIRMWARE FirmwareUpdater::begin_() {
     
     const uint32_t firmware_end_address = FLASH_BASE + firmware_update_size; // the byte after the end
 
-    for (uint32_t flash_address = FLASH_BASE; flash_address < firmware_end_address; flash_address += 2) {
-        if (flash_address >= flash_update_start_page_aligned_address && flash_address < flash_update_end_page_aligned_address) {
-            continue;
-        }
-
-        if ((flash_address % FLASH_PAGE_SIZE) == 0) {
-            if (!FirmwareUpdater::flash_erase_page_(flash_address)) {
-                return false;
+    for (uint8_t i = 0; i < firmware_update_retries; i++) {
+        for (uint32_t flash_address = FLASH_BASE; flash_address < firmware_end_address; flash_address += 2) {
+            if (flash_address >= flash_update_start_page_aligned_address && flash_address < flash_update_end_page_aligned_address) {
+                continue;
             }
-        }
 
-        int firmware_byte = firmware_file.read();
-        if (firmware_byte == -1) {
-            return false;
-        }
-        const uint8_t firmware_byte_1 = (uint8_t)firmware_byte;
-        uint8_t firmware_byte_2 = 0xFF;
-        if (flash_address < firmware_end_address - 1) { // since we increment in 2s we may cause a read on a file with no more contents
-            firmware_byte = firmware_file.read();
+            if ((flash_address % FLASH_PAGE_SIZE) == 0) {
+                if (!FirmwareUpdater::flash_erase_page_(flash_address)) {
+                    return;
+                }
+            }
+
+            int firmware_byte = firmware_file.read();
             if (firmware_byte == -1) {
-                return false;
+                return;
             }
-            firmware_byte_2 = (uint8_t)firmware_byte;
+            const uint8_t firmware_byte_1 = (uint8_t)firmware_byte;
+            uint8_t firmware_byte_2 = 0xFF;
+            if (flash_address < firmware_end_address - 1) { // since we increment in 2s we may cause a read on a file with no more contents
+                firmware_byte = firmware_file.read();
+                if (firmware_byte == -1) {
+                    return;
+                }
+                firmware_byte_2 = (uint8_t)firmware_byte;
+            }
+
+            const uint16_t firmware_halfword = ((uint16_t)firmware_byte_2 << 8U) | (uint16_t)firmware_byte_1;
+
+            if (!FirmwareUpdater::flash_write_byte_(flash_address, firmware_halfword)) {
+                return;
+            }
         }
 
-        const uint16_t firmware_halfword = ((uint16_t)firmware_byte_2 << 8U) | (uint16_t)firmware_byte_1;
-
-        if (!FirmwareUpdater::flash_write_byte_(flash_address, firmware_halfword)) {
-            return false;
-        }
-    }
-
-    return true;
-}
-
-bool __FIRMWARE FirmwareUpdater::check() {
-    if (!sd.exists(firmware_update_path) || !sd.exists(firmware_update_available_path)) {
-        return false;
-    }
-
-    SD_File firmware_update_available_file{firmware_update_available_path};
-    if (!firmware_update_available_file.open(FA_READ)) {
-        return false;
-    }
-
-    const int update_available_indicator_byte = firmware_update_available_file.read();
-    if ((update_available_indicator_byte == -1) || ((char)update_available_indicator_byte != update_is_available_indicator_byte)) {
-        return false;
-    }
-
-    return true;
-}
-
-bool __FIRMWARE FirmwareUpdater::update() {
-    if (!check()) {
-        return false;
-    }
-
-    const bool update_status = begin_();
-    if (update_status) {
-        end_();
-    }
-
-    return update_status;
-}
-
-void FirmwareUpdater::firmware_stream(const char* data, size_t size) {
-    if (size == 0) {
-        return;
-    }
-
-    SD_File new_firmware_file{new_firmware_path};
-
-    if ((current_update_size_ == 0) && !initialise_firmware_()) {
-        if (!new_firmware_file.open(FA_WRITE | FA_CREATE_ALWAYS)) {
-            new_firmware_success_ = false;
-            return;
-        }
-    } else {
-        if (!new_firmware_file.open(FA_WRITE | FA_OPEN_ALWAYS)) {
-            new_firmware_success_ = false;
-            return;
+        const firmware_checksum_type firmware_checksum = calculate_flash_firmware_checksum_(FLASH_BASE, firmware_end_address);
+        if (firmware_checksum == expected_firmware_checksum) {
+            end_(); // reset
+            return; // won't reach here
         }
     }
 
-    if (!new_firmware_file.seek(current_update_size_)) {
-        new_firmware_success_ = false;
-        return;
-    }
-
-    const uint32_t written_amount = new_firmware_file.write(data, size);
-    current_update_size_ += written_amount;
-    if (written_amount != size) {
-        new_firmware_success_ = false;
-        return;
-    }
+    return;
 }
 
-bool FirmwareUpdater::finish_firmware(const bool success) {
-    if ((current_update_size_ == 0) || !success || !new_firmware_success_) {
-        current_update_size_ = 0;
-        return false;
-    }
-
-    current_update_size_ = 0;
-
-    if (sd.exists(firmware_update_path) && !sd.remove(firmware_update_path)) {
-        return false;
-    }
-
-    if (!sd.rename(new_firmware_path, firmware_update_path)) {
-        return false;
-    }
-
-    SD_File firmware_available_file{firmware_update_available_path};
-    if (!firmware_available_file.open(FA_WRITE | FA_CREATE_ALWAYS)) {
-        return false;
-    }
-
-    if (!firmware_available_file.write(update_is_available_indicator_byte)) {
-        return false;
-    }
-
-    return true;
-}
-
-bool FirmwareUpdater::initialise_firmware_() {
-    new_firmware_success_ = true;
-
-    if (sd.exists(new_firmware_path)) {
-        return sd.remove(new_firmware_path);
-    }
-
-    return true;
-}
-
-void __FIRMWARE FirmwareUpdater::mcu_reset() {
+void __FIRMWARE FirmwareUpdater::mcu_reset_() {
     __disable_irq();
     NVIC_SystemReset();
 }
@@ -311,5 +244,5 @@ void __FIRMWARE FirmwareUpdater::mcu_reset() {
 
 void __FIRMWARE FirmwareUpdater::end_() {
     sd.remove(firmware_update_available_path);
-    mcu_reset();
+    mcu_reset_();
 }

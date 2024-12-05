@@ -1,22 +1,19 @@
 #include "Packet.h"
 
-Packet::Packet(Encryption* encryption, PacketType type, uint32_t index, uint8_t data_size, const char* data) {
-    this->encryption = encryption;
+Packet::Packet(Encryption* encryption, const PacketType type, const uint32_t index, const uint8_t data_size, const char* data) : encryption_(encryption) {
     this->set(type, index, data_size, data);
 }
 
-Packet::Packet(Encryption* encryption) {
-    this->encryption = encryption;
-}
+Packet::Packet(Encryption* encryption) : encryption_(encryption) {}
 
-void Packet::set(PacketType type, uint32_t index, uint8_t data_size, const char* data) {
+void Packet::set(const PacketType type, const uint32_t index, const uint8_t data_size, const char* data) {
     this->set_type(type);
     this->set_index(index);
     this->set_data_size(data_size); // this step must happen before setting `data`
     this->set_data(data);
 }
 
-void Packet::set_type(PacketType type) {
+void Packet::set_type(const PacketType type) {
     this->type = type;
 }
 
@@ -54,7 +51,7 @@ uint8_t Packet::generate_message_checksum() {
     checksum += this->data_size;
     const uint8_t data_size = PAL_MIN(this->data_size, MAX_DATA_SIZE);
     for (uint8_t i = 0; i < data_size; ++i) {
-        checksum += this->data[i];
+        checksum += this->data[i]; // TODO: USE CRC16
     }
     return checksum;
 }
@@ -96,7 +93,7 @@ uint8_t Packet::generate_packet_checksum() {
         if ((i == PACKET_CHECKSUM_INDEX) || (i == PACKET_ILLEGAL_CHAR_INDEX)) { // skip checksum and illegal char replacement (since if the checksum has an illegal char, we still want to handle this) for calculating the checksum
             continue;
         }
-        checksum += this->packet[i];
+        checksum += this->packet[i]; // TODO: USE CRC16
     }
     return checksum;
 }
@@ -149,7 +146,7 @@ bool Packet::from_raw() {
     char encrypted_data[encrypted_data_size];
     memcpy(encrypted_data, this->packet + PACKET_OVERHEAD, encrypted_data_size); // unfortunately, we do have to use this buffer because don't want to modify `this->packet` (if we simply use a pointer to `this->packet + PACKET_OVERHEAD`)
     char message[MAX_MESSAGE_SIZE + AES_BLOCK_SIZE]; // Even though we know the maximum size, according to the BCP, the encryption library checks the WORST case, which is when there is no padding, so it is safest to append the block size just in case to avoid buffer overflow
-    const size_t message_size = this->encryption->decrypt(encrypted_data, encrypted_data_size, message, sizeof(message) / sizeof(message[0]), this->iv);
+    const size_t message_size = this->encryption_->decrypt(encrypted_data, encrypted_data_size, message, sizeof(message) / sizeof(message[0]), this->iv);
     if (message_size == 0) {
         return false;
     }
@@ -173,9 +170,9 @@ void Packet::generate_raw() {
     message[MESSAGE_CHECKSUM_INDEX] = this->message_checksum;
     message[MESSAGE_DATA_SIZE_INDEX] = this->data_size;
     memcpy(&message[MESSAGE_DATA_START_INDEX], this->data, PAL_MIN(this->data_size, MAX_DATA_SIZE));
-    const uint16_t iv = this->encryption->generate_random_iv();
+    const uint16_t iv = this->encryption_->generate_random_iv();
     this->set_iv(iv);
-    const size_t encrypted_size = this->encryption->encrypt(message, MESSAGE_OVERHEAD + PAL_MIN(this->data_size, MAX_DATA_SIZE), this->packet + PACKET_OVERHEAD, MAX_PACKET_SIZE - PACKET_OVERHEAD, this->iv);
+    const size_t encrypted_size = this->encryption_->encrypt(message, MESSAGE_OVERHEAD + PAL_MIN(this->data_size, MAX_DATA_SIZE), this->packet + PACKET_OVERHEAD, MAX_PACKET_SIZE - PACKET_OVERHEAD, this->iv);
     this->set_packet_size(encrypted_size + PACKET_OVERHEAD);
     this->packet[PACKET_SIZE_INDEX] = this->packet_size;
     this->packet[PACKET_IV_1_INDEX] = this->iv & 0xFF;

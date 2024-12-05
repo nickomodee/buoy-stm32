@@ -1,8 +1,8 @@
 #pragma once
-#include "AES.h"
-#include "Debug.h"
+#include "../AES/AES.h"
+#include "../Debug/Debug.h"
+#include "../PAL/PAL.h"
 #include <cstdint>
-#include "PAL.h"
 
 #define AES_BLOCK_SIZE 16 // 128 bits
 

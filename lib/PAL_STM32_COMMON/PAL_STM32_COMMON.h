@@ -3,8 +3,7 @@
 // provide common utilities for use with `PAL_STM32` objects
 
 #include "stm32f3xx_hal.h"
-// #include "../FirmwareUpdater/firmware_update_linker.h"
-#define __FIRMWARE __attribute((section(".firmware_update_section"))) __attribute__((used))
+#include "../FirmwareUpdater/firmware_update_linker.h"
 
 #define CONCATENATE_DETAIL(x, y) x##y
 #define CONCATENATE(x, y) CONCATENATE_DETAIL(x, y)

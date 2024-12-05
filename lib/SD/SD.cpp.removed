@@ -147,7 +147,7 @@ uint32_t __FIRMWARE SD::write(FIL* file, const char* buffer, const size_t size) 
 }
 
 uint32_t __FIRMWARE SD::write(FIL* file, const char* str) {
-    const size_t str_length = firmware_strlen(str);
+    const size_t str_length = strlen(str);
     return write(file, str, str_length);
 }
 
@@ -276,14 +276,14 @@ size_t __FIRMWARE SD::list_dir(const char* path, char* output, const size_t size
     output[0] = '\0';
     while (next_file()) {
         const char* fname = file_name();
-        const size_t fname_length = firmware_strlen(fname);
+        const size_t fname_length = strlen(fname);
         if ((fname_length == 0) || (count + fname_length + 2 + 1 > size)) { // `2` for `"\r\n"` and `1` for `'\0'`
             close_dir();
             return count;
         }
-        firmware_strncat(output + count, fname, fname_length);
+        strncat(output + count, fname, fname_length);
         count += fname_length;
-        firmware_strncat(output + count, firmware_crlf, 2);
+        strncat(output + count, firmware_crlf, 2);
         count += 2;
     }
 

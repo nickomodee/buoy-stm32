@@ -3,8 +3,8 @@
 #include <Arduino.h>
 #include <Stream.h>
 #include <Wire.h>
-#include "OneWire.h" // need to download this from: https://github.com/PaulStoffregen/OneWire/tree/master
-#include "PAL.h"
+#include <OneWire.h> // need to download this from: https://github.com/PaulStoffregen/OneWire/tree/master
+#include "../PAL/PAL.h"
 
 #define PAL_OCT 8
 #define PAL_DEC 10

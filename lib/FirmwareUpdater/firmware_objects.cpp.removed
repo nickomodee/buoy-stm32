@@ -881,6 +881,12 @@ __FIRMWARE void __DSB(void) {
     __ASM volatile ("dsb 0xF":::"memory");
 }
 
+__FIRMWARE void Error_Handler() {
+    __disable_irq();
+    while (1) {
+    }
+}
+
 extern "C" {
     void* __FIRMWARE memcpy(void *dest, const void *src, size_t n) {
         unsigned char *d = (unsigned char *)dest;

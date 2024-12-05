@@ -1,11 +1,11 @@
 #include "SD_File.h"
 
 __FIRMWARE SD_File::SD_File(const char* path) {
-    const size_t path_length = firmware_strlen(path);
+    const size_t path_length = strlen(path);
     if (path_length + 1 > PATH_SIZE) {
         return;
     }
-    firmware_strncpy(path_, path, path_length);
+    strncpy(path_, path, path_length);
 }
 
 __FIRMWARE SD_File::~SD_File() {

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "PAL.h"
+#include "../PAL/PAL.h"
 
 // values
 #define SEARCH_ROM 0xF0

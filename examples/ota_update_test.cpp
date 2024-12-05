@@ -5,6 +5,7 @@
 #include "BCP.h"
 #include "SD.h"
 #include "FirmwareUpdater.h"
+#include "DataStreamParser.h"
 
 // LoRa config
 #define LORA_TIMEOUT 500
@@ -19,8 +20,8 @@
 #define LORA_IQCONVERTED IQConverted::OFF
 
 // BCP config
-#define BCP_TIMEOUT 2000
-#define BCP_NUM_RETRIES 10
+#define BCP_TIMEOUT 3000 // these should be different between the buoy and the server and ideally prime to avoid getting stuck
+#define BCP_NUM_RETRIES 10 // `timeout * num_retries` should be equal between the buoy and the server
 
 #if PLATFORM == STM32
     PAL_STM32_UART_STREAM LoRaSerial_UART_STM32(USART1); // USART2 is used for the default 'Serial'
@@ -45,6 +46,7 @@ const uint8_t encryption_key[16] = { 0x41, 0x41, 0x41, 0x41, 0x41, 0x41, 0x41, 0
 Encryption encryption(encryption_key);
 
 FirmwareUpdater firmware_updater;
+DataStreamParser data_stream_parser;
 
 void setup() {
     PAL_SERIAL.begin(9600);
@@ -59,7 +61,7 @@ void setup() {
             break;
         } 
 
-        PAL_SERIAL.print("SD Initialisation Failed, Status: ");
+        PAL_SERIAL.print("SD Initialisation Failed, Status: "); // TODO: when the SD is not initialised from the beginning (e.g. unplugged), it will never be initialised (e.g. if you plug it back in)
         PAL_SERIAL.println(sd_init_status);
         PAL_DELAY(1000);
     }
@@ -67,21 +69,15 @@ void setup() {
 }
 
 void loop() {
-    bool lora_begin_status;
-    do {
-        lora_begin_status = lora.begin();
-        PAL_SERIAL.print(F("LoRa begin: "));
-        PAL_SERIAL.println(lora_begin_status);
-        PAL_DELAY(5000);
-    } while (!lora_begin_status);
-
-    BCP bcp_instance(BCP_TIMEOUT, BCP_NUM_RETRIES, &lora, &firmware_updater.firmware_stream, &encryption);
+    const BCPDataStreamFunc bcp_data_stream_func = [](const char* data, const size_t size, const uint32_t current_index, const uint32_t final_index) {
+        data_stream_parser.parse_data(data, size, current_index, final_index);
+    };
+    BCP bcp_instance(BCP_TIMEOUT, BCP_NUM_RETRIES, &lora, bcp_data_stream_func, &encryption);
     const char data[] = "hello world PADDING PADDING PADDING PADDING PADDING PADDING PADDING PADDING";
     const bool success = bcp_instance.send(data, strlen(data));
     PAL_SERIAL.print("BCP Status: ");
     PAL_SERIAL.println(success);
-    const bool firmware_success = firmware_updater.finish_firmware(success);
-    if (firmware_success) {
+    if (success) {
         PAL_SERIAL.println("Updating...");
         firmware_updater.update();
     }

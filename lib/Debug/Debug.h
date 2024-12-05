@@ -1,6 +1,6 @@
 #pragma once
 
-#include "PAL.h"
+#include "../PAL/PAL.h"
 
 #define DEBUG
 
@@ -26,6 +26,16 @@
 #define DEBUG_LORA_PRINT(...) PAL_SERIAL.print("[LORA] "); PAL_SERIAL.print(__VA_ARGS__)
 #define DEBUG_LORA_PRINTLN(...) PAL_SERIAL.print("[LORA] "); PAL_SERIAL.println(__VA_ARGS__)
 #define DEBUG_LORA_WRITE(...) PAL_SERIAL.print("[LORA] "); PAL_SERIAL.write(__VA_ARGS__)
+
+// Debug for FirmwareUpdater
+#define DEBUG_FIRMWAREUPDATER_PRINT(...) PAL_SERIAL.print("[FirmwareUpdater] "); PAL_SERIAL.print(__VA_ARGS__)
+#define DEBUG_FIRMWAREUPDATER_PRINTLN(...) PAL_SERIAL.print("[FirmwareUpdater] "); PAL_SERIAL.println(__VA_ARGS__)
+#define DEBUG_FIRMWAREUPDATER_WRITE(...) PAL_SERIAL.print("[FirmwareUpdater] "); PAL_SERIAL.write(__VA_ARGS__)
+
+// Debug for DataStreamParser
+#define DEBUG_DATASTREAMPARSER_PRINT(...) PAL_SERIAL.print("[DataStreamParser] "); PAL_SERIAL.print(__VA_ARGS__)
+#define DEBUG_DATASTREAMPARSER_PRINTLN(...) PAL_SERIAL.print("[DataStreamParser] "); PAL_SERIAL.println(__VA_ARGS__)
+#define DEBUG_DATASTREAMPARSER_WRITE(...) PAL_SERIAL.print("[DataStreamParser] "); PAL_SERIAL.write(__VA_ARGS__)
 #else
 // Debug for BCP
 #define DEBUG_BCP_PRINT(...) DEBUG_NOOP()
@@ -46,4 +56,14 @@
 #define DEBUG_LORA_PRINT(...) DEBUG_NOOP()
 #define DEBUG_LORA_PRINTLN(...) DEBUG_NOOP()
 #define DEBUG_LORA_WRITE(...) DEBUG_NOOP()
+
+// Debug for FirmwareUpdater
+#define DEBUG_FIRMWAREUPDATER_PRINT(...) DEBUG_NOOP()
+#define DEBUG_FIRMWAREUPDATER_PRINTLN(...) DEBUG_NOOP()
+#define DEBUG_FIRMWAREUPDATER_WRITE(...) DEBUG_NOOP()
+
+// Debug for DataStreamParser
+#define DEBUG_DATASTREAMPARSER_PRINT(...) DEBUG_NOOP()
+#define DEBUG_DATASTREAMPARSER_PRINTLN(...) DEBUG_NOOP()
+#define DEBUG_DATASTREAMPARSER_WRITE(...) DEBUG_NOOP()
 #endif

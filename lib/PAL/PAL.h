@@ -11,7 +11,7 @@
 #include "../PAL_STM32/PAL_STM32.h"
 
 #else
-#include "PAL_ARDUINO.h"
+#include "../PAL_ARDUINO/PAL_ARDUINO.h"
 
 #endif
 

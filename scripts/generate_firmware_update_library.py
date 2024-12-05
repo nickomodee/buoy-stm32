@@ -2,6 +2,8 @@ import subprocess
 import os
 import shutil
 
+DEBUG = True # setting to `True` will enable debug symbols in the firmware update critical section, which is not wanted for the actual buoy
+
 SOURCE_FILES = [
     "lib/fatfs/diskio.cpp",
     "lib/fatfs/fatfs.cpp",
@@ -12,7 +14,7 @@ SOURCE_FILES = [
     "lib/fatfs/option/syscall.cpp",
     "lib/FirmwareUpdater/firmware_objects.cpp",
     "lib/FirmwareUpdater/firmware_update_linker.cpp",
-    "lib/FirmwareUpdater/FirmwareUpdater.cpp",
+    "lib/FirmwareUpdater/FirmwareUpdaterCritical.cpp",
     "lib/PAL_STM32_COMMON/PAL_STM32_COMMON.cpp",
     "lib/SD/SD.cpp",
     "lib/SD_File/SD_File.cpp"
@@ -61,6 +63,8 @@ CFLAGS = [
     "-fno-inline",
     "-fno-inline-functions",
 ]
+if DEBUG:
+    CFLAGS.append("-g")
 
 def compile_sources(sources, output_dir, cflags):
     object_files = []

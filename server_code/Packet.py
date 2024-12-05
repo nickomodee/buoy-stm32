@@ -39,7 +39,7 @@ def print_hex(data: bytes, func: Callable[[object], None]) -> None:
     func(" ".join([f"0x{x:02x}" for x in data]))
 
 def replace_byte_at_index(data: bytes, index: int, replacement: int) -> bytes:
-    return data[:index] + replacement.to_bytes(1, byteorder='big') + data[index + 1:]
+    return data[:index] + replacement.to_bytes(1, byteorder='little') + data[index + 1:]
 
 class Packet:
     _ILLEGAL_CHAR: int = ord('\r')
@@ -174,12 +174,12 @@ class Packet:
 
     def generate_raw(self) -> None:
         message: bytes = b""
-        message += self._type.value.to_bytes(1, byteorder='big')
+        message += self._type.value.to_bytes(1, byteorder='little')
         message += self._index.to_bytes(4, byteorder='little') # little endian format
         MESSAGE_CHECKSUM: int = self.generate_message_checksum()
         self.set_message_checksum(MESSAGE_CHECKSUM)
-        message += MESSAGE_CHECKSUM.to_bytes(1, byteorder='big')
-        message += len(self._data).to_bytes(1, byteorder='big')
+        message += MESSAGE_CHECKSUM.to_bytes(1, byteorder='little')
+        message += len(self._data).to_bytes(1, byteorder='little')
         message += self._data[:MAX_DATA_SIZE]
         IV: int = self._encryption.generate_random_iv()
         self.set_iv(IV)
@@ -189,8 +189,8 @@ class Packet:
         ENCRYPTED_SIZE: int = len(encrypted_message)
         PACKET_SIZE: int = ENCRYPTED_SIZE + PACKET_OVERHEAD
         self._packet = b""
-        self._packet += PACKET_SIZE.to_bytes(1, byteorder='big')
-        self._packet += Packet._ILLEGAL_CHAR.to_bytes(1, byteorder='big') # we need to set a TEMPORARY illegal char replacement so that we can generate the actual replacement below, after the IV, checksum, and encrypted message is set
+        self._packet += PACKET_SIZE.to_bytes(1, byteorder='little')
+        self._packet += Packet._ILLEGAL_CHAR.to_bytes(1, byteorder='little') # we need to set a TEMPORARY illegal char replacement so that we can generate the actual replacement below, after the IV, checksum, and encrypted message is set
         self._packet += IV.to_bytes(2, byteorder='little') # little endian format
         self._packet += b"0" # we need to set a TEMPORARY checksum so that we can generate the checksum below (but we first need to append the `encrypted_message` in the correct position)
         self._packet += encrypted_message

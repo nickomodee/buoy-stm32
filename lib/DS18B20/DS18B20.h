@@ -1,7 +1,7 @@
 #pragma once
 
-#include "TempSensor.h"
-#include "DS18B20_Base.h"
+#include "../interfaces/TempSensor.h"
+#include "../DS18B20_Base/DS18B20_Base.h"
 
 class DS18B20 : public DS18B20_Base, public TempSensor {
     public:

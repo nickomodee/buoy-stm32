@@ -1,7 +1,7 @@
 // Modified from: https://github.com/suculent/thinx-aes-lib/blob/master/src/AES.h
 #pragma once
 
-#include "PAL.h"
+#include "../PAL/PAL.h"
 
 #include "AES_config.h"
 /*

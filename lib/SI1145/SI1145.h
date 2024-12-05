@@ -1,9 +1,9 @@
 #pragma once
 
-#include "UVSensor.h"
-#include "VisibleLuxSensor.h"
-#include "IRLuxSensor.h"
-#include "PAL.h"
+#include "../interfaces/UVSensor.h"
+#include "../interfaces/VisibleLuxSensor.h"
+#include "../interfaces/IRLuxSensor.h"
+#include "../PAL/PAL.h"
 
 // page 6/7 of the SI1145 datasheet: https://www.silabs.com/documents/public/data-sheets/Si1145-46-47.pdf
 // visible photodiode response (ALS_VIS)

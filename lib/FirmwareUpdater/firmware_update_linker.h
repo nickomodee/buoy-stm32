@@ -8,10 +8,6 @@
 #define __FIRMWARE_DATA __attribute((section(".firmware_update_data"))) __attribute__((used))
 #define __FIRMWARE_RODATA __attribute((section(".firmware_update_rodata"))) __attribute__((used))
 
-size_t __FIRMWARE firmware_strlen(const char *str);
-char* __FIRMWARE firmware_strncat(char *dest, const char *src, size_t n);
-char* __FIRMWARE firmware_strncpy(char *dest, const char *src, size_t n);
-
 extern const char firmware_empty[];
 extern const char firmware_crlf[];
 

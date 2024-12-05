@@ -1,58 +1,5 @@
 #include "firmware_update_linker.h"
 
-size_t __FIRMWARE firmware_strlen(const char *str) {
-    size_t length = 0;
-
-    if (str == NULL) {
-        return 0;
-    }
-
-    while (str[length] != '\0') {
-        length++;
-    }
-
-    return length;
-}
-
-char* __FIRMWARE firmware_strncat(char *dest, const char *src, size_t n) {
-    size_t dest_len = firmware_strlen(dest);
-    size_t i;
-
-    if (dest == NULL || src == NULL) {
-        return dest;
-    }
-
-    for (i = 0; i < n && src[i] != '\0'; i++) {
-        dest[dest_len + i] = src[i];
-    }
-
-    dest[dest_len + i] = '\0';
-
-    return dest;
-}
-char* __FIRMWARE firmware_strncpy(char *dest, const char *src, size_t n) {
-    size_t i;
-
-    if (dest == NULL || src == NULL) {
-        return dest;
-    }
-
-    for (i = 0; i < n && src[i] != '\0'; i++) {
-        dest[i] = src[i];
-    }
-
-    if (i < n) {
-        dest[i] = '\0';
-        for (i = i + 1; i < n; i++) {
-            dest[i] = '\0';
-        }
-    } else {
-        dest[n] = '\0';
-    }
-
-    return dest;
-}
-
 const char __FIRMWARE_RODATA firmware_empty[] = "";
 const char __FIRMWARE_RODATA firmware_crlf[] = "\r\n";
 
