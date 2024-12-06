@@ -1,6 +1,7 @@
 from Packet import Packet, PacketType, MAX_DATA_SIZE
 from Encryption import Encryption
 from LoRa import LoRa, LoRaState, DataRate, Bandwidth, CodeRate, IQConverted
+from CRC import crc32
 import serial, serial.serialutil, serial.tools.list_ports
 import time
 from typing import Literal, List, Callable
@@ -321,8 +322,8 @@ if __name__ == "__main__":
     LORA_IQCONVERTED: IQConverted = IQConverted.OFF
 
     # BCP config
-    BCP_TIMEOUT: float = 5.0 # these should be different between the buoy and the server and ideally prime to avoid getting stuck
-    BCP_NUM_RETRIES: Literal[6] = 6 # `timeout * num_retries` should be equal between the buoy and the server
+    BCP_TIMEOUT: float = 7.0 # these should be different between the buoy and the server and ideally prime to avoid getting stuck
+    BCP_NUM_RETRIES: Literal[10] = 10 # `timeout * num_retries` should be equal between the buoy and the server
 
     # Firmware path for the bin file for OTA update (MAKE SURE THAT THE FIRMWARE UPDATE CRITICAL SECTION IS CONSISTENT!!)
     FIRMWARE_PATH = "firmware.bin"
@@ -338,20 +339,14 @@ if __name__ == "__main__":
     encryption_key: List[int] = [0x41] * 16
     encryption: Encryption = Encryption(encryption_key)
 
-    def calculate_additive_16bit_checksum(data: bytes): # TODO: USE CRC32
-        checksum: int = 0
-        for datum in data:
-            checksum += datum
-        checksum &= 0xFFFF # 16 bit
-        return checksum
-
     def generate_BCP_data_for_firmware(firmware_path: str): # we need to prepend the 4 bytes of the file size and the 2 bytes for the checksum
         with open(firmware_path, 'rb') as f:
             firmware_data: bytes = f.read()
             firmware_size: int = len(firmware_data)
             firmware_size_bytes: bytes = firmware_size.to_bytes(4, byteorder='little') # `uint32_t` in little endian format
-            firmware_checksum = calculate_additive_16bit_checksum(firmware_data)
-            firmware_checksum_bytes = firmware_checksum.to_bytes(2, byteorder='little') # `uint16_t` in little endian format
+            crc32.reset()
+            firmware_checksum = crc32.update_bulk(firmware_data)
+            firmware_checksum_bytes = firmware_checksum.to_bytes(4, byteorder='little') # `uint32_t` in little endian format
             output: bytes = firmware_size_bytes + firmware_checksum_bytes + firmware_data
             print(f"Firmware Size: {firmware_size}, Firmware Checksum: {firmware_checksum}")
             return output

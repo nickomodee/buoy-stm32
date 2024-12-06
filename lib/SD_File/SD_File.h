@@ -5,8 +5,6 @@
 #include <cstring>
 #include <cstdint>
 
-static constexpr const size_t PATH_SIZE = 32;
-
 class SD_File {
     public:
         SD_File(const char* path) __FIRMWARE;
@@ -28,9 +26,11 @@ class SD_File {
         bool rename(const char* new_path) __FIRMWARE;
         bool exists() __FIRMWARE;
     private:
+        static constexpr const size_t __FIRMWARE_RODATA MAX_PATH_SIZE = 32;
+
         FIL file_;
         uint8_t mode_;
 
-        char path_[PATH_SIZE] = {0};
+        char path_[MAX_PATH_SIZE] = {0};
         bool open_ = false;
 };

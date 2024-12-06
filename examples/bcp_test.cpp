@@ -17,8 +17,8 @@
 #define LORA_IQCONVERTED IQConverted::OFF
 
 // BCP config
-#define BCP_TIMEOUT 3000 // these should be different between the buoy and the server and ideally prime to avoid getting stuck
-#define BCP_NUM_RETRIES 10 // `timeout * num_retries` should be equal between the buoy and the server
+#define BCP_TIMEOUT 5000 // these should be different between the buoy and the server and ideally prime to avoid getting stuck
+#define BCP_NUM_RETRIES 14 // `timeout * num_retries` should be equal between the buoy and the server
 
 #if PLATFORM == STM32
     PAL_STM32_UART_STREAM LoRaSerial_UART_STM32(USART1); // USART2 is used for the default 'Serial'

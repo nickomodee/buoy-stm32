@@ -93,9 +93,10 @@ bool DataStreamParser::handle_state_(bool finish) {
 
         case DataStreamParserState::FIRMWARE:
             DEBUG_DATASTREAMPARSER_PRINTLN("Processing FIRMWARE state...");
-            for (size_t i = 0; i < buffer_offset_; i++) {
-                current_firmware_checksum_ += buffer_[i];
-            }
+
+            crc32.reset(current_firmware_checksum_); // we need to start from the previous CRC since it can be interrupted (e.g., by BCP)
+            current_firmware_checksum_ = crc32.update(buffer_, buffer_offset_);
+
             current_firmware_size_ += buffer_offset_;
 
             DEBUG_DATASTREAMPARSER_PRINT("Current firmware size: ");

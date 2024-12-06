@@ -2,13 +2,14 @@
 
 #include "../Encryption/Encryption.h"
 #include "../PAL/PAL.h"
+#include "../CRC/CRC.h"
 #include "../Debug/Debug.h"
 #include <cstdint>
 
-#define MAX_PACKET_SIZE 53
-#define PACKET_OVERHEAD 5 // the packet 'overhead' that isn't encrypted data
+#define MAX_PACKET_SIZE 54
+#define PACKET_OVERHEAD 6 // the packet 'overhead' that isn't encrypted data
 #define MAX_MESSAGE_SIZE 47
-#define MESSAGE_OVERHEAD 7 // the message 'overhead' that isn't data
+#define MESSAGE_OVERHEAD 8 // the message 'overhead' that isn't data
 #define MAX_DATA_SIZE (MAX_MESSAGE_SIZE - MESSAGE_OVERHEAD) // the brackets are crucial... found out the hard way
 
 #define MESSAGE_TYPE_INDEX 0
@@ -16,16 +17,18 @@
 #define MESSAGE_INDEX_2_INDEX 2
 #define MESSAGE_INDEX_3_INDEX 3
 #define MESSAGE_INDEX_4_INDEX 4
-#define MESSAGE_CHECKSUM_INDEX 5 // TODO: MAKE THE CHECKSUM 16 bit
-#define MESSAGE_DATA_SIZE_INDEX 6
-#define MESSAGE_DATA_START_INDEX 7
+#define MESSAGE_CHECKSUM_1_INDEX 5
+#define MESSAGE_CHECKSUM_2_INDEX 6
+#define MESSAGE_DATA_SIZE_INDEX 7
+#define MESSAGE_DATA_START_INDEX 8
 
 #define PACKET_SIZE_INDEX 0
 #define PACKET_ILLEGAL_CHAR_INDEX 1
 #define PACKET_IV_1_INDEX 2
 #define PACKET_IV_2_INDEX 3
-#define PACKET_CHECKSUM_INDEX 4
-#define PACKET_ENCRYPTED_START_INDEX 5
+#define PACKET_CHECKSUM_1_INDEX 4
+#define PACKET_CHECKSUM_2_INDEX 5
+#define PACKET_ENCRYPTED_START_INDEX 6
 
 /**
  * @brief Enum class representing the different types of packets.
@@ -108,21 +111,21 @@ class Packet {
          * 
          * @param[in] checksum The checksum of the message.
          */
-        void set_message_checksum(uint8_t checksum);
+        void set_message_checksum(uint16_t checksum);
 
         /**
          * @brief Gets the message checksum.
          * 
          * @returns The checksum of the message.
          */
-        uint8_t get_message_checksum() const;
+        uint16_t get_message_checksum() const;
 
         /**
          * @brief Generates the message checksum.
          * 
          * @returns The generated checksum based on the packet data.
          */
-        uint8_t generate_message_checksum();
+        uint16_t generate_message_checksum();
 
         /**
          * @brief Validates the message checksum.
@@ -164,14 +167,14 @@ class Packet {
          * 
          * @param[in] checksum The checksum of the packet.
          */
-        void set_packet_checksum(uint8_t checksum);
+        void set_packet_checksum(uint16_t checksum);
 
         /**
          * @brief Gets the packet checksum.
          * 
          * @returns The checksum of the packet.
          */
-        uint8_t get_packet_checksum() const;
+        uint16_t get_packet_checksum() const;
 
         /**
          * @brief Generates the packet checksum.
@@ -182,7 +185,7 @@ class Packet {
          * 
          * @returns The generated checksum based on the packet content.
          */
-        uint8_t generate_packet_checksum();
+        uint16_t generate_packet_checksum();
 
         /**
          * @brief Validates the packet checksum.
@@ -267,9 +270,11 @@ class Packet {
          * 
          *  - The fourth byte is the MSB of the 16-bit initialisation vector (IV) for AES encryption and decryption.
          * 
-         *  - The fifth byte is the checksum of the packet (a byte to represent the addidtion of all bytes in the packet, except for the checksum).
+         *  - The fifth byte is the LSB of the checksum of the packet (using CRC16 of all bytes in the packet, except for the checksum bytes).
          * 
-         *  - The sixth up to fifty-third bytes (inclusive, but the packet size doesn't have to be the maximum) are the AES 128-bit encrypted message data of the packet, with the unencryped message structure below:
+         *  - The sixth byte is the MSB of the checksum of the packet (using CRC16 of all bytes in the packet, except for the checksum bytes).
+         * 
+         *  - The seventh up to fifty-fourth bytes (inclusive, but the packet size doesn't have to be the maximum) are the AES 128-bit encrypted message data of the packet, with the unencryped message structure below:
          * 
          *     - The first byte is the type of the packet (SYN, SYNACK, ACK, DATA_DESC, DATA, FIN, with byte values from 0 to 5)
          * 
@@ -281,11 +286,13 @@ class Packet {
          * 
          *     - The fifth byte is the MSB of the packet index.
          * 
-         *     - The sixth byte is the checksum of the message (a byte to represent the addition of all bytes in the message, except for the checksum).
+         *     - The sixth byte is the LSB of the checksum of the message (using CRC16 of all bytes in the packet, except for the checksum bytes).
          * 
-         *     - The seventh byte is the size of the data, not the message (0-40, 40 max size).
+         *     - The seventh byte is the MSB of the checksum of the message (using CRC16 of all bytes in the packet, except for the checksum bytes).
          * 
-         *     - The next bytes are optional: the eigth up to the forty-seventh byte is the actual data of the packet.
+         *     - The eigth byte is the size of the data, not the message (0-39, 39 max size).
+         * 
+         *     - The next bytes are optional: the ninth up to the forty-seventh byte is the actual data of the packet.
          * 
          * @returns A boolean if the raw packet was successfully parsed.
          */
@@ -305,9 +312,11 @@ class Packet {
          * 
          *  - The fourth byte is the MSB of the 16-bit initialisation vector (IV) for AES encryption and decryption.
          * 
-         *  - The fifth byte is the checksum of the packet (a byte to represent the addidtion of all bytes in the packet, except for the checksum).
+         *  - The fifth byte is the LSB of the checksum of the packet (using CRC16 of all bytes in the packet, except for the checksum bytes).
          * 
-         *  - The sixth up to fifty-third bytes (inclusive, but the packet size doesn't have to be the maximum) are the AES 128-bit encrypted message data of the packet, with the unencryped message structure below:
+         *  - The sixth byte is the MSB of the checksum of the packet (using CRC16 of all bytes in the packet, except for the checksum bytes).
+         * 
+         *  - The seventh up to fifty-fourth bytes (inclusive, but the packet size doesn't have to be the maximum) are the AES 128-bit encrypted message data of the packet, with the unencryped message structure below:
          * 
          *     - The first byte is the type of the packet (SYN, SYNACK, ACK, DATA_DESC, DATA, FIN, with byte values from 0 to 5)
          * 
@@ -319,11 +328,13 @@ class Packet {
          * 
          *     - The fifth byte is the MSB of the packet index.
          * 
-         *     - The sixth byte is the checksum of the message (a byte to represent the addition of all bytes in the message, except for the checksum).
+         *     - The sixth byte is the LSB of the checksum of the message (using CRC16 of all bytes in the packet, except for the checksum bytes).
          * 
-         *     - The seventh byte is the size of the data, not the message (0-40, 40 max size).
+         *     - The seventh byte is the MSB of the checksum of the message (using CRC16 of all bytes in the packet, except for the checksum bytes).
          * 
-         *     - The next bytes are optional: the eigth up to the forty-seventh byte is the actual data of the packet.
+         *     - The eigth byte is the size of the data, not the message (0-39, 39 max size).
+         * 
+         *     - The next bytes are optional: the ninth up to the forty-seventh byte is the actual data of the packet.
          */
         void generate_raw();
 
@@ -350,10 +361,10 @@ class Packet {
     private:
         PacketType type; ///< The type of packet.
         uint32_t index; ///< The sequence index of the packet.
-        uint8_t message_checksum; ///< Checksum for the message portion of the packet.
+        uint16_t message_checksum; ///< Checksum for the message portion of the packet.
         uint8_t data_size; ///< The size of the data in the packet.
         char data[MAX_DATA_SIZE]; ///< The data payload of the packet.
-        uint8_t packet_checksum; ///< Checksum for the entire packet.
+        uint16_t packet_checksum; ///< Checksum for the entire packet.
         uint16_t iv; ///< Initialisation vector for encryption.
         char illegal_char_replacement; ///< Replacement character for illegal characters in the packet.
         uint8_t packet_size; ///< The size of the packet in bytes.

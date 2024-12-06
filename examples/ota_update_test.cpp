@@ -20,8 +20,8 @@
 #define LORA_IQCONVERTED IQConverted::OFF
 
 // BCP config
-#define BCP_TIMEOUT 3000 // these should be different between the buoy and the server and ideally prime to avoid getting stuck
-#define BCP_NUM_RETRIES 10 // `timeout * num_retries` should be equal between the buoy and the server
+#define BCP_TIMEOUT 5000 // these should be different between the buoy and the server and ideally prime to avoid getting stuck
+#define BCP_NUM_RETRIES 14 // `timeout * num_retries` should be equal between the buoy and the server
 
 #if PLATFORM == STM32
     PAL_STM32_UART_STREAM LoRaSerial_UART_STM32(USART1); // USART2 is used for the default 'Serial'
@@ -52,6 +52,8 @@ void setup() {
     PAL_SERIAL.begin(9600);
     SERIAL_INTERFACE.begin(9600);
 
+    HAL_RTC_Init
+
     // PAL_SERIAL.println("Update succesful!"); // uncomment to test
 
     uint8_t sd_init_status;
@@ -59,7 +61,7 @@ void setup() {
         sd_init_status = sd.begin();
         if (sd_init_status == 1) {
             break;
-        } 
+        }
 
         PAL_SERIAL.print("SD Initialisation Failed, Status: "); // TODO: when the SD is not initialised from the beginning (e.g. unplugged), it will never be initialised (e.g. if you plug it back in)
         PAL_SERIAL.println(sd_init_status);
@@ -77,7 +79,7 @@ void loop() {
     const bool success = bcp_instance.send(data, strlen(data));
     PAL_SERIAL.print("BCP Status: ");
     PAL_SERIAL.println(success);
-    if (success) {
+    if (firmware_updater.check()) {
         PAL_SERIAL.println("Updating...");
         firmware_updater.update();
     }

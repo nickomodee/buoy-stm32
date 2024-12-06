@@ -2,7 +2,7 @@ import subprocess
 import os
 import shutil
 
-DEBUG = True # setting to `True` will enable debug symbols in the firmware update critical section, which is not wanted for the actual buoy
+DEBUG = False # setting to `True` will enable debug symbols in the firmware update critical section, which is not wanted for the actual buoy
 
 SOURCE_FILES = [
     "lib/fatfs/diskio.cpp",
@@ -17,7 +17,8 @@ SOURCE_FILES = [
     "lib/FirmwareUpdater/FirmwareUpdaterCritical.cpp",
     "lib/PAL_STM32_COMMON/PAL_STM32_COMMON.cpp",
     "lib/SD/SD.cpp",
-    "lib/SD_File/SD_File.cpp"
+    "lib/SD_File/SD_File.cpp",
+    "lib/CRC/CRC.cpp"
 ]
 
 OUTPUT_DIR = "firmware_updater_build"
@@ -50,11 +51,6 @@ CFLAGS = [
     "-std=gnu++17",
     "-fno-exceptions",
     "-fno-rtti",
-    "-Ilib/fatfs",
-    "-Ilib/FirmwareUpdater",
-    "-Ilib/PAL_STM32_COMMON",
-    "-Ilib/SD",
-    "-Ilib/SD_File",
     "-IC:/Users/User/.platformio/packages/framework-stm32cubef3/Drivers/CMSIS/Include",
     "-IC:/Users/User/.platformio/packages/framework-stm32cubef3/Drivers/CMSIS/Device/ST/STM32F3xx/Include",
     "-IC:/Users/User/.platformio/packages/framework-stm32cubef3/Drivers/STM32F3xx_HAL_Driver/Inc",
@@ -62,6 +58,8 @@ CFLAGS = [
     "-IC:/Users/User/.platformio/packages/framework-stm32cubef3/Drivers/CMSIS/DSP/Include",
     "-fno-inline",
     "-fno-inline-functions",
+    "-ffunction-sections",
+    "-fdata-sections",
 ]
 if DEBUG:
     CFLAGS.append("-g")

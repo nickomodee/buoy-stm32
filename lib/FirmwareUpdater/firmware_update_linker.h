@@ -3,10 +3,10 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#define __FIRMWARE __attribute((section(".firmware_update_section"))) __attribute__((used))
-#define __FIRMWARE_BSS __attribute((section(".firmware_update_bss"))) __attribute__((used))
-#define __FIRMWARE_DATA __attribute((section(".firmware_update_data"))) __attribute__((used))
-#define __FIRMWARE_RODATA __attribute((section(".firmware_update_rodata"))) __attribute__((used))
+#define __FIRMWARE __attribute__((section(".firmware_update_section"), used, noinline))
+#define __FIRMWARE_BSS __attribute__((section(".firmware_update_bss"), used, noinline))
+#define __FIRMWARE_DATA __attribute__((section(".firmware_update_data"), used, noinline))
+#define __FIRMWARE_RODATA __attribute__((section(".firmware_update_rodata"), used, noinline))
 
 extern const char firmware_empty[];
 extern const char firmware_crlf[];

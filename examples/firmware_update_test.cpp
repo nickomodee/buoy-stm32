@@ -39,8 +39,7 @@ void setup() {
 
     if (firmware_update_available) {
         PAL_SERIAL.println("Updating firmware...");
-        PAL_SERIAL.print("Firmware update status: ");
-        PAL_SERIAL.println(firmware_updater.update());
+        firmware_updater.update();
         PAL_SERIAL.println("This message shouldn't be seen if successful (unless updating with the same firmware)");
     } else {
         PAL_SERIAL.println("Not updating");

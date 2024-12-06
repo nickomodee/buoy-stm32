@@ -2,7 +2,7 @@
 
 __FIRMWARE SD_File::SD_File(const char* path) {
     const size_t path_length = strlen(path);
-    if (path_length + 1 > PATH_SIZE) {
+    if (path_length + 1 > MAX_PATH_SIZE) {
         return;
     }
     strncpy(path_, path, path_length);

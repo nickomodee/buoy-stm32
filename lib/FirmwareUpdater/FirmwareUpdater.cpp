@@ -1,10 +1,10 @@
 #include "FirmwareUpdater.h"
 
 bool FirmwareUpdater::new_firmware_started_ = false;
-uint32_t FirmwareUpdater::new_firmware_expected_size_ = 0;
-uint16_t FirmwareUpdater::new_firmware_expected_checksum_ = 0;
-uint32_t FirmwareUpdater::current_update_size_ = 0;
-uint16_t FirmwareUpdater::current_update_checksum_ = 0;
+firmware_size_type FirmwareUpdater::new_firmware_expected_size_ = 0;
+firmware_checksum_type FirmwareUpdater::new_firmware_expected_checksum_ = 0;
+firmware_size_type FirmwareUpdater::current_update_size_ = 0;
+firmware_checksum_type FirmwareUpdater::current_update_checksum_ = 0;
 
 FirmwareUpdater::FirmwareUpdater() {}
 
@@ -34,9 +34,8 @@ void FirmwareUpdater::firmware_stream(const uint8_t* data, const size_t size) {
         return;
     }
 
-    for (size_t i = 0; i < size; i++) {
-        current_update_checksum_ += (uint8_t)data[i];
-    }
+    crc32.reset(current_update_checksum_); // we need to start from the previous CRC since it can be interrupted (e.g., by BCP)
+    current_update_checksum_ = crc32.update(data, size);
 
     const uint32_t written_amount = new_firmware_file.write(data, size);
     current_update_size_ += written_amount;
@@ -119,7 +118,7 @@ bool FirmwareUpdater::finish_firmware(const bool success) {
     return true;
 }
 
-bool FirmwareUpdater::initialise_firmware(const uint32_t expected_size, const firmware_checksum_type expected_checksum) {
+bool FirmwareUpdater::initialise_firmware(const firmware_size_type expected_size, const firmware_checksum_type expected_checksum) {
     DEBUG_FIRMWAREUPDATER_PRINTLN("Initialising firmware update...");
     new_firmware_started_ = true;
     new_firmware_expected_size_ = expected_size;
@@ -220,7 +219,7 @@ bool FirmwareUpdater::check() {
         return false;
     }
 
-    firmware_checksum_type firmware_checksum = 0;
+    crc32.reset();
     int firmware_byte;
     for (firmware_size_type i = 0; i < firmware_size; i++) {
         firmware_byte = firmware_file.read();
@@ -228,8 +227,9 @@ bool FirmwareUpdater::check() {
             DEBUG_FIRMWAREUPDATER_PRINTLN("Failed to read firmware byte.");
             return false;
         }
-        firmware_checksum += (uint8_t)firmware_byte; // TODO: USE CRC32
+        crc32.update((uint8_t)firmware_byte);
     }
+    const firmware_checksum_type firmware_checksum = crc32.get_crc();
 
     if (firmware_checksum != expected_firmware_checksum) {
         DEBUG_FIRMWAREUPDATER_PRINT("Firmware checksum mismatch. Expected: ");
@@ -244,10 +244,10 @@ bool FirmwareUpdater::check() {
     return true;
 }
 
-bool FirmwareUpdater::update() {
+void FirmwareUpdater::update() {
     if (!check()) {
         DEBUG_FIRMWAREUPDATER_PRINTLN("Firmware update check failed.");
-        return false;
+        return;
     }
 
     begin_(); // will always return `false` because if it is `true`, it will automatically reset

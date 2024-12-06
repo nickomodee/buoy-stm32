@@ -32,32 +32,26 @@ uint32_t Packet::get_index() const {
     return this->index;
 }
 
-void Packet::set_message_checksum(uint8_t checksum) {
+void Packet::set_message_checksum(uint16_t checksum) {
     this->message_checksum = checksum;
 }
 
-uint8_t Packet::get_message_checksum() const {
+uint16_t Packet::get_message_checksum() const {
     return this->message_checksum;
 }
 
-uint8_t Packet::generate_message_checksum() {
-    uint8_t checksum = 0;
-    checksum += (uint8_t)this->type;
-    checksum += this->index & 0xFF;
-    checksum += (this->index >> 8) & 0xFF;
-    checksum += (this->index >> 16) & 0xFF;
-    checksum += (this->index >> 24) & 0xFF;
+uint16_t Packet::generate_message_checksum() {
+    crc16.reset();
+    crc16.update((uint8_t)this->type);
+    crc16.update((uint8_t*)&this->index, sizeof(this->index)); // little endian format
     // skip checksum for calculating the checksum
-    checksum += this->data_size;
+    crc16.update(this->data_size);
     const uint8_t data_size = PAL_MIN(this->data_size, MAX_DATA_SIZE);
-    for (uint8_t i = 0; i < data_size; ++i) {
-        checksum += this->data[i]; // TODO: USE CRC16
-    }
-    return checksum;
+    return crc16.update(this->data, data_size);
 }
 
 bool Packet::validate_message_checksum() {
-    const uint8_t real_checksum = this->generate_message_checksum();
+    const uint16_t real_checksum = this->generate_message_checksum();
     return real_checksum == this->message_checksum;
 }
 
@@ -78,28 +72,28 @@ const char* Packet::get_data() const {
     return this->data;
 }
 
-void Packet::set_packet_checksum(uint8_t checksum) {
+void Packet::set_packet_checksum(uint16_t checksum) {
     this->packet_checksum = checksum;
 }
 
-uint8_t Packet::get_packet_checksum() const {
+uint16_t Packet::get_packet_checksum() const {
     return this->packet_checksum;
 }
 
-uint8_t Packet::generate_packet_checksum() {
+uint16_t Packet::generate_packet_checksum() {
+    crc16.reset();
     const uint8_t packet_size = PAL_MIN(this->packet_size, MAX_PACKET_SIZE);
-    uint8_t checksum = 0;
     for (uint8_t i = 0; i < packet_size; ++i) {
-        if ((i == PACKET_CHECKSUM_INDEX) || (i == PACKET_ILLEGAL_CHAR_INDEX)) { // skip checksum and illegal char replacement (since if the checksum has an illegal char, we still want to handle this) for calculating the checksum
+        if ((i == PACKET_CHECKSUM_1_INDEX) || (i == PACKET_CHECKSUM_2_INDEX) || (i == PACKET_ILLEGAL_CHAR_INDEX)) { // skip checksum and illegal char replacement (since if the checksum has an illegal char, we still want to handle this) for calculating the checksum
             continue;
         }
-        checksum += this->packet[i]; // TODO: USE CRC16
+        crc16.update(this->packet[i]);
     }
-    return checksum;
+    return crc16.get_crc();
 }
 
 bool Packet::validate_packet_checksum() {
-    const uint8_t real_checksum = this->generate_packet_checksum();
+    const uint16_t real_checksum = this->generate_packet_checksum();
     return real_checksum == this->packet_checksum;
 }
 
@@ -141,7 +135,7 @@ bool Packet::from_raw() {
     this->set_packet_size(this->get_packet_size());
     this->set_illegal_char_replacement(this->packet[PACKET_ILLEGAL_CHAR_INDEX]);
     this->set_iv((uint16_t)(uint8_t)this->packet[PACKET_IV_1_INDEX] | ((uint16_t)(uint8_t)this->packet[PACKET_IV_2_INDEX] << 8));
-    this->set_packet_checksum(this->packet[PACKET_CHECKSUM_INDEX]);
+    this->set_packet_checksum((uint16_t)(uint8_t)this->packet[PACKET_CHECKSUM_1_INDEX] | ((uint16_t)(uint8_t)this->packet[PACKET_CHECKSUM_2_INDEX] << 8));
     const uint8_t encrypted_data_size = this->packet_size - PACKET_OVERHEAD;
     char encrypted_data[encrypted_data_size];
     memcpy(encrypted_data, this->packet + PACKET_OVERHEAD, encrypted_data_size); // unfortunately, we do have to use this buffer because don't want to modify `this->packet` (if we simply use a pointer to `this->packet + PACKET_OVERHEAD`)
@@ -152,7 +146,7 @@ bool Packet::from_raw() {
     }
     this->set_type((PacketType)message[MESSAGE_TYPE_INDEX]);
     this->set_index((uint32_t)(uint8_t)message[MESSAGE_INDEX_1_INDEX] | ((uint32_t)(uint8_t)message[MESSAGE_INDEX_2_INDEX] << 8) | ((uint32_t)(uint8_t)message[MESSAGE_INDEX_3_INDEX] << 16) | ((uint32_t)(uint8_t)message[MESSAGE_INDEX_4_INDEX] << 24));
-    this->set_message_checksum(message[MESSAGE_CHECKSUM_INDEX]);
+    this->set_message_checksum((uint16_t)(uint8_t)message[MESSAGE_CHECKSUM_1_INDEX] | ((uint16_t)(uint8_t)message[MESSAGE_CHECKSUM_2_INDEX] << 8));
     this->set_data_size(message[MESSAGE_DATA_SIZE_INDEX]); // this SHOULD equal `message_size - MESSAGE_OVERHEAD`
     this->set_data(&message[MESSAGE_DATA_START_INDEX]);
     return true;
@@ -165,9 +159,10 @@ void Packet::generate_raw() {
     message[MESSAGE_INDEX_2_INDEX] = (this->index >> 8) & 0xFF;
     message[MESSAGE_INDEX_3_INDEX] = (this->index >> 16) & 0xFF;
     message[MESSAGE_INDEX_4_INDEX] = (this->index >> 24) & 0xFF;
-    const uint8_t message_checksum = this->generate_message_checksum();
+    const uint16_t message_checksum = this->generate_message_checksum();
     this->set_message_checksum(message_checksum);
-    message[MESSAGE_CHECKSUM_INDEX] = this->message_checksum;
+    message[MESSAGE_CHECKSUM_1_INDEX] = this->message_checksum & 0xFF;
+    message[MESSAGE_CHECKSUM_2_INDEX] = this->message_checksum >> 8;
     message[MESSAGE_DATA_SIZE_INDEX] = this->data_size;
     memcpy(&message[MESSAGE_DATA_START_INDEX], this->data, PAL_MIN(this->data_size, MAX_DATA_SIZE));
     const uint16_t iv = this->encryption_->generate_random_iv();
@@ -177,9 +172,10 @@ void Packet::generate_raw() {
     this->packet[PACKET_SIZE_INDEX] = this->packet_size;
     this->packet[PACKET_IV_1_INDEX] = this->iv & 0xFF;
     this->packet[PACKET_IV_2_INDEX] = this->iv >> 8;
-    const uint8_t packet_checksum = this->generate_packet_checksum();
+    const uint16_t packet_checksum = this->generate_packet_checksum();
     this->set_packet_checksum(packet_checksum);
-    this->packet[PACKET_CHECKSUM_INDEX] = this->packet_checksum;
+    this->packet[PACKET_CHECKSUM_1_INDEX] = this->packet_checksum & 0xFF;
+    this->packet[PACKET_CHECKSUM_2_INDEX] = this->packet_checksum >> 8;
     // We want to set the illegal char replacement last, in case IV or checksum also contains the illegal character
     const char illegal_char_replacement = this->replace_illegal_char();
     this->set_illegal_char_replacement(illegal_char_replacement);

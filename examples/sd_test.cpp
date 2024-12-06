@@ -43,7 +43,7 @@ void loop() {
     PAL_SERIAL.println();
 
     {
-        constexpr const char* file_path = "write.txt";
+        constexpr const char file_path[] = "write.txt";
         SD_File file{file_path};
         PAL_SERIAL.print("Writing to \"");
         PAL_SERIAL.print(file_path);
@@ -56,7 +56,7 @@ void loop() {
         file.close();
     }
     {
-        constexpr const char* file_path = "write.txt";
+        constexpr const char file_path[] = "write.txt";
         SD_File file{file_path};
         PAL_SERIAL.println(file.open(FA_READ));
         PAL_SERIAL.print("File size: ");

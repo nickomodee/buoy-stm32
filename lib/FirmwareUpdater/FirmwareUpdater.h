@@ -2,6 +2,7 @@
 
 #include "../SD/SD.h"
 #include "../SD_File/SD_File.h"
+#include "../CRC/CRC.h"
 #include "../PAL/PAL.h"
 #include "../Debug/Debug.h"
 
@@ -15,20 +16,30 @@ extern const uint8_t __FIRMWARE_RODATA update_checksum_size;
 extern const uint8_t __FIRMWARE_RODATA update_size_size;
 extern const uint8_t __FIRMWARE_RODATA firmware_update_retries;
 
-typedef uint16_t firmware_checksum_type;
+typedef uint32_t firmware_checksum_type;
 typedef uint32_t firmware_size_type;
 
-extern uint32_t _flash_update_start;
-extern uint32_t _flash_update_end;
+extern uint32_t _flash_update_start; // from linker
+extern uint32_t _flash_update_end; // from linker
 
 class FirmwareUpdater {
     public:
         FirmwareUpdater();
-        static bool update();
+        static void update();
         static bool check();
         static void firmware_stream(const uint8_t* data, const size_t size);
         static bool finish_firmware(const bool success);
         static bool initialise_firmware(const firmware_size_type expected_size, const firmware_checksum_type expected_checksum);
+
+        static constexpr const char __FIRMWARE_RODATA firmware_update_path[] = "fw.bin";
+        static constexpr const char __FIRMWARE_RODATA new_firmware_path[] = "fw_new.bin";
+        static constexpr const char __FIRMWARE_RODATA firmware_update_size_path[] = "fw_size.bin";
+        static constexpr const char __FIRMWARE_RODATA firmware_update_checksum_path[] = "checksum.bin";
+        static constexpr const char __FIRMWARE_RODATA firmware_update_available_path[] = "avail.txt";
+        static constexpr const char __FIRMWARE_RODATA update_is_available_indicator_byte = '1';
+        static constexpr const uint8_t __FIRMWARE_RODATA update_checksum_size = sizeof(firmware_checksum_type);
+        static constexpr const uint8_t __FIRMWARE_RODATA update_size_size = sizeof(firmware_size_type);
+        static constexpr const uint8_t __FIRMWARE_RODATA firmware_update_retries = 16;
     
     private:
         static bool __FIRMWARE flash_erase_page_(const uint32_t address);
