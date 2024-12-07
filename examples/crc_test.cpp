@@ -7,7 +7,7 @@ void setup() {
     PAL_SERIAL.begin(9600);
     PAL_SERIAL.println('2');
 
-    constexpr const char data[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    constexpr char data[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
     crc16.reset();
     const uint16_t current_crc16 = crc16.update(data, 10);

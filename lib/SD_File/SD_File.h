@@ -26,7 +26,7 @@ class SD_File {
         bool rename(const char* new_path) __FIRMWARE;
         bool exists() __FIRMWARE;
     private:
-        static constexpr const size_t __FIRMWARE_RODATA MAX_PATH_SIZE = 32;
+        static constexpr size_t __FIRMWARE_RODATA MAX_PATH_SIZE = 32;
 
         FIL file_;
         uint8_t mode_;

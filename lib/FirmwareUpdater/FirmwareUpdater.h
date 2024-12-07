@@ -31,15 +31,15 @@ class FirmwareUpdater {
         static bool finish_firmware(const bool success);
         static bool initialise_firmware(const firmware_size_type expected_size, const firmware_checksum_type expected_checksum);
 
-        static constexpr const char __FIRMWARE_RODATA firmware_update_path[] = "fw.bin";
-        static constexpr const char __FIRMWARE_RODATA new_firmware_path[] = "fw_new.bin";
-        static constexpr const char __FIRMWARE_RODATA firmware_update_size_path[] = "fw_size.bin";
-        static constexpr const char __FIRMWARE_RODATA firmware_update_checksum_path[] = "checksum.bin";
-        static constexpr const char __FIRMWARE_RODATA firmware_update_available_path[] = "avail.txt";
-        static constexpr const char __FIRMWARE_RODATA update_is_available_indicator_byte = '1';
-        static constexpr const uint8_t __FIRMWARE_RODATA update_checksum_size = sizeof(firmware_checksum_type);
-        static constexpr const uint8_t __FIRMWARE_RODATA update_size_size = sizeof(firmware_size_type);
-        static constexpr const uint8_t __FIRMWARE_RODATA firmware_update_retries = 16;
+        static constexpr char __FIRMWARE_RODATA firmware_update_path[] = "fw.bin";
+        static constexpr char __FIRMWARE_RODATA new_firmware_path[] = "fw_new.bin";
+        static constexpr char __FIRMWARE_RODATA firmware_update_size_path[] = "fw_size.bin";
+        static constexpr char __FIRMWARE_RODATA firmware_update_checksum_path[] = "checksum.bin";
+        static constexpr char __FIRMWARE_RODATA firmware_update_available_path[] = "avail.txt";
+        static constexpr char __FIRMWARE_RODATA update_is_available_indicator_byte = '1';
+        static constexpr uint8_t __FIRMWARE_RODATA update_checksum_size = sizeof(firmware_checksum_type);
+        static constexpr uint8_t __FIRMWARE_RODATA update_size_size = sizeof(firmware_size_type);
+        static constexpr uint8_t __FIRMWARE_RODATA firmware_update_retries = 16;
     
     private:
         static bool __FIRMWARE flash_erase_page_(const uint32_t address);

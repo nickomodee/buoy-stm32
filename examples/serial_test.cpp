@@ -89,12 +89,12 @@ static void MX_GPIO_Init(void)
     HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 }
 
-/* Error Handler ------------------------------------------------------------*/
-void Error_Handler() {
-    __disable_irq();
-    while (1) {
-    }
-}
+// /* Error Handler ------------------------------------------------------------*/
+// void Error_Handler() {
+//     __disable_irq();
+//     while (1) {
+//     }
+// }
 
 extern "C" void SysTick_Handler() { // make this visible to C files
     HAL_IncTick();

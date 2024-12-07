@@ -49,9 +49,9 @@ static void UART_MSP_INIT(const USART_TypeDef* UART_instance) {
         __HAL_RCC_GPIOA_CLK_ENABLE();
         /**USART2 GPIO Configuration
         PA2     ------> USART2_TX
-        PA3     ------> USART2_RX
+        PA15    ------> USART2_RX
         */
-        GPIO_InitStruct.Pin = GPIO_PIN_2 | GPIO_PIN_3;
+        GPIO_InitStruct.Pin = GPIO_PIN_2 | GPIO_PIN_15;
         GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
         GPIO_InitStruct.Pull = GPIO_NOPULL;
         GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;

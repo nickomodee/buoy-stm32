@@ -64,3 +64,4 @@ extern uint32_t PAL_GENERAL_RANDOM(uint32_t howsmall, uint32_t howbig);
 #define PAL_ONEWIRE PAL_EXPAND(ONEWIRE)
 
 #define PAL_RESET PAL_EXPAND(RESET)
+#define PAL_SLEEP PAL_EXPAND(SLEEP)

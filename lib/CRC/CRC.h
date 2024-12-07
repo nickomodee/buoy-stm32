@@ -16,7 +16,7 @@ public:
     uint16_t get_crc() __FIRMWARE;
 
 private:
-    static constexpr const uint16_t __FIRMWARE_RODATA polynomial = 0xF13B;
+    static constexpr uint16_t __FIRMWARE_RODATA polynomial = 0xF13B;
 };
 
 class CRC32 {
@@ -30,7 +30,7 @@ public:
     uint32_t get_crc() __FIRMWARE;
 
 private:
-    static constexpr const uint32_t __FIRMWARE_RODATA polynomial = 0x741B8CD7;
+    static constexpr uint32_t __FIRMWARE_RODATA polynomial = 0x741B8CD7;
 };
 
 extern CRC16 __FIRMWARE_BSS crc16;

@@ -97,3 +97,27 @@ void PAL_STM32_DELAY_US(const uint32_t us) {
     uint32_t ticks = us * (SystemCoreClock / 1000000); // convert us to clock ticks
     while ((DWT->CYCCNT - start) < ticks) {};
 }
+
+void PAL_STM32_SLEEP() {
+    // // disaple peripherals
+
+    // // disable ADC
+    // ADC1->CR |= ADC_CR_ADDIS; 
+    // ADC2->CR |= ADC_CR_ADDIS;
+    
+    // // disable DAC
+    // DAC->CR &= ~DAC_CR_EN1;
+    // DAC->CR &= ~DAC_CR_EN2;
+
+    // // disable GPIO clocks
+    // RCC->AHBENR &= ~(RCC_AHBENR_GPIOAEN | RCC_AHBENR_GPIOBEN | RCC_AHBENR_GPIOCEN | RCC_AHBENR_GPIODEN | RCC_AHBENR_GPIOFEN);
+
+    // // disable USART, SPI, I2C clocks
+    // RCC->APB1ENR &= ~(RCC_APB1ENR_USART2EN | RCC_APB1ENR_I2C1EN);
+    // RCC->APB2ENR &= ~(RCC_APB2ENR_USART1EN | RCC_APB2ENR_SPI1EN);
+
+    __HAL_RCC_PWR_CLK_ENABLE();
+    __HAL_PWR_CLEAR_FLAG(PWR_FLAG_WU);
+    DBGMCU->CR = 0; // disable debug interface
+    HAL_PWR_EnterSTANDBYMode();
+}
