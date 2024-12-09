@@ -42,7 +42,7 @@ __FIRMWARE SD::SD() {
     }
 
     /*Configure GPIO pin Output Level */
-    HAL_GPIO_WritePin(SD_CS_GPIO_Port, SD_CS_Pin, GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(SD_CS_GPIO_Port, SD_CS_Pin, GPIO_PIN_SET);
 
     /*Configure GPIO pin : SD_CS_Pin */
     GPIO_InitStruct.Pin = SD_CS_Pin;
@@ -74,7 +74,6 @@ __FIRMWARE SD::SD() {
         Error_Handler();
     }
 
-    // FatFS Init
     MX_FATFS_Init();
 }
 
@@ -88,8 +87,16 @@ __FIRMWARE SD::~SD() {
     }
 }
 
+extern Disk_drvTypeDef __FIRMWARE_BSS disk;
+
 bool __FIRMWARE SD::begin() {
-    HAL_Delay(1000);
+    FatFs_ = {0};
+    dir_ = {0};
+    dir_open_ = false;
+    mounted_  = false;
+    file_info_ = {0};
+    disk = {{0},{0},{0},0}; // this is from fatfs
+    MX_FATFS_Init(); // since we cleared disk, we must initialise the driver again
 
     return mount();
 }

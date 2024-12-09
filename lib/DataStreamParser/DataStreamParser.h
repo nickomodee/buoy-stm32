@@ -18,23 +18,25 @@ enum class DataStreamParserState {
 class DataStreamParser {
     public:
         DataStreamParser();
-        void reset();
-        void parse_data(const char* data, const size_t size, const uint32_t current_index, const uint32_t final_index);
+        static void reset();
+        static void parse_data(const char* data, const size_t size, const uint32_t current_index, const uint32_t final_index);
 
     private:
-        bool handle_state_(bool final);
+        static bool handle_state_(bool final);
 
-        const DataStreamParserFirmwareInitFunc firmware_init_func_ = &FirmwareUpdater::initialise_firmware;
-        const DataStreamParserFirmwareStreamFunc firmware_stream_func_ = &FirmwareUpdater::firmware_stream;
-        const DataStreamParserFirmwareFinaliseFunc firmware_finalise_func_ = &FirmwareUpdater::finish_firmware;
+        static const DataStreamParserFirmwareInitFunc firmware_init_func_;
+        static const DataStreamParserFirmwareStreamFunc firmware_stream_func_;
+        static const DataStreamParserFirmwareFinaliseFunc firmware_finalise_func_;
         static constexpr size_t BUFFER_SIZE = 8;
-        uint8_t buffer_[BUFFER_SIZE] = {0};
-        size_t buffer_offset_ = 0;
-        size_t bytes_needed_ = sizeof(expected_firmware_size_);
-        DataStreamParserState state_ = DataStreamParserState::FIRMWARE_SIZE;
+        static uint8_t buffer_[BUFFER_SIZE];
+        static size_t buffer_offset_;
+        static size_t bytes_needed_;
+        static DataStreamParserState state_;
         // protocol fields
-        firmware_size_type expected_firmware_size_ = 0;
-        firmware_size_type current_firmware_size_ = 0;
-        firmware_checksum_type expected_firmware_checksum_ = 0;
-        firmware_checksum_type current_firmware_checksum_ = 0;
+        static firmware_size_type expected_firmware_size_;
+        static firmware_size_type current_firmware_size_;
+        static firmware_checksum_type expected_firmware_checksum_;
+        static firmware_checksum_type current_firmware_checksum_;
 };
+
+extern DataStreamParser data_stream_parser;

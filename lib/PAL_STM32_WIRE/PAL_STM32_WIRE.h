@@ -15,7 +15,7 @@ class PAL_STM32_WIRE : public PAL_STM32_STREAM {
     public:
         static const uint16_t RX_BUFFER_SIZE = 256;
         static const uint16_t TX_BUFFER_SIZE = 256;
-        PAL_STM32_WIRE() : PAL_STM32_STREAM(RX_BUFFER_SIZE) {};
+        PAL_STM32_WIRE();
         void begin();
         void beginTransmission(const uint8_t address);
         uint8_t endTransmission();

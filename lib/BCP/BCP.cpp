@@ -302,21 +302,24 @@ void BCP::set_retransmission_control(RetransmissionController controller) {
 }
 
 bool BCP::send(const char* data, size_t data_size) {
-    bool LoRa_begin_success = false;
-    for (uint8_t i = 0; i < this-> num_retries_; ++i) {
-        if (this->lora_->begin()) {
-            LoRa_begin_success = true;
-            break;
-        }
-    }
-    if (!LoRa_begin_success) {
-        return false;
-    }
     const LoRaState saved_state = this->lora_->get_state();
-    this->lora_->set_state(LoRaState::RX); // we do this so that after TX, we immediately revert to RX to catch packets
-    this->current_index_ = 0;
-    this->set_retransmission_control(RetransmissionController::BUOY);
     for (uint8_t i = 0; i < this->num_retries_; ++i) {
+        bool LoRa_begin_success = false;
+        for (uint8_t i = 0; i < this-> num_retries_; ++i) {
+            if (this->lora_->begin()) {
+                DEBUG_BCP_PRINTLN(F("LoRa begin success..."));
+                LoRa_begin_success = true;
+                break;
+            }
+        }
+        if (!LoRa_begin_success) {
+            DEBUG_BCP_PRINTLN(F("LoRa begin failed..."));
+            continue;
+        }
+        this->lora_->set_state(LoRaState::RX); // we do this so that after TX, we immediately revert to RX to catch packets
+        this->current_index_ = 0;
+        this->set_retransmission_control(RetransmissionController::BUOY);
+
         DEBUG_BCP_PRINTLN(F("Synchronising"));
         if (!this->synchronise()) {
             continue;

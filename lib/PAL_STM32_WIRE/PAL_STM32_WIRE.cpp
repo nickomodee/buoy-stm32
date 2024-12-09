@@ -33,6 +33,8 @@ static void I2C_MspInit(const I2C_TypeDef* instance) {
 
 }
 
+PAL_STM32_WIRE::PAL_STM32_WIRE() : PAL_STM32_STREAM(RX_BUFFER_SIZE) {};
+
 void PAL_STM32_WIRE::begin() {
     this->hi2c_.Instance = I2C1;
     this->hi2c_.Init.Timing = 0x00201D2B;

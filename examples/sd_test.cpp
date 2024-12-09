@@ -15,7 +15,7 @@ void setup() {
     uint8_t sd_init_status;
     while (true) {
         sd_init_status = sd.begin();
-        if (sd_init_status == 1) {
+        if (sd_init_status) {
             break;
         }
 

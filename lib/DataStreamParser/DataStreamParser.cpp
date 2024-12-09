@@ -1,5 +1,18 @@
 #include "DataStreamParser.h"
 
+const DataStreamParserFirmwareInitFunc DataStreamParser::firmware_init_func_ = &FirmwareUpdater::initialise_firmware;
+const DataStreamParserFirmwareStreamFunc DataStreamParser::firmware_stream_func_ = &FirmwareUpdater::firmware_stream;
+const DataStreamParserFirmwareFinaliseFunc DataStreamParser::firmware_finalise_func_ = &FirmwareUpdater::finish_firmware;
+uint8_t DataStreamParser::buffer_[BUFFER_SIZE] = {0};
+size_t DataStreamParser::buffer_offset_ = 0;
+size_t DataStreamParser::bytes_needed_ = sizeof(expected_firmware_size_);
+DataStreamParserState DataStreamParser::state_ = DataStreamParserState::FIRMWARE_SIZE;
+// protocol fields
+firmware_size_type DataStreamParser::expected_firmware_size_ = 0;
+firmware_size_type DataStreamParser::current_firmware_size_ = 0;
+firmware_checksum_type DataStreamParser::expected_firmware_checksum_ = 0;
+firmware_checksum_type DataStreamParser::current_firmware_checksum_ = 0;
+
 DataStreamParser::DataStreamParser() {
     reset();
 }
@@ -131,3 +144,5 @@ bool DataStreamParser::handle_state_(bool finish) {
 
     return finish;
 }
+
+DataStreamParser data_stream_parser;

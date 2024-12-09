@@ -45,14 +45,9 @@ LoRa lora(&lora_serial, LORA_TIMEOUT, LORA_NUM_RETRIES, LORA_LOCAL_ADDR, LORA_TA
 const uint8_t encryption_key[16] = { 0x41, 0x41, 0x41, 0x41, 0x41, 0x41, 0x41, 0x41, 0x41, 0x41, 0x41, 0x41, 0x41, 0x41, 0x41, 0x41 };
 Encryption encryption(encryption_key);
 
-FirmwareUpdater firmware_updater;
-DataStreamParser data_stream_parser;
-
 void setup() {
     PAL_SERIAL.begin(9600);
     SERIAL_INTERFACE.begin(9600);
-
-    HAL_RTC_Init
 
     // PAL_SERIAL.println("Update succesful!"); // uncomment to test
 

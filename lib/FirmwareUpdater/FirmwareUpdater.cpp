@@ -254,3 +254,5 @@ void FirmwareUpdater::update() {
 
     DEBUG_FIRMWAREUPDATER_PRINTLN("Firmware update failed.");
 }
+
+FirmwareUpdater firmware_updater;

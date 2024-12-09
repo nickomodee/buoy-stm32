@@ -55,3 +55,5 @@ class FirmwareUpdater {
         static firmware_size_type current_update_size_;
         static firmware_checksum_type current_update_checksum_;
 };
+
+extern FirmwareUpdater firmware_updater;

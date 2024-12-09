@@ -6,8 +6,6 @@
 
 #define ARR_SIZE(x) sizeof(x) / sizeof(x[0])
 
-FirmwareUpdater firmware_updater;
-
 void setup() {
     PAL_SERIAL.begin(9600);
     PAL_DELAY(2000);
