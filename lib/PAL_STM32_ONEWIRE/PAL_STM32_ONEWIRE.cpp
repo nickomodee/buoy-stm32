@@ -6,14 +6,6 @@ PAL_STM32_ONEWIRE::PAL_STM32_ONEWIRE(const uint8_t physical_pin) {
     begin(physical_pin);
 }
 
-static GPIO_TypeDef* get_GPIO_port(const uint8_t physical_pin) {
-    return pin_map[physical_pin].GPIO_port;
-}
-
-static uint16_t get_GPIO_pin(const uint8_t physical_pin) {
-    return pin_map[physical_pin].GPIO_pin;
-}
-
 void PAL_STM32_ONEWIRE::begin(const uint8_t physical_pin) {
     GPIO_port_ = get_GPIO_port(physical_pin);
     GPIO_pin_ = get_GPIO_pin(physical_pin);

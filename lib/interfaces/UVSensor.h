@@ -9,8 +9,8 @@ class UVSensor {
         /**
          * @brief Read the UV index.
          * 
-         * @returns A double of the value of the UV index on the UV index scale.
+         * @returns A float of the value of the UV index on the UV index scale.
          */
-        virtual double read_uv_index() = 0;
+        virtual float read_uv_index() = 0;
         virtual ~UVSensor() = default;
 };

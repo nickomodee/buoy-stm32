@@ -10,14 +10,14 @@ void Error_Handler();
 extern void setup(); // `setup()` function in main file
 extern void loop(); // `loop()` function in main file
 
-void blink(const uint32_t times) {
-    for (uint32_t i = 0; i < times; i++) {
-        HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_3);
-        HAL_Delay(500);
-        HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_3);
-        HAL_Delay(500);
-    }
-}
+// void blink(const uint32_t times) {
+//     for (uint32_t i = 0; i < times; i++) {
+//         HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_3);
+//         HAL_Delay(500);
+//         HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_3);
+//         HAL_Delay(500);
+//     }
+// }
 
 int main() {
     HAL_Init();
@@ -73,25 +73,25 @@ void SystemClock_Config() {
 }
 
 /* GPIO Initialization Function ---------------------------------------------*/
-static void MX_GPIO_Init(void)
+static void MX_GPIO_Init()
 {
-    GPIO_InitTypeDef GPIO_InitStruct = {0};
-    /* USER CODE BEGIN MX_GPIO_Init_1 */
-    /* USER CODE END MX_GPIO_Init_1 */
+    // GPIO_InitTypeDef GPIO_InitStruct = {0};
+    // /* USER CODE BEGIN MX_GPIO_Init_1 */
+    // /* USER CODE END MX_GPIO_Init_1 */
 
-    /* GPIO Ports Clock Enable */
-    __HAL_RCC_GPIOA_CLK_ENABLE();
-    __HAL_RCC_GPIOB_CLK_ENABLE();
+    // /* GPIO Ports Clock Enable */
+    // __HAL_RCC_GPIOA_CLK_ENABLE();
+    // __HAL_RCC_GPIOB_CLK_ENABLE();
 
-    /*Configure GPIO pin Output Level */
-    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_3, GPIO_PIN_RESET);
+    // /*Configure GPIO pin Output Level */
+    // HAL_GPIO_WritePin(GPIOB, GPIO_PIN_3, GPIO_PIN_RESET);
 
-    /*Configure GPIO pin : PB3 */
-    GPIO_InitStruct.Pin = GPIO_PIN_3;
-    GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+    // /*Configure GPIO pin : PB3 */
+    // GPIO_InitStruct.Pin = GPIO_PIN_3;
+    // GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+    // GPIO_InitStruct.Pull = GPIO_NOPULL;
+    // GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+    // HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 }
 
 /* Error Handler ------------------------------------------------------------*/

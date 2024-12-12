@@ -61,3 +61,11 @@ static constexpr PinMapping pin_map[] = {
     {GPIOA, GPIO_PIN_7},  // A6
     {GPIOA, GPIO_PIN_2},  // A7
 };
+
+static __attribute__((used)) GPIO_TypeDef* get_GPIO_port(const uint8_t physical_pin) {
+    return pin_map[physical_pin].GPIO_port;
+}
+
+static __attribute__((used)) uint16_t get_GPIO_pin(const uint8_t physical_pin) {
+    return pin_map[physical_pin].GPIO_pin;
+}

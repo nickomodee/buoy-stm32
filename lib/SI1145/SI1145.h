@@ -61,9 +61,9 @@ class SI1145 : public UVSensor, public VisibleLuxSensor, public IRLuxSensor {
         SI1145(const uint8_t i2c_address = SI1145_I2C_ADDRESS, PAL_TWOWIRE* wire = &PAL_WIRE);
         bool init() override;
         void reset();
-        double read_uv_index() override;
-        double read_visible_lux() override;
-        double read_ir_lux() override;
+        float read_uv_index() override;
+        float read_visible_lux() override;
+        float read_ir_lux() override;
     private:
         uint16_t read_visible_counts(); // the raw ADC counts which need to be converted to lux
         uint16_t read_ir_counts(); // the raw ADC counts which need to be converted to lux

@@ -2,7 +2,7 @@
 #include "DS18B20.h"
 #include "TempSensor.h"
 
-#define ONEWIRE_PIN 7
+#define ONEWIRE_PIN 9
 
 DS18B20 ds18b20(ONEWIRE_PIN);
 TempSensor& temp_sensor = ds18b20;

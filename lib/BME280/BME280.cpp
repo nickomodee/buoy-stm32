@@ -93,17 +93,17 @@ int32_t BME280::read_temp_fine() {
 }
 
 // Modifed from: https://github.com/adafruit/Adafruit_BME280_Library/blob/master/Adafruit_BME280.cpp, cause WTF is happening
-double BME280::read_temp() {
+float BME280::read_temp() {
     const int32_t t_fine = read_temp_fine();
     if (t_fine == -1) { // temp measurement was disabled
         return NAN;
     }
 
-    return (double)((t_fine * 5 + 128) / 256) / 100;
+    return (float)((t_fine * 5 + 128) / 256) / 100;
 }
 
 // Modifed from: https://github.com/adafruit/Adafruit_BME280_Library/blob/master/Adafruit_BME280.cpp, cause WTF is happening
-double BME280::read_pressure() {
+float BME280::read_pressure() {
     int64_t var1, var2, var3, var4;
 
     const int32_t t_fine = read_temp_fine();
@@ -141,7 +141,7 @@ double BME280::read_pressure() {
 }
 
 // Modifed from: https://github.com/adafruit/Adafruit_BME280_Library/blob/master/Adafruit_BME280.cpp, cause WTF is happening
-double BME280::read_humidity() {
+float BME280::read_humidity() {
     int32_t var1, var2, var3, var4, var5;
 
     const int32_t t_fine = read_temp_fine();

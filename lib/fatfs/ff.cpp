@@ -1322,7 +1322,7 @@ DWORD __FIRMWARE ld_clust (
 
 #if !_FS_READONLY
 static
-void st_clust (
+void __FIRMWARE st_clust (
 	BYTE* dir,	/* Pointer to the directory entry */
 	DWORD cl	/* Value to be set */
 )

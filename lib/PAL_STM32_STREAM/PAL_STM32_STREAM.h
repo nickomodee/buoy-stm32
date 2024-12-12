@@ -26,6 +26,8 @@ class PAL_STM32_STREAM_BUFFER {
         bool get(uint8_t &data);
         bool peek(uint8_t &data);
         const uint8_t* get_read_ptr();
+        const uint8_t* get_write_ptr();
+        uint16_t remaining_capacity() const;
         uint16_t get_count() const;
         void set_count(const uint16_t count);
 
@@ -35,6 +37,7 @@ class PAL_STM32_STREAM_BUFFER {
         volatile uint8_t* buffer_;
         volatile uint16_t head_;
         volatile uint16_t tail_;
+        volatile uint16_t count_; // we are using count instead of `tail_ - head_` in the case that we write the full buffer size, which causes it to loop round so `tail_ == head_`, making the buffer appear empty
 };
 
 /**

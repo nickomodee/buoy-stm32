@@ -9,8 +9,8 @@ class IRLuxSensor {
         /**
          * @brief Read the infrared light intensity in lux.
          * 
-         * @returns A double of the value of the infrared light intensity in lux.
+         * @returns A float of the value of the infrared light intensity in lux.
          */
-        virtual double read_ir_lux() = 0;
+        virtual float read_ir_lux() = 0;
         virtual ~IRLuxSensor() = default;
 };

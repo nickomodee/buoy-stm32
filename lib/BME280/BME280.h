@@ -207,9 +207,9 @@ class BME280 : public TempSensor, public PressureSensor, public HumiditySensor {
                           SensorSampling hum_sampling = SensorSampling::SAMPLING_X16,
                           SensorFilter filter = SensorFilter::FILTER_OFF,
                           StandbyDuration duration = StandbyDuration::STANDBY_MS_0_5);
-        double read_temp() override;
-        double read_pressure() override;
-        double read_humidity() override;
+        float read_temp() override;
+        float read_pressure() override;
+        float read_humidity() override;
     private:
         /**
          * @brief Checks the status of whether the device is busy reading calibration data.

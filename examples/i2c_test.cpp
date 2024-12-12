@@ -252,7 +252,7 @@ void loop() {
 
     PAL_SERIAL.print("Humidity: ");
     PAL_SERIAL.print(humidity);
-    PAL_SERIAL.println(" %RH");
+    PAL_SERIAL.println("%RH");
 
     PAL_SERIAL.println("------------------------");
 

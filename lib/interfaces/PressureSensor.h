@@ -9,8 +9,8 @@ class PressureSensor {
         /**
          * @brief Read the pressure.
          * 
-         * @returns A double of the value of the pressure in Pascals.
+         * @returns A float of the value of the pressure in Pascals.
          */
-        virtual double read_pressure() = 0;
+        virtual float read_pressure() = 0;
         virtual ~PressureSensor() = default;
 };

@@ -9,8 +9,8 @@ class VisibleLuxSensor {
         /**
          * @brief Read the visible light intensity in lux.
          * 
-         * @returns A double of the value of the visible light intensity in lux.
+         * @returns A float of the value of the visible light intensity in lux.
          */
-        virtual double read_visible_lux() = 0;
+        virtual float read_visible_lux() = 0;
         virtual ~VisibleLuxSensor() = default;
 };

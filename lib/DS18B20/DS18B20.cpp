@@ -10,6 +10,6 @@ bool DS18B20::init(const uint8_t address[8]) {
     return (bool)DS18B20_Base::select(const_cast<uint8_t*>(address));
 }
 
-double DS18B20::read_temp() {
-    return (double)DS18B20_Base::getTempC();
+float DS18B20::read_temp() {
+    return (float)DS18B20_Base::getTempC();
 }

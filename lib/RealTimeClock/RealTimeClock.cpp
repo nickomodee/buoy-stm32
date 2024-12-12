@@ -194,7 +194,7 @@ extern "C" void HAL_RTC_AlarmAEventCallback(RTC_HandleTypeDef *hrtc) {
     rtc.alarm_callback();
 }
 
-extern "C" void RTC_Alarm_IRQHandler(void) {
+extern "C" void RTC_Alarm_IRQHandler() {
     HAL_RTC_AlarmIRQHandler(rtc.get_hrtc_ptr());
 }
 

@@ -12,7 +12,7 @@ static void configure_ADC() {
     __HAL_RCC_GPIOA_CLK_ENABLE();
     __HAL_RCC_ADC1_CLK_ENABLE();
  
-    gpioInit.Pin = GPIO_PIN_4;
+    gpioInit.Pin = GPIO_PIN_1;
     gpioInit.Mode = GPIO_MODE_ANALOG;
     gpioInit.Pull = GPIO_NOPULL;
     HAL_GPIO_Init(GPIOA, &gpioInit);
@@ -39,7 +39,7 @@ static void configure_ADC() {
  
     HAL_ADC_Init(&hadc1);
  
-    adcChannel.Channel = ADC_CHANNEL_4;
+    adcChannel.Channel = ADC_CHANNEL_1;
     adcChannel.Rank = 1;
     // adcChannel.SamplingTime = ADC_SAMPLETIME_480CYCLES;
     adcChannel.Offset = 0;
@@ -67,6 +67,7 @@ static uint32_t get_adc_random_value() {
         HAL_ADC_Start(&hadc1);
         if (HAL_ADC_PollForConversion(&hadc1, 100) == HAL_OK) {
             uint32_t adc_value = HAL_ADC_GetValue(&hadc1);
+            PAL_SERIAL.println(adc_value);
             seed ^= (adc_value & 0x1) << i; // Use only the least significant bit of each sample
         }
         HAL_ADC_Stop(&hadc1);

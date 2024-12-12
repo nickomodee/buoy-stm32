@@ -31,7 +31,7 @@ bool SI1145::init() {
     return true;
 }
 
-double SI1145::read_uv_index() {
+float SI1145::read_uv_index() {
     return read_16(SI1145_REG_UVINDEX) / 100.0;
 }
 
@@ -39,7 +39,7 @@ uint16_t SI1145::read_visible_counts() {
     return read_16(SI1145_REG_VISIBLE);
 }
 
-double SI1145::read_visible_lux() {
+float SI1145::read_visible_lux() {
     return read_visible_counts() / VISIBLE_SUNLIGHT_LUX;
 }
 
@@ -47,7 +47,7 @@ uint16_t SI1145::read_ir_counts() {
     return read_16(SI1145_REG_IR);
 }
 
-double SI1145::read_ir_lux() {
+float SI1145::read_ir_lux() {
     return read_ir_counts() / IR_SUNLIGHT_LUX;
 }
 

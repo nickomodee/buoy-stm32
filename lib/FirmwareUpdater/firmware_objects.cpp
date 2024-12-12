@@ -164,7 +164,7 @@ __FIRMWARE HAL_StatusTypeDef HAL_SPI_Init(SPI_HandleTypeDef *hspi) {
     uint32_t frxth;
 
     /* Check the SPI handle allocation */
-    if (hspi == NULL) {
+    if (hspi == nullptr) {
         return HAL_ERROR;
     }
 
@@ -220,7 +220,7 @@ __FIRMWARE HAL_StatusTypeDef HAL_SPI_Init(SPI_HandleTypeDef *hspi) {
         hspi->ErrorCallback = HAL_SPI_ErrorCallback;               /* Legacy weak ErrorCallback        */
         hspi->AbortCpltCallback = HAL_SPI_AbortCpltCallback;       /* Legacy weak AbortCpltCallback    */
 
-        if (hspi->MspInitCallback == NULL) {
+        if (hspi->MspInitCallback == nullptr) {
             hspi->MspInitCallback = HAL_SPI_MspInit; /* Legacy weak MspInit  */
         }
 
@@ -337,7 +337,7 @@ __FIRMWARE HAL_StatusTypeDef HAL_SPI_Transmit(SPI_HandleTypeDef *hspi, uint8_t *
         goto error;
     }
 
-    if ((pData == NULL) || (Size == 0U)) {
+    if ((pData == nullptr) || (Size == 0U)) {
         errorcode = HAL_ERROR;
         goto error;
     }
@@ -350,11 +350,11 @@ __FIRMWARE HAL_StatusTypeDef HAL_SPI_Transmit(SPI_HandleTypeDef *hspi, uint8_t *
     hspi->TxXferCount = Size;
 
     /*Init field not used in handle to zero */
-    hspi->pRxBuffPtr = (uint8_t *)NULL;
+    hspi->pRxBuffPtr = (uint8_t *)nullptr;
     hspi->RxXferSize = 0U;
     hspi->RxXferCount = 0U;
-    hspi->TxISR = NULL;
-    hspi->RxISR = NULL;
+    hspi->TxISR = nullptr;
+    hspi->RxISR = nullptr;
 
     /* Configure communication direction : 1Line */
     if (hspi->Init.Direction == SPI_DIRECTION_1LINE) {
@@ -504,7 +504,7 @@ __FIRMWARE HAL_StatusTypeDef HAL_SPI_TransmitReceive(SPI_HandleTypeDef *hspi, ui
         goto error;
     }
 
-    if ((pTxData == NULL) || (pRxData == NULL) || (Size == 0U)) {
+    if ((pTxData == nullptr) || (pRxData == nullptr) || (Size == 0U)) {
         errorcode = HAL_ERROR;
         goto error;
     }
@@ -524,8 +524,8 @@ __FIRMWARE HAL_StatusTypeDef HAL_SPI_TransmitReceive(SPI_HandleTypeDef *hspi, ui
     hspi->TxXferSize = Size;
 
     /*Init field not used in handle to zero */
-    hspi->RxISR = NULL;
-    hspi->TxISR = NULL;
+    hspi->RxISR = nullptr;
+    hspi->TxISR = nullptr;
 
 #if (USE_SPI_CRC != 0U)
     /* Reset CRC Calculation */
@@ -1022,11 +1022,11 @@ extern "C" {
         if (ch == '\0')
             return (char *)s;
 
-        return NULL;
+        return nullptr;
     }
 
     char* __FIRMWARE strrchr(const char *s, int c) {
-        const char *last = NULL;
+        const char *last = nullptr;
         char ch = (char)c;
 
         while (*s) {
@@ -1050,7 +1050,7 @@ extern "C" {
                 return (void *)(p + i);
         }
 
-        return NULL;
+        return nullptr;
     }
 
     char* __FIRMWARE strstr(const char *haystack, const char *needle) {
@@ -1069,7 +1069,7 @@ extern "C" {
                 return (char *)haystack;
         }
 
-        return NULL;
+        return nullptr;
     }
 
     size_t __FIRMWARE strspn(const char *s, const char *accept) {
@@ -1094,12 +1094,12 @@ extern "C" {
     }
 
     char* __FIRMWARE strtok(char *str, const char *delim) {
-        static char* __FIRMWARE_BSS static_str = NULL;
+        static char* __FIRMWARE_BSS static_str = nullptr;
 
         if (str)
             static_str = str;
         else if (!static_str)
-            return NULL;
+            return nullptr;
 
         char *token_start = static_str;
 
@@ -1107,8 +1107,8 @@ extern "C" {
             static_str++;
 
         if (!*static_str) {
-            static_str = NULL;
-            return NULL;
+            static_str = nullptr;
+            return nullptr;
         }
 
         token_start = static_str;
@@ -1120,7 +1120,7 @@ extern "C" {
             *static_str = '\0';
             static_str++;
         } else {
-            static_str = NULL;
+            static_str = nullptr;
         }
 
         return token_start;

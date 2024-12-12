@@ -10,6 +10,8 @@
         "stm32f3xx_hal_conf.h": "c",
         "firmware_update_linker.h": "c",
         "sd.h": "c",
-        "cstdint": "cpp"
+        "cstdint": "cpp",
+        "type_traits": "cpp",
+        "*.d": "cpp"
     }
 }

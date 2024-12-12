@@ -8,7 +8,7 @@
 
 extern void Error_Handler();
 
-#define WIRE_MAX_TIMEOUT 10000 // 10 seconds for the timeout for HAL Wire events
+#define WIRE_MAX_TIMEOUT 1000 // 1 second for the timeout for HAL Wire events
 
 // Modified from: https://github.com/arduino/ArduinoCore-avr/blob/master/libraries/Wire/src/Wire.h and https://github.com/arduino/ArduinoCore-avr/blob/master/libraries/Wire/src/Wire.cpp
 class PAL_STM32_WIRE : public PAL_STM32_STREAM {

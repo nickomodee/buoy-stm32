@@ -68,7 +68,7 @@ void SystemClock_Config() {
 }
 
 /* GPIO Initialization Function ---------------------------------------------*/
-static void MX_GPIO_Init(void)
+static void MX_GPIO_Init()
 {
     GPIO_InitTypeDef GPIO_InitStruct = {0};
     /* USER CODE BEGIN MX_GPIO_Init_1 */
