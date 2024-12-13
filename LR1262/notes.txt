@@ -1,0 +1,1 @@
+Open `STM32Cube_FW_WL_V1.3.0\Projects\B-WL5M-SUBG1\Applications\LoRaWAN\LoRaWAN_AT_Slave\STM32CubeIDE\.project` in STM32CubeIDE and choose to import all. Build and then upload the .elf (located under `Debug`) using the STM32CubeProgrammer in UART mode, 115200 baud rate. Make sure to plug in the LR1262 while holding the `BOOT` button.

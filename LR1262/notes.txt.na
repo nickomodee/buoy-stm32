@@ -1,0 +1,43 @@
+Instructions here: https://community.platformio.org/t/how-to-use-stm32wl55jc-under-stm32cube-framework/32926. Make sure to modify the platform.io `platform.json` file located at `~/.platformio/platforms/ststm32/platform.json` to include:
+
+```
+    "framework-stm32cubewl": {
+      "type": "framework",
+      "optional": true,
+      "owner": "platformio",
+      "version": "symlink://C:/path/to/here/STM32CubeWL"
+    },
+```
+
+underneath:
+```
+    "framework-zephyr": {
+    "type": "framework",
+```
+
+Also modify `nucleo_wl55jc.json` at `~/.platformio/platforms/ststm32/boards/nucleo_wl55jc.json` to include the `stm32cube` framework:
+```
+  "frameworks": [
+    "arduino",
+    "stm32cube",
+    "zephyr"
+  ],
+```
+
+Clone `STM32CubeWL` from github using the following command: `git clone --recursive https://github.com/STMicroelectronics/STM32CubeWL`, then make sure to add this `package.json`:
+```
+{
+  "description": "STM32Cube is a set of tools and embedded software bricks available free of charge to enable fast and easy development on the STM32 platform (STM32CubeWL MCU Firmware Package)",
+  "keywords": [
+    "framework",
+    "hal",
+    "stm32",
+    "st"
+  ],
+  "name": "framework-stm32cubewl",
+  "version": "1.26.2",
+  "homepage": "https://github.com/STMicroelectronics/STM32CubeWL"
+}
+```
+
+Then, remove the `.git` subdirectory to prevent compatibility when using our git `buoy-stm32`, since it is a descendant of it.

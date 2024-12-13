@@ -13,6 +13,7 @@ void setup() {
     PAL_SERIAL.begin(9600);
     Wire.begin();
     while (!si1145.init()) {
+        PAL_SERIAL.println("SI1145 initialisation failed");
         PAL_DELAY(1000);
     }
 }
@@ -23,7 +24,7 @@ void loop() {
     const float ir_lux = ir_lux_sensor.read_ir_lux();
 
     PAL_SERIAL.print("UV Index: ");
-    PAL_SERIAL.print(uv_index, 2); // 2 d.p.
+    PAL_SERIAL.print(uv_index / 100.0f, 2); // 2 d.p.
     PAL_SERIAL.println();
 
     PAL_SERIAL.print("Visible Light (Lux): ");
