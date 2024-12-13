@@ -1,0 +1,3 @@
+C:/Users/User/OneDrive/Documents/buoy-stm32/LR1262/STM32Cube_FW_WL_V1.3.0/Projects/B-WL5M-SUBG1/Applications/LoRaWAN/LoRaWAN_AT_Slave/Core/Src/subghz.c:30:6:MX_SUBGHZ_Init	2
+C:/Users/User/OneDrive/Documents/buoy-stm32/LR1262/STM32Cube_FW_WL_V1.3.0/Projects/B-WL5M-SUBG1/Applications/LoRaWAN/LoRaWAN_AT_Slave/Core/Src/subghz.c:51:6:HAL_SUBGHZ_MspInit	1
+C:/Users/User/OneDrive/Documents/buoy-stm32/LR1262/STM32Cube_FW_WL_V1.3.0/Projects/B-WL5M-SUBG1/Applications/LoRaWAN/LoRaWAN_AT_Slave/Core/Src/subghz.c:68:6:HAL_SUBGHZ_MspDeInit	1

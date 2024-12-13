@@ -58,7 +58,7 @@ struct ATCommand_s
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
-#define CMD_SIZE                        540
+#define CMD_SIZE                        1024
 #define CIRC_BUFF_SIZE                  8
 
 /* USER CODE BEGIN PD */
@@ -78,12 +78,18 @@ struct ATCommand_s
 static const char *const ATError_description[] =
 {
   "\r\nOK\r\n",                     /* AT_OK */
+  /* USER CODE BEGIN AT_BLANK_DESC */
+  "",                               /* AT_BLANK */
+  /* USER CODE END AT_BLANK_DESC */
   "\r\nAT_ERROR\r\n",               /* AT_ERROR */
   "\r\nAT_PARAM_ERROR\r\n",         /* AT_PARAM_ERROR */
   "\r\nAT_BUSY_ERROR\r\n",          /* AT_BUSY_ERROR */
   "\r\nAT_TEST_PARAM_OVERFLOW\r\n", /* AT_TEST_PARAM_OVERFLOW */
   "\r\nAT_NO_NETWORK_JOINED\r\n",   /* AT_NO_NET_JOINED */
   "\r\nAT_RX_ERROR\r\n",            /* AT_RX_ERROR */
+  /* USER CODE BEGIN AT_TX_ERROR_DESC */
+  "\r\nAT_TX_ERROR\r\n",            /* AT_TX_ERROR */
+  /* USER CODE END AT_TX_ERROR_DESC */
   "\r\nAT_NO_CLASS_B_ENABLE\r\n",   /* AT_NO_CLASS_B_ENABLE */
   "\r\nAT_DUTYCYCLE_RESTRICTED\r\n", /* AT_DUTYCYCLE_RESTRICTED */
   "\r\nAT_CRYPTO_ERROR\r\n",        /* AT_CRYPTO_ERROR */
@@ -512,6 +518,55 @@ static const struct ATCommand_s ATCommand[] =
     .set = AT_return_error,
     .run = AT_test_stop,
   },
+
+  /* USER CODE BEGIN CUSTOM_COMMANDS */
+  // radio custom commands
+  {
+    .string = AT_CCONF,
+    .size_string = sizeof(AT_CCONF) - 1,
+#ifndef NO_HELP
+    .help_string = "AT"AT_CCONF"=<Freq in Hz>:<Power in dBm>:<Lora Bandwidth <0 to 6>:<Lora SF>:<CodingRate 4/5, 4/6, 4/7, 4/8>:\r\n\
+         <Lna>:<LowDrOpt 0:off, 1:on, 2:Auto><CR>. Configure custom RX or TX for LoRa\r\n"
+    	"AT+CCONF=915000000:22:4:12:4/5:1:2\r\n",
+#endif /* !NO_HELP */
+    .get = AT_custom_get_config,
+    .set = AT_custom_set_config,
+    .run = AT_return_error,
+  },
+
+  {
+    .string = AT_CTX,
+    .size_string = sizeof(AT_CTX) - 1,
+#ifndef NO_HELP
+    .help_string = "AT"AT_CTX"=<Packet data in hex separated with spaces><CR>. Sends a LoRa packet\r\n",
+#endif /* !NO_HELP */
+    .get = AT_return_error,
+    .set = AT_custom_tx,
+    .run = AT_return_error,
+  },
+
+  {
+    .string = AT_CRX,
+    .size_string = sizeof(AT_CRX) - 1,
+#ifndef NO_HELP
+    .help_string = "AT"AT_CRX"<CR>. Starts receiving LoRa data\r\n",
+#endif /* !NO_HELP */
+    .get = AT_return_error,
+    .set = AT_return_error,
+    .run = AT_custom_rx,
+  },
+
+  {
+    .string = AT_COFF,
+    .size_string = sizeof(AT_COFF) - 1,
+#ifndef NO_HELP
+    .help_string = "AT"AT_COFF". Turns off on-going LoRa RX\r\n",
+#endif /* !NO_HELP */
+    .get = AT_return_error,
+    .set = AT_return_error,
+    .run = AT_custom_off,
+  },
+  /* USER CODE END CUSTOM_COMMANDS */
 
   /* Radio access commands */
 #ifdef AT_RADIO_ACCESS

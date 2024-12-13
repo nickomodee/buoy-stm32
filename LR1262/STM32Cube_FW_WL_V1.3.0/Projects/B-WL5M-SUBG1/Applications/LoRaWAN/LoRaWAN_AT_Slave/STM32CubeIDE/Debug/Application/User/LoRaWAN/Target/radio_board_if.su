@@ -1,0 +1,7 @@
+C:/Users/User/OneDrive/Documents/buoy-stm32/LR1262/STM32Cube_FW_WL_V1.3.0/Projects/B-WL5M-SUBG1/Applications/LoRaWAN/LoRaWAN_AT_Slave/LoRaWAN/Target/radio_board_if.c:59:9:RBI_Init	8	static
+C:/Users/User/OneDrive/Documents/buoy-stm32/LR1262/STM32Cube_FW_WL_V1.3.0/Projects/B-WL5M-SUBG1/Applications/LoRaWAN/LoRaWAN_AT_Slave/LoRaWAN/Target/radio_board_if.c:67:9:RBI_DeInit	8	static
+C:/Users/User/OneDrive/Documents/buoy-stm32/LR1262/STM32Cube_FW_WL_V1.3.0/Projects/B-WL5M-SUBG1/Applications/LoRaWAN/LoRaWAN_AT_Slave/LoRaWAN/Target/radio_board_if.c:75:9:RBI_ConfigRFSwitch	8	static
+C:/Users/User/OneDrive/Documents/buoy-stm32/LR1262/STM32Cube_FW_WL_V1.3.0/Projects/B-WL5M-SUBG1/Applications/LoRaWAN/LoRaWAN_AT_Slave/LoRaWAN/Target/radio_board_if.c:83:9:RBI_GetTxConfig	0	static
+C:/Users/User/OneDrive/Documents/buoy-stm32/LR1262/STM32Cube_FW_WL_V1.3.0/Projects/B-WL5M-SUBG1/Applications/LoRaWAN/LoRaWAN_AT_Slave/LoRaWAN/Target/radio_board_if.c:91:9:RBI_IsTCXO	8	static
+C:/Users/User/OneDrive/Documents/buoy-stm32/LR1262/STM32Cube_FW_WL_V1.3.0/Projects/B-WL5M-SUBG1/Applications/LoRaWAN/LoRaWAN_AT_Slave/LoRaWAN/Target/radio_board_if.c:99:9:RBI_IsDCDC	8	static
+C:/Users/User/OneDrive/Documents/buoy-stm32/LR1262/STM32Cube_FW_WL_V1.3.0/Projects/B-WL5M-SUBG1/Applications/LoRaWAN/LoRaWAN_AT_Slave/LoRaWAN/Target/radio_board_if.c:107:9:RBI_GetRFOMaxPowerConfig	8	static

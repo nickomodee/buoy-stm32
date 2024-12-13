@@ -184,7 +184,7 @@ uint8_t hex_char_to_byte(char c) {
         return c - 'A' + 10;
     }
     // invalid
-    return 0;
+    return (uint8_t)-1;
 }
 
 bool LoRa::recv() {
@@ -211,7 +211,7 @@ bool LoRa::recv() {
             if (buffer_counter >= LORA_MAX_SIZE) {
                 goto fail;
             }
-            this->buffer[buffer_counter] = (hex_char_to_byte(c1) << 4) | hex_char_to_byte(c2);
+            this->buffer[buffer_counter] = (hex_char_to_byte(c1) << 4) | hex_char_to_byte(c2); // TODO: validate c1 and c2 != -1
             buffer_counter++;
             if (this->lora_serial->read_blocking(timeout) != ' ') { // flush ' ' char
                 goto fail;
@@ -226,7 +226,7 @@ bool LoRa::recv() {
             }
         }
         const char expected_buffer_2[] = "\r\n";
-        // we need 2 more "\r\n" for RX finish
+        // we need 2 more "\r\n" for RX finish (but not in a row so we can't do `"\r\n\r\n"`)
         if (!this->lora_serial->expected(expected_buffer_2, strlen(expected_buffer_2), serial_buffer, LORA_SERIAL_BUFFER_SIZE, this->timeout)) {
             goto fail;
         }

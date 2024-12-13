@@ -463,6 +463,21 @@
 			<locationURI>PARENT-1-PROJECT_LOC/LoRaWAN/App/app_lorawan.c</locationURI>
 		</link>
 		<link>
+			<name>Application/User/LoRaWAN/App/app_lorawan.h</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/LoRaWAN/App/app_lorawan.h</locationURI>
+		</link>
+		<link>
+			<name>Application/User/LoRaWAN/App/custom.c</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/LoRaWAN/App/custom.c</locationURI>
+		</link>
+		<link>
+			<name>Application/User/LoRaWAN/App/custom.h</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/LoRaWAN/App/custom.h</locationURI>
+		</link>
+		<link>
 			<name>Application/User/LoRaWAN/App/lora_app.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/LoRaWAN/App/lora_app.c</locationURI>
@@ -473,9 +488,19 @@
 			<locationURI>PARENT-1-PROJECT_LOC/LoRaWAN/App/lora_at.c</locationURI>
 		</link>
 		<link>
+			<name>Application/User/LoRaWAN/App/lora_at.h</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/LoRaWAN/App/lora_at.h</locationURI>
+		</link>
+		<link>
 			<name>Application/User/LoRaWAN/App/lora_command.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/LoRaWAN/App/lora_command.c</locationURI>
+		</link>
+		<link>
+			<name>Application/User/LoRaWAN/App/lora_command.h</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/LoRaWAN/App/lora_command.h</locationURI>
 		</link>
 		<link>
 			<name>Application/User/LoRaWAN/App/lora_info.c</name>
@@ -486,6 +511,11 @@
 			<name>Application/User/LoRaWAN/App/test_rf.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/LoRaWAN/App/test_rf.c</locationURI>
+		</link>
+		<link>
+			<name>Application/User/LoRaWAN/App/test_rf.h</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/LoRaWAN/App/test_rf.h</locationURI>
 		</link>
 		<link>
 			<name>Application/User/LoRaWAN/Target/radio_board_if.c</name>

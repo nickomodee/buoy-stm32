@@ -31,7 +31,7 @@ extern "C" {
 #include "stm32_adv_trace.h"
 
 /* USER CODE BEGIN Includes */
-
+#include "custom.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
@@ -42,12 +42,18 @@ extern "C" {
 typedef enum eATEerror
 {
   AT_OK = 0,
+  /* USER CODE BEGIN AT_BLANK_DEF */
+  AT_BLANK,
+  /* USER CODE END AT_BLANK_DEF */
   AT_ERROR,
   AT_PARAM_ERROR,
   AT_BUSY_ERROR,
   AT_TEST_PARAM_OVERFLOW,
   AT_NO_NET_JOINED,
   AT_RX_ERROR,
+  /* USER CODE BEGIN AT_TX_ERROR_DEF */
+  AT_TX_ERROR,
+  /* USER CODE BEGIN AT_TX_ERROR_DEF */
   AT_NO_CLASS_B_ENABLE,
   AT_DUTYCYCLE_RESTRICTED,
   AT_CRYPTO_ERROR,
@@ -123,6 +129,14 @@ typedef enum eATEerror
 #define AT_TRX        "+TRX"
 #define AT_TTH        "+TTH"
 #define AT_TOFF       "+TOFF"
+
+/* USER CODE BEGIN CUSTOM_COMMAND_AT_DEFS */
+// radio custom commands
+#define AT_CCONF      "+CCONF"
+#define AT_CTX        "+CTX"
+#define AT_CRX        "+CRX"
+#define AT_COFF       "+COFF"
+/* USER CODE END CUSTOM_COMMAND_AT_DEFS */
 
 /* Radio access commands */
 #define AT_REGW       "+REGW"
@@ -616,6 +630,18 @@ ATEerror_t AT_test_tx_hopping(const char *param);
   * @retval AT_OK
   */
 ATEerror_t AT_test_stop(const char *param);
+
+/* USER CODE BEGIN CUSTOM_COMMANDS */
+ATEerror_t AT_custom_get_config(const char *param);
+
+ATEerror_t AT_custom_set_config(const char *param);
+
+ATEerror_t AT_custom_tx(const char *param);
+
+ATEerror_t AT_custom_rx(const char *param);
+
+ATEerror_t AT_custom_off(const char *param);
+/* USER CODE END CUSTOM_COMMANDS */
 
 /* --------------- Radio access commands --------------- */
 /**

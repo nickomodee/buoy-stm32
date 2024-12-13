@@ -1,0 +1,5 @@
+C:/Users/User/OneDrive/Documents/buoy-stm32/LR1262/STM32Cube_FW_WL_V1.3.0/Projects/B-WL5M-SUBG1/Applications/LoRaWAN/LoRaWAN_AT_Slave/Core/Src/adc_if.c:181:17:ADC_ReadChannels	4
+C:/Users/User/OneDrive/Documents/buoy-stm32/LR1262/STM32Cube_FW_WL_V1.3.0/Projects/B-WL5M-SUBG1/Applications/LoRaWAN/LoRaWAN_AT_Slave/Core/Src/adc_if.c:79:6:SYS_InitMeasurement	1
+C:/Users/User/OneDrive/Documents/buoy-stm32/LR1262/STM32Cube_FW_WL_V1.3.0/Projects/B-WL5M-SUBG1/Applications/LoRaWAN/LoRaWAN_AT_Slave/Core/Src/adc_if.c:90:6:SYS_DeInitMeasurement	1
+C:/Users/User/OneDrive/Documents/buoy-stm32/LR1262/STM32Cube_FW_WL_V1.3.0/Projects/B-WL5M-SUBG1/Applications/LoRaWAN/LoRaWAN_AT_Slave/Core/Src/adc_if.c:139:10:SYS_GetBatteryLevel	3
+C:/Users/User/OneDrive/Documents/buoy-stm32/LR1262/STM32Cube_FW_WL_V1.3.0/Projects/B-WL5M-SUBG1/Applications/LoRaWAN/LoRaWAN_AT_Slave/Core/Src/adc_if.c:97:9:SYS_GetTemperatureLevel	2
