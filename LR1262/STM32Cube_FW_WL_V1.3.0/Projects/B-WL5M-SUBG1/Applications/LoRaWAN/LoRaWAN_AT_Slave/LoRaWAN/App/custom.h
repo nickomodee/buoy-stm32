@@ -24,6 +24,8 @@ extern "C" {
 #define RX_CONTINUOUS_ON              1
 #define DEFAULT_LDR_OPT               2
 
+#define LORA_MAX_PACKET_SIZE          255
+
 typedef enum
 {
   custom_BW_7kHz = 0,

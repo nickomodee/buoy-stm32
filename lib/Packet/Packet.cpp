@@ -141,7 +141,9 @@ bool Packet::from_raw() {
     memcpy(encrypted_data, this->packet + PACKET_OVERHEAD, encrypted_data_size); // unfortunately, we do have to use this buffer because don't want to modify `this->packet` (if we simply use a pointer to `this->packet + PACKET_OVERHEAD`)
     char message[MAX_MESSAGE_SIZE + AES_BLOCK_SIZE]; // Even though we know the maximum size, according to the BCP, the encryption library checks the WORST case, which is when there is no padding, so it is safest to append the block size just in case to avoid buffer overflow
     const size_t message_size = this->encryption_->decrypt(encrypted_data, encrypted_data_size, message, sizeof(message) / sizeof(message[0]), this->iv);
-    if (message_size == 0) {
+    if ((message_size < MESSAGE_DATA_START_INDEX - 1) || (message_size != MESSAGE_OVERHEAD + message[MESSAGE_DATA_SIZE_INDEX])) {
+        DEBUG_PACKET_PRINT("Error while decrypting message with invalid size: ");
+        DEBUG_PACKET_PRINTLN(message_size);
         return false;
     }
     this->set_type((PacketType)message[MESSAGE_TYPE_INDEX]);

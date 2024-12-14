@@ -39,8 +39,10 @@ void MX_LPUART1_UART_Init(void)
   /* USER CODE BEGIN LPUART1_Init 1 */
 
   /* USER CODE END LPUART1_Init 1 */
+  /* USER CODE BEGIN USART_AND_BAUD_RATE */
   hlpuart1.Instance = LPUART1;
   hlpuart1.Init.BaudRate = 9600;
+  /* USER CODE END USART_AND_BAUD_RATE */
   hlpuart1.Init.WordLength = UART_WORDLENGTH_8B;
   hlpuart1.Init.StopBits = UART_STOPBITS_1;
   hlpuart1.Init.Parity = UART_PARITY_NONE;

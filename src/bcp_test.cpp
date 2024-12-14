@@ -7,14 +7,13 @@
 // LoRa config
 #define LORA_TIMEOUT 500
 #define LORA_NUM_RETRIES 5
-#define LORA_LOCAL_ADDR 101
-#define LORA_TARGET_ADDR 102
 #define LORA_FREQ 915000000 // 915 MHz
 #define LORA_DATA_RATE DataRate::SF12
 #define LORA_BANDWIDTH Bandwidth::BANDWIDTH_250_KHZ
 #define LORA_CODE_RATE CodeRate::RATE_4_BY_5
 #define LORA_TX_POWER 22
-#define LORA_IQCONVERTED IQConverted::OFF
+#define LORA_LNA LNA::ON
+#define LORA_LOW_DR_OPT LowDrOpt::AUTO
 
 // BCP config
 #define BCP_TIMEOUT 5000 // these should be different between the buoy and the server and ideally prime to avoid getting stuck
@@ -37,7 +36,7 @@
 #endif
 
 LoRaSerial lora_serial(SERIAL_INTERFACE);
-LoRa lora(&lora_serial, LORA_TIMEOUT, LORA_NUM_RETRIES, LORA_LOCAL_ADDR, LORA_TARGET_ADDR, LORA_FREQ, LORA_DATA_RATE, LORA_BANDWIDTH, LORA_CODE_RATE, LORA_TX_POWER, LORA_IQCONVERTED);
+LoRa lora(&lora_serial, LORA_TIMEOUT, LORA_NUM_RETRIES, LORA_FREQ, LORA_DATA_RATE, LORA_BANDWIDTH, LORA_CODE_RATE, LORA_TX_POWER, LORA_LNA, LORA_LOW_DR_OPT);
 
 const uint8_t encryption_key[16] = { 0x41, 0x41, 0x41, 0x41, 0x41, 0x41, 0x41, 0x41, 0x41, 0x41, 0x41, 0x41, 0x41, 0x41, 0x41, 0x41 };
 Encryption encryption(encryption_key);

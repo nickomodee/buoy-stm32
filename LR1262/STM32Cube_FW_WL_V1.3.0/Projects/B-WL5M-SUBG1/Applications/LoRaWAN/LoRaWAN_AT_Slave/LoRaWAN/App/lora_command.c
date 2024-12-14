@@ -535,15 +535,15 @@ static const struct ATCommand_s ATCommand[] =
   },
 
   {
-    .string = AT_CTX,
-    .size_string = sizeof(AT_CTX) - 1,
-#ifndef NO_HELP
-    .help_string = "AT"AT_CTX"=<Packet data in hex separated with spaces><CR>. Sends a LoRa packet\r\n",
-#endif /* !NO_HELP */
-    .get = AT_return_error,
-    .set = AT_custom_tx,
-    .run = AT_return_error,
-  },
+      .string = AT_CTX,
+      .size_string = sizeof(AT_CTX) - 1,
+  #ifndef NO_HELP
+      .help_string = "AT"AT_CTX"=<Packet data in 2-byte padded hex, no separation><CR>. Sends a LoRa packet\r\n",
+  #endif /* !NO_HELP */
+      .get = AT_return_error,
+      .set = AT_custom_tx,
+      .run = AT_return_error,
+    },
 
   {
     .string = AT_CRX,

@@ -162,6 +162,9 @@ class Packet:
         except AssertionError as e:
             logger.debug(f"Error while decrypting: {e}")
             return False
+        if (len(message) < MESSAGE_DATA_START_INDEX - 1) or (len(message) != MESSAGE_OVERHEAD + message[MESSAGE_DATA_SIZE_INDEX]):
+            logger.debug(f"Error while decrypting message with invalid size: {len(message)}")
+            return False
         self.set_type(PacketType(message[MESSAGE_TYPE_INDEX]))
         self.set_index(message[MESSAGE_INDEX_1_INDEX] | (message[MESSAGE_INDEX_2_INDEX] << 8) | (message[MESSAGE_INDEX_3_INDEX] << 16) | (message[MESSAGE_INDEX_4_INDEX] << 24))
         self.set_message_checksum(message[MESSAGE_CHECKSUM_1_INDEX] | (message[MESSAGE_CHECKSUM_2_INDEX] << 8))

@@ -2171,7 +2171,7 @@ uint8_t hex_char_to_byte(char c) {
 #define ARR_SIZE(x) sizeof(x) / sizeof(x[0])
 
 ATEerror_t AT_custom_tx(const char *param) {
-	static uint8_t packet[255]; // magic byte 255 (max LoRa packet size) but I don't want to disturb other parts of the codebase
+	static uint8_t packet[LORA_MAX_PACKET_SIZE];
 	uint16_t packet_index = 0;
 
 	uint16_t i = 0;

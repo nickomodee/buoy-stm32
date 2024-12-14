@@ -1,6 +1,6 @@
 from Packet import Packet, PacketType, MAX_DATA_SIZE
 from Encryption import Encryption
-from LoRa import LoRa, LoRaState, DataRate, Bandwidth, CodeRate, IQConverted
+from LoRa import LoRa, LoRaState, DataRate, Bandwidth, CodeRate, LNA, LowDrOpt
 from CRC import crc32
 import serial, serial.serialutil, serial.tools.list_ports
 import time
@@ -312,14 +312,13 @@ if __name__ == "__main__":
     # LoRa config
     LORA_TIMEOUT: float = 0.5
     LORA_NUM_RETRIES: Literal[5] = 5
-    LORA_LOCAL_ADDR: Literal[102] = 102 # Swapped from the microcontroller end
-    LORA_TARGET_ADDR: Literal[101] = 101
     LORA_FREQ: Literal[915000000] = 915000000  # 915 MHz
     LORA_DATA_RATE: DataRate = DataRate.SF12
     LORA_BANDWIDTH: Bandwidth = Bandwidth.BANDWIDTH_250_KHZ
     LORA_CODE_RATE: CodeRate = CodeRate.RATE_4_BY_5
     LORA_TX_POWER: Literal[22] = 22
-    LORA_IQCONVERTED: IQConverted = IQConverted.OFF
+    LORA_LNA: LNA = LNA.ON
+    LORA_LOW_DR_OPT: LowDrOpt = LowDrOpt.AUTO
 
     # BCP config
     BCP_TIMEOUT: float = 7.0 # these should be different between the buoy and the server and ideally prime to avoid getting stuck
@@ -334,7 +333,7 @@ if __name__ == "__main__":
         print(f"Error opening serial communication on COM port '{LORA_COM_PORT}': {e}")
         print(f"Available ports: {list(map(lambda x: f'{x.device}: {x.description}', serial.tools.list_ports.comports()))}")
         exit(-1)
-    lora: LoRa = LoRa(lora_serial=lora_serial, timeout=LORA_TIMEOUT, num_retries=LORA_NUM_RETRIES, local_addr=LORA_LOCAL_ADDR, target_addr=LORA_TARGET_ADDR, freq=LORA_FREQ, data_rate=LORA_DATA_RATE, bandwidth=LORA_BANDWIDTH, code_rate=LORA_CODE_RATE, tx_power=LORA_TX_POWER, iqconverted=LORA_IQCONVERTED)
+    lora: LoRa = LoRa(lora_serial=lora_serial, timeout=LORA_TIMEOUT, num_retries=LORA_NUM_RETRIES, freq=LORA_FREQ, data_rate=LORA_DATA_RATE, bandwidth=LORA_BANDWIDTH, code_rate=LORA_CODE_RATE, tx_power=LORA_TX_POWER, lna=LORA_LNA, low_dr_opt=LORA_LOW_DR_OPT)
     
     encryption_key: List[int] = [0x41] * 16
     encryption: Encryption = Encryption(encryption_key)

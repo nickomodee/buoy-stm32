@@ -5,7 +5,7 @@
 #include "stm32_seq.h"
 #include "utilities_def.h"
 
-static custom_parameter_t custom_param = {F_915MHz, EMISSION_POWER, custom_BW_125kHz, SF12, CR4o5, 1, DEFAULT_LDR_OPT};
+static custom_parameter_t custom_param = {F_915MHz, EMISSION_POWER, custom_BW_250kHz, SF12, CR4o5, 1, DEFAULT_LDR_OPT};
 
 static __IO uint32_t radio_tx_done_flag = 0;
 static __IO uint32_t radio_tx_timeout_flag = 0;
@@ -23,7 +23,7 @@ static void custom_on_tx_done();
 /*!
  * \brief Function to be executed on Radio RX Done event
  */
-static void custom_on_rx_done(uint8_t *packet, uint16_t size, int16_t rssi, int8_t snr);
+static void custom_on_rx_done(const uint8_t *packet, const uint16_t size, const int16_t rssi, const int8_t snr);
 
 /*!
  * \brief Function executed on Radio RX Timeout event
@@ -53,11 +53,15 @@ int32_t custom_get_config(custom_parameter_t *param) {
 int32_t custom_off() {
 	// sleeping will stop receiving
 	Radio.Sleep();
-	AT_PPRINTF("Sleeping...\r\n");
+	AT_PPRINTF("Idle...\r\n");
 	return 0;
 }
 
 int32_t custom_tx_start(const uint8_t* packet, const uint16_t packet_size) {
+	if (packet_size > LORA_MAX_PACKET_SIZE) {
+		return -2;
+	}
+
     radio_tx_done_flag = 0;
     radio_tx_timeout_flag = 0;
 
@@ -145,7 +149,7 @@ void custom_on_tx_done() {
 	UTIL_SEQ_SetEvt(1 << CFG_SEQ_Evt_RadioOnTstRF);
 }
 
-void custom_on_rx_done(uint8_t *packet, uint16_t size, int16_t rssi, int8_t LoraSnr_FskCfo) {
+void custom_on_rx_done(const uint8_t *packet, const uint16_t size, const int16_t rssi, const int8_t snr) {
 	AT_PPRINTF("OnRxDone\r\n");
 	AT_PPRINTF("Recv:\r\n");
 
@@ -153,7 +157,7 @@ void custom_on_rx_done(uint8_t *packet, uint16_t size, int16_t rssi, int8_t Lora
 		AT_PPRINTF("%02x ", packet[i]);
 	}
 
-	AT_PPRINTF("\r\nData end\r\n\r\n");
+	AT_PPRINTF("\r\nData end\r\nrssi = %d dBm, snr = %d dB\r\n", rssi, snr);
 }
 
 void custom_on_tx_timeout() {

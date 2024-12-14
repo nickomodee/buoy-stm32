@@ -1,0 +1,4 @@
+C:/Users/User/OneDrive/Documents/buoy-stm32/LR1262/STM32Cube_FW_WL_V1.3.0/Projects/B-WL5M-SUBG1/Applications/LoRaWAN/LoRaWAN_AT_Slave/LoRaWAN/App/lora_command.c:830:13:CMD_GetChar	4
+C:/Users/User/OneDrive/Documents/buoy-stm32/LR1262/STM32Cube_FW_WL_V1.3.0/Projects/B-WL5M-SUBG1/Applications/LoRaWAN/LoRaWAN_AT_Slave/LoRaWAN/App/lora_command.c:947:13:com_error	2
+C:/Users/User/OneDrive/Documents/buoy-stm32/LR1262/STM32Cube_FW_WL_V1.3.0/Projects/B-WL5M-SUBG1/Applications/LoRaWAN/LoRaWAN_AT_Slave/LoRaWAN/App/lora_command.c:675:6:CMD_Init	2
+C:/Users/User/OneDrive/Documents/buoy-stm32/LR1262/STM32Cube_FW_WL_V1.3.0/Projects/B-WL5M-SUBG1/Applications/LoRaWAN/LoRaWAN_AT_Slave/LoRaWAN/App/lora_command.c:696:6:CMD_Process	31

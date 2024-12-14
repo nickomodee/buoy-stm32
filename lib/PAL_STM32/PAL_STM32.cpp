@@ -12,7 +12,7 @@ static void configure_ADC() {
     __HAL_RCC_GPIOA_CLK_ENABLE();
     __HAL_RCC_ADC1_CLK_ENABLE();
  
-    gpioInit.Pin = GPIO_PIN_1;
+    gpioInit.Pin = GPIO_PIN_0;
     gpioInit.Mode = GPIO_MODE_ANALOG;
     gpioInit.Pull = GPIO_NOPULL;
     HAL_GPIO_Init(GPIOA, &gpioInit);
@@ -37,7 +37,9 @@ static void configure_ADC() {
     hadc1.Init.DMAContinuousRequests = ENABLE;
     hadc1.Init.EOCSelection = DISABLE;
  
-    HAL_ADC_Init(&hadc1);
+    if (HAL_ADC_Init(&hadc1) != HAL_OK) {
+        Error_Handler();
+    }
  
     adcChannel.Channel = ADC_CHANNEL_1;
     adcChannel.Rank = 1;
@@ -67,7 +69,6 @@ static uint32_t get_adc_random_value() {
         HAL_ADC_Start(&hadc1);
         if (HAL_ADC_PollForConversion(&hadc1, 100) == HAL_OK) {
             uint32_t adc_value = HAL_ADC_GetValue(&hadc1);
-            PAL_SERIAL.println(adc_value);
             seed ^= (adc_value & 0x1) << i; // Use only the least significant bit of each sample
         }
         HAL_ADC_Stop(&hadc1);
@@ -76,16 +77,39 @@ static uint32_t get_adc_random_value() {
     return seed;
 }
 
-uint32_t PAL_STM32_RANDOMSEED_INIT_ENTROPY() {
-    init_adc_for_entropy();
+static uint32_t get_micros_random_value() {
+    uint32_t seed = 0;
 
-    uint32_t seed = get_adc_random_value();
+    for (int i = 0; i < 32; i++) {
+        const uint32_t micros = PAL_STM32_MICROS();
+        seed ^= (micros & 0x1) << i; // Use only the least significant bit of each sample
+    }
+
+    return seed;
+}
+
+uint32_t PAL_STM32_RANDOMSEED_INIT_ENTROPY() {
+    // init_adc_for_entropy();
+
+    // const uint32_t seed = get_adc_random_value();
+    const uint32_t seed = get_micros_random_value();
     PAL_GENERAL_RANDOMSEED(seed);
     return seed;
 }
 
 
 static bool is_dwt_initialised = false;
+
+uint32_t PAL_STM32_MICROS() {
+    if (!is_dwt_initialised) {
+        CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk; // enable DWT
+        DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;            // enable cycle counter
+        is_dwt_initialised = true;
+    }
+    
+    const uint32_t ticks = DWT->CYCCNT;
+    return ticks / (SystemCoreClock / 1000000);
+}
 
 void PAL_STM32_DELAY_US(const uint32_t us) {
     if (!is_dwt_initialised) {
@@ -94,8 +118,8 @@ void PAL_STM32_DELAY_US(const uint32_t us) {
         is_dwt_initialised = true;
     }
     
-    uint32_t start = DWT->CYCCNT;
-    uint32_t ticks = us * (SystemCoreClock / 1000000); // convert us to clock ticks
+    const uint32_t start = DWT->CYCCNT;
+    const uint32_t ticks = us * (SystemCoreClock / 1000000); // convert us to clock ticks
     while ((DWT->CYCCNT - start) < ticks) {};
 }
 

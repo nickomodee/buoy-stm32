@@ -4,7 +4,7 @@ import shutil
 
 env = DefaultEnvironment()
 
-ENABLE_FIRMWARE_UPDATER_PRUNING = False
+ENABLE_FIRMWARE_UPDATER_PRUNING = True
 firmware_update_sections = ("firmware_update_section", "firmware_update_bss", "firmware_update_data", "firmware_update_rodata")
 
 def prune_firmware_update_sections(source, target, env):

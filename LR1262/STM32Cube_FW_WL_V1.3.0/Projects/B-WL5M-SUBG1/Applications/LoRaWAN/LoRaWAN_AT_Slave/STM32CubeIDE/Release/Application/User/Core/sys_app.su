@@ -1,0 +1,13 @@
+C:/Users/User/OneDrive/Documents/buoy-stm32/LR1262/STM32Cube_FW_WL_V1.3.0/Projects/B-WL5M-SUBG1/Applications/LoRaWAN/LoRaWAN_AT_Slave/Core/Src/sys_app.c:290:13:tiny_snprintf_like.constprop	16	static
+C:/Users/User/OneDrive/Documents/buoy-stm32/LR1262/STM32Cube_FW_WL_V1.3.0/Projects/B-WL5M-SUBG1/Applications/LoRaWAN/LoRaWAN_AT_Slave/Core/Src/sys_app.c:254:13:TimestampNow	32	static
+C:/Users/User/OneDrive/Documents/buoy-stm32/LR1262/STM32Cube_FW_WL_V1.3.0/Projects/B-WL5M-SUBG1/Applications/LoRaWAN/LoRaWAN_AT_Slave/Core/Src/sys_app.c:89:6:SystemApp_Init	8	static
+C:/Users/User/OneDrive/Documents/buoy-stm32/LR1262/STM32Cube_FW_WL_V1.3.0/Projects/B-WL5M-SUBG1/Applications/LoRaWAN/LoRaWAN_AT_Slave/Core/Src/sys_app.c:137:6:UTIL_SEQ_Idle	0	static
+C:/Users/User/OneDrive/Documents/buoy-stm32/LR1262/STM32Cube_FW_WL_V1.3.0/Projects/B-WL5M-SUBG1/Applications/LoRaWAN/LoRaWAN_AT_Slave/Core/Src/sys_app.c:148:9:GetBatteryLevel	8	static
+C:/Users/User/OneDrive/Documents/buoy-stm32/LR1262/STM32Cube_FW_WL_V1.3.0/Projects/B-WL5M-SUBG1/Applications/LoRaWAN/LoRaWAN_AT_Slave/Core/Src/sys_app.c:180:9:GetTemperatureLevel	8	static
+C:/Users/User/OneDrive/Documents/buoy-stm32/LR1262/STM32Cube_FW_WL_V1.3.0/Projects/B-WL5M-SUBG1/Applications/LoRaWAN/LoRaWAN_AT_Slave/Core/Src/sys_app.c:191:6:GetUniqueId	16	static
+C:/Users/User/OneDrive/Documents/buoy-stm32/LR1262/STM32Cube_FW_WL_V1.3.0/Projects/B-WL5M-SUBG1/Applications/LoRaWAN/LoRaWAN_AT_Slave/Core/Src/sys_app.c:231:6:GetDevAddr	16	static
+C:/Users/User/OneDrive/Documents/buoy-stm32/LR1262/STM32Cube_FW_WL_V1.3.0/Projects/B-WL5M-SUBG1/Applications/LoRaWAN/LoRaWAN_AT_Slave/Core/Src/sys_app.c:268:6:UTIL_ADV_TRACE_PreSendHook	0	static
+C:/Users/User/OneDrive/Documents/buoy-stm32/LR1262/STM32Cube_FW_WL_V1.3.0/Projects/B-WL5M-SUBG1/Applications/LoRaWAN/LoRaWAN_AT_Slave/Core/Src/sys_app.c:279:6:UTIL_ADV_TRACE_PostSendHook	0	static
+C:/Users/User/OneDrive/Documents/buoy-stm32/LR1262/STM32Cube_FW_WL_V1.3.0/Projects/B-WL5M-SUBG1/Applications/LoRaWAN/LoRaWAN_AT_Slave/Core/Src/sys_app.c:313:19:HAL_InitTick	0	static
+C:/Users/User/OneDrive/Documents/buoy-stm32/LR1262/STM32Cube_FW_WL_V1.3.0/Projects/B-WL5M-SUBG1/Applications/LoRaWAN/LoRaWAN_AT_Slave/Core/Src/sys_app.c:328:10:HAL_GetTick	0	static
+C:/Users/User/OneDrive/Documents/buoy-stm32/LR1262/STM32Cube_FW_WL_V1.3.0/Projects/B-WL5M-SUBG1/Applications/LoRaWAN/LoRaWAN_AT_Slave/Core/Src/sys_app.c:360:6:HAL_Delay	8	static

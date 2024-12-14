@@ -1,42 +1,42 @@
 #include "LoRa.h"
 
-LoRa::LoRa(LoRaSerial* lora_serial, uint16_t timeout, uint8_t num_retries, uint16_t local_addr, uint16_t target_addr, uint32_t freq, DataRate data_rate, Bandwidth bandwidth, CodeRate code_rate, uint8_t tx_power, IQConverted iqconverted) {
-    this->lora_serial = lora_serial;
-    this->timeout = timeout;
-    this->num_retries = num_retries;
-    this->local_addr = local_addr;
-    this->target_addr = target_addr;
-    this->freq = freq;
-    this->data_rate = data_rate;
-    this->bandwidth = bandwidth;
-    this->code_rate = code_rate;
-    this->tx_power = tx_power;
-    this->iqconverted = iqconverted;
+// source: https://stackoverflow.com/questions/25890784/computing-length-of-a-c-string-at-compile-time-is-this-really-a-constexpr
+static int constexpr length(const char* str) {
+    return *str ? 1 + length(str + 1) : 0;
 }
+
+LoRa::LoRa(LoRaSerial* lora_serial, const uint16_t timeout, const uint8_t num_retries, const uint32_t freq, const DataRate data_rate, const Bandwidth bandwidth, const CodeRate code_rate, const uint8_t tx_power, const LNA lna, const LowDrOpt low_dr_opt) : lora_serial_(lora_serial), timeout_(timeout), num_retries_(num_retries), freq_(freq), data_rate_(data_rate), bandwidth_(bandwidth), code_rate_(code_rate), tx_power_(tx_power), lna_(lna), low_dr_opt_(low_dr_opt) {}
 
 bool LoRa::begin() {
-    for (uint8_t i = 0; i < this->num_retries; i++) {
-        this->lora_serial->write("+++\r\n");
-    }
-    this->lora_serial->flush_buffer();
-    if (!this->set_local_addr(this->local_addr)) {
+    this->lora_serial_->flush_buffer();
+    if (!this->reset()) {
         return false;
     }
-    if (!this->set_target_addr(this->target_addr)) {
+    if (!this->configure()) {
         return false;
     }
-    this->state = LoRaState::IDLE;
-    if (!this->set_state(LoRaState::TX)) {
-        return false;
-    }
-    return this->set_state(LoRaState::IDLE);
+    this->state_ = LoRaState::IDLE;
+    return true;
 }
 
-bool LoRa::send_command(const char* command, size_t command_length, const char* expected, size_t expected_length) {
-    this->lora_serial->flush_buffer();
-    for (uint8_t i = 0; i < this->num_retries; ++i) {
-        this->lora_serial->write(command, command_length);
-        if (!this->lora_serial->expected(expected, expected_length, serial_buffer, LORA_SERIAL_BUFFER_SIZE, this->timeout)) {
+bool LoRa::reset() {
+    const char command_buffer[] = AT_RESET "\r\n";
+    const char expected_buffer[] = "AT? to list all available functions\r\n";
+    return this->send_command_(command_buffer, strlen(command_buffer), expected_buffer, strlen(expected_buffer));
+}
+
+bool LoRa::configure() {
+    char command_buffer[length(AT_CCONF) + 40];
+    snprintf(command_buffer, ARR_SIZE(command_buffer), AT_CCONF "=%lu:%u:%u:%u:4/%u:%u:%u\r\n", this->freq_, this->tx_power_, (uint8_t)this->bandwidth_, (uint8_t)this->data_rate_, (uint8_t)this->code_rate_, (uint8_t)this->lna_, (uint8_t)this->low_dr_opt_);
+    const char expected_buffer[] = "\r\nOK\r\n";
+    return this->send_command_(command_buffer, strlen(command_buffer), expected_buffer, strlen(expected_buffer));
+}
+
+bool LoRa::send_command_(const char* command, const size_t command_length, const char* expected, const size_t expected_length) {
+    this->lora_serial_->flush_buffer();
+    for (uint8_t i = 0; i < this->num_retries_; ++i) {
+        this->lora_serial_->write(command, command_length);
+        if (!this->lora_serial_->expected(expected, expected_length, serial_buffer_, LORA_SERIAL_BUFFER_SIZE, this->timeout_)) {
             continue;
         }
         return true;
@@ -44,135 +44,87 @@ bool LoRa::send_command(const char* command, size_t command_length, const char* 
     return false;
 }
 
-bool LoRa::set_local_addr(uint16_t local_addr) {
-    char command_buffer[20];
-    snprintf(command_buffer, ARR_SIZE(command_buffer), "AT+CADDRSET=%u\r\n", local_addr);
-    char expected_buffer[28];
-    snprintf(expected_buffer, ARR_SIZE(expected_buffer), "set local address: %u \r\n", local_addr); // yes, the space after is not a typo
-    if (!this->send_command(command_buffer, strlen(command_buffer), expected_buffer, strlen(expected_buffer))) {
-        return false;
-    }
-    // success
-    this->local_addr = local_addr;
-    return true;
-}
-
-bool LoRa::set_target_addr(uint16_t target_addr) {
-    char command_buffer[22];
-    snprintf(command_buffer, ARR_SIZE(command_buffer), "AT+CTXADDRSET=%u\r\n", target_addr);
-    char expected_buffer[29];
-    snprintf(expected_buffer, ARR_SIZE(expected_buffer), "set target address: %u \r\n", target_addr); // yes, the space after is not a typo
-    if (!this->send_command(command_buffer, strlen(command_buffer), expected_buffer, strlen(expected_buffer))) {
-        return false;
-    }
-    // success
-    this->target_addr = target_addr;
-    return true;
-}
-
-bool LoRa::send(const char* data, size_t data_size) {
+bool LoRa::send(const char* data, const size_t data_size) {
     if (data_size > LORA_MAX_SIZE) {
         return false;
     }
 
-    DEBUG_LORA_PRINT("LoRa current state: "); DEBUG_LORA_PRINTLN((uint8_t)this->state);
+    DEBUG_LORA_PRINT("LoRa current state: "); DEBUG_LORA_PRINTLN((uint8_t)this->state_);
 
-    const LoRaState saved_state = this->state;
+    const LoRaState saved_state = this->state_;
     if (!this->set_state(LoRaState::TX)) {
         this->set_state(saved_state);   
         return false;
     }
-    memcpy(this->buffer, data, data_size);
-    strncpy(this->buffer + data_size, "\r\n", 3);
-    this->buffer_counter = data_size;
+
+    constexpr size_t buffer_size = ARR_SIZE(this->buffer_);
+    constexpr size_t tx_command_size = length(AT_CTX) + 1; // `+ 1` for the `"="`
+    strncpy(this->buffer_, AT_CTX "=", buffer_size);
+    
+    // append data in 2-byte padded hex format with no separation
+    size_t data_offset = tx_command_size;
+    for (size_t i = 0; i < data_size; ++i) {
+        if (data_offset + 2 >= buffer_size) {
+            break;
+        }
+        snprintf(buffer_ + data_offset, buffer_size - data_offset, "%02x", data[i]);
+        data_offset += 2;
+    }
+
+    strncpy(this->buffer_ + data_offset, "\r\n", buffer_size - data_offset);
+
+    this->buffer_counter_ = data_size;
     const char expected_buffer[] = "OnTxDone\r\n";
-    if (!this->send_command(this->buffer, data_size + 2, expected_buffer, strlen(expected_buffer))) { // `data_size + 2` the 2 is for the extra "\r\n"
+    if (!this->send_command_(this->buffer_, data_offset + 2, expected_buffer, strlen(expected_buffer))) { // the `+ 2` is for the extra `"\r\n"`
         this->set_state(saved_state);
         return false;
     }
-    this->set_state(saved_state);
+
+    this->set_state(saved_state); // ignore return value, we still successfully sent
     return true;
 }
 
-bool LoRa::set_state(LoRaState updated_state) {
-    if (this->state == updated_state) {
-        return true;
-    }
-    
-    if (this->state == LoRaState::TX) {
-        const char command_buffer[] = "+++\r\n";
-        const char expected_buffer[] = "Quit transparent\r\n";
-        if (!this->send_command(command_buffer, strlen(command_buffer), expected_buffer, strlen(expected_buffer))) {
-            return false;
-        }
-        // success exiting TX mode
-    }
-
-    if (this->state == LoRaState::SLEEP) {
-        const char command_buffer[] = "\r\n";
-        const char expected_buffer[] = "leave deepsleep...\r\n";
-        if (!this->send_command(command_buffer, strlen(command_buffer), expected_buffer, strlen(expected_buffer))) {
-            return false;
-        }
-        // after exiting deep sleep, the next command will always error, sò we force an error to not disrupt any future commands
-        const char expected_buffer_2[] = "+CME ERROR:1\r\n";
-        if (!this->send_command(command_buffer, strlen(command_buffer), expected_buffer_2, strlen(expected_buffer_2))) {
-            return false;
-        }
-    }
-
-    this->state = LoRaState::IDLE; // in case the rest fails
-
+bool LoRa::set_state(const LoRaState updated_state) {
     switch (updated_state) {
         case LoRaState::RX:
-            {
-                char command_buffer[37];
-                snprintf(command_buffer, ARR_SIZE(command_buffer), "AT+CRX=%lu,%u,%u,%u,%u\r\n", this->freq, (uint8_t)this->data_rate, (uint8_t)this->bandwidth, (uint8_t)this->code_rate, (uint8_t)this->iqconverted);
-                const char expected_buffer[] = ")\r\n";
-                if (!this->send_command(command_buffer, strlen(command_buffer), expected_buffer, strlen(expected_buffer))) {
-                    return false;
-                }
-                this->state = LoRaState::RX;
-                return true;
-            }
+            return enter_rx_mode_();
         case LoRaState::TX:
-            {
-                char command_buffer[40];
-                snprintf(command_buffer, ARR_SIZE(command_buffer), "AT+CTX=%lu,%u,%u,%u,%u,%u\r\n", this->freq, (uint8_t)this->data_rate, (uint8_t)this->bandwidth, (uint8_t)this->code_rate, this->tx_power, (uint8_t)this->iqconverted);
-                const char expected_buffer[] = "\r\n>";
-                if (!this->send_command(command_buffer, strlen(command_buffer), expected_buffer, strlen(expected_buffer))) {
-                    return false;
-                }
-                this->state = LoRaState::TX;
-                return true;
-            }
+            return enter_tx_mode_();
         case LoRaState::IDLE:
-            return true;
+            return enter_idle_mode_();
         case LoRaState::SLEEP:
-            {
-                const char command_buffer[] = "AT+CSLEEP=0\r\n"; // constant 0 for hot-start
-                const char expected_buffer[] = "enter deepsleep...\r\n";
-                if (!this->send_command(command_buffer, strlen(command_buffer), expected_buffer, strlen(expected_buffer))) {
-                    return false;
-                }
-                this->state = LoRaState::SLEEP;
-                return true;
-            }
+            return enter_idle_mode_(); // `IDLE` is already low power
         default:
             return false;
     }
 }
 
 LoRaState LoRa::get_state() {
-    return this->state;
+    return this->state_;
 }
 
-bool LoRa::wake() {
-    if (this->state != LoRaState::SLEEP) {
-        return true;
+bool LoRa::enter_rx_mode_() {
+    if (!configure()) {
+        return false;
     }
 
-    return this->set_state(LoRaState::IDLE);
+    const char command_buffer[] = AT_CRX "\r\n";
+    const char expected_buffer[] = "Receiving...\r\n";
+    return this->send_command_(command_buffer, strlen(command_buffer), expected_buffer, strlen(expected_buffer));
+}
+
+bool LoRa::enter_tx_mode_() {
+    if (!enter_idle_mode_()) {
+        return false;
+    }
+
+    return configure();
+}
+
+bool LoRa::enter_idle_mode_() {
+    const char command_buffer[] = AT_COFF "\r\n";
+    const char expected_buffer[] = "Idle...\r\n";
+    return this->send_command_(command_buffer, strlen(command_buffer), expected_buffer, strlen(expected_buffer));
 }
 
 uint8_t hex_char_to_byte(char c) {
@@ -189,48 +141,54 @@ uint8_t hex_char_to_byte(char c) {
 
 bool LoRa::recv() {
     // ideally, we should already be in RX mode, so that if recv is called a previous message can be read from the serial buffer
-    const LoRaState saved_state = this->state;
+    const LoRaState saved_state = this->state_;
     if (!this->set_state(LoRaState::RX)) {
         goto fail;
     }
-    for (uint8_t i = 0; i < this->num_retries; ++i) {
-        buffer_counter = 0;
+    for (uint8_t i = 0; i < this->num_retries_; ++i) {
+        buffer_counter_ = 0;
         const char expected_buffer[] = "Recv:\r\n";
-        if (!this->lora_serial->expected(expected_buffer, strlen(expected_buffer), serial_buffer, LORA_SERIAL_BUFFER_SIZE, this->timeout)) {
+        if (!this->lora_serial_->expected(expected_buffer, strlen(expected_buffer), serial_buffer_, LORA_SERIAL_BUFFER_SIZE, this->timeout_)) {
             continue;
         }
-        int c1 = this->lora_serial->read_blocking(timeout);
+        int c1 = this->lora_serial_->read_blocking(timeout_);
         if (c1 == -1) {
             goto fail;
         }
-        int c2 = this->lora_serial->read_blocking(timeout);
+        int c2 = this->lora_serial_->read_blocking(timeout_);
         if (c2 == -1) {
             goto fail;
         }
         while (c1 != '\r') {
-            if (buffer_counter >= LORA_MAX_SIZE) {
+            if (buffer_counter_ >= LORA_MAX_SIZE) {
                 goto fail;
             }
-            this->buffer[buffer_counter] = (hex_char_to_byte(c1) << 4) | hex_char_to_byte(c2); // TODO: validate c1 and c2 != -1
-            buffer_counter++;
-            if (this->lora_serial->read_blocking(timeout) != ' ') { // flush ' ' char
+            const uint8_t c1_byte = hex_char_to_byte(c1);
+            const uint8_t c2_byte = hex_char_to_byte(c2);
+            if ((c1_byte == (uint8_t)-1) || (c2_byte == (uint8_t)-1)) { // invalid hex formats
                 goto fail;
             }
-            c1 = this->lora_serial->read_blocking(timeout);
+            this->buffer_[buffer_counter_] = (c1_byte << 4) | c2_byte;
+            buffer_counter_++;
+            if (this->lora_serial_->read_blocking(timeout_) != ' ') { // flush ' ' char
+                goto fail;
+            }
+            c1 = this->lora_serial_->read_blocking(timeout_);
             if (c1 == -1) {
                 goto fail;
             }
-            c2 = this->lora_serial->read_blocking(timeout);
+            c2 = this->lora_serial_->read_blocking(timeout_);
             if (c2 == -1) {
                 goto fail;
             }
         }
-        const char expected_buffer_2[] = "\r\n";
-        // we need 2 more "\r\n" for RX finish (but not in a row so we can't do `"\r\n\r\n"`)
-        if (!this->lora_serial->expected(expected_buffer_2, strlen(expected_buffer_2), serial_buffer, LORA_SERIAL_BUFFER_SIZE, this->timeout)) {
+        // the rx ends with `"Data end\r\nrssi = {rssi} dBm, snr = {snr} dB\r\n"`
+        const char expected_buffer_2[] = "Data end\r\nrssi = ";
+        if (!this->lora_serial_->expected(expected_buffer_2, strlen(expected_buffer_2), serial_buffer_, LORA_SERIAL_BUFFER_SIZE, this->timeout_)) {
             goto fail;
         }
-        if (!this->lora_serial->expected(expected_buffer_2, strlen(expected_buffer_2), serial_buffer, LORA_SERIAL_BUFFER_SIZE, this->timeout)) {
+        const char expected_buffer_3[] = " dB\r\n";
+        if (!this->lora_serial_->expected(expected_buffer_3, strlen(expected_buffer_3), serial_buffer_, LORA_SERIAL_BUFFER_SIZE, this->timeout_)) {
             goto fail;
         }
         this->set_state(saved_state);
@@ -242,9 +200,9 @@ bool LoRa::recv() {
 }
 
 const char* LoRa::get_buffer() {
-    return this->buffer;
+    return this->buffer_;
 }
 
 const uint8_t LoRa::get_buffer_len() {
-    return this->buffer_counter;
+    return this->buffer_counter_;
 }
