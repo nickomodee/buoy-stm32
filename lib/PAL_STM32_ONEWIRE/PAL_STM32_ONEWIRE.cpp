@@ -10,7 +10,7 @@ void PAL_STM32_ONEWIRE::begin(const uint8_t physical_pin) {
     GPIO_port_ = get_GPIO_port(physical_pin);
     GPIO_pin_ = get_GPIO_pin(physical_pin);
     
-    GPIO_init_ = {0};
+    GPIO_init_ = {};
 
     // GPIO Ports Clock Enable
     if (GPIO_port_ == GPIOA) {

@@ -334,17 +334,6 @@ static int decodeRotationVector(sh2_SensorValue_t *value, const sh2_SensorEvent_
     return SH2_OK;
 }
 
-#include "../PAL/PAL.h"
-
-void print_hex(const char* str, size_t str_length) {
-    for (size_t i = 0; i < str_length; ++i) {
-        PAL_SERIAL.print("0x");
-        PAL_SERIAL.print((uint8_t)str[i], PAL_HEX);
-        PAL_SERIAL.print(" ");
-    }
-    PAL_SERIAL.println();
-}
-
 static int decodeGameRotationVector(sh2_SensorValue_t *value, const sh2_SensorEvent_t *event)
 {
     // Read raw signed 16-bit integers for each component
@@ -364,44 +353,6 @@ static int decodeGameRotationVector(sh2_SensorValue_t *value, const sh2_SensorEv
     value->un.gameRotationVector.j = scaled_j;
     value->un.gameRotationVector.k = scaled_k;
     value->un.gameRotationVector.real = scaled_real;
-
-    if (value->un.gameRotationVector.i > 1.00 || value->un.gameRotationVector.j > 1.00 || value->un.gameRotationVector.k > 1.00 || value->un.gameRotationVector.real > 1.00) {
-        // Debug: Print the entire raw report in hexadecimal
-        PAL_SERIAL.print("Raw Report: ");
-        print_hex(reinterpret_cast<const char*>(event->report), 16);
-
-        // Debug: Print raw integer values
-        PAL_SERIAL.print("Raw Game Rotation Vector: i=");
-        PAL_SERIAL.print(raw_i);
-        PAL_SERIAL.print(", j=");
-        PAL_SERIAL.print(raw_j);
-        PAL_SERIAL.print(", k=");
-        PAL_SERIAL.print(raw_k);
-        PAL_SERIAL.print(", real=");
-        PAL_SERIAL.println(raw_real);
-
-        // Debug: Print scaled floating-point values
-        PAL_SERIAL.print("Scaled Game Rotation Vector: i=");
-        PAL_SERIAL.print(scaled_i, 6); // Print with 6 decimal places
-        PAL_SERIAL.print(", j=");
-        PAL_SERIAL.print(scaled_j, 6);
-        PAL_SERIAL.print(", k=");
-        PAL_SERIAL.print(scaled_k, 6);
-        PAL_SERIAL.print(", real=");
-        PAL_SERIAL.println(scaled_real, 6);
-
-        // Debug: Print scaled floating-point values
-        PAL_SERIAL.print("Scaled Game Rotation Vector: i=");
-        PAL_SERIAL.print(scaled_i, 6); // Print with 6 decimal places
-        PAL_SERIAL.print(", j=");
-        PAL_SERIAL.print(scaled_j, 6);
-        PAL_SERIAL.print(", k=");
-        PAL_SERIAL.print(scaled_k, 6);
-        PAL_SERIAL.print(", real=");
-        PAL_SERIAL.println(scaled_real, 6);
-
-        PAL_SERIAL.print(",STOP!");
-    }
 
     return SH2_OK;
 }

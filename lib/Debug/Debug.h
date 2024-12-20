@@ -2,7 +2,7 @@
 
 #include "../PAL/PAL.h"
 
-#define DEBUG
+// #define DEBUG
 
 #define DEBUG_NOOP() (void)0 // no-op
 

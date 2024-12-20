@@ -7,7 +7,7 @@ const I2C_TypeDef* PAL_STM32_WIRE::I2C_instance_ = I2C1;
 volatile I2C_HandleTypeDef PAL_STM32_WIRE::hi2c_;
 
 static void I2C_MspInit(const I2C_TypeDef* instance) {
-    GPIO_InitTypeDef GPIO_InitStruct = {0};
+    GPIO_InitTypeDef GPIO_InitStruct = {};
     if (instance == I2C1) {
         __HAL_RCC_GPIOB_CLK_ENABLE();
         /**I2C1 GPIO Configuration
@@ -101,6 +101,7 @@ uint8_t PAL_STM32_WIRE::endTransmission(const bool send_stop) {
 }
 
 size_t PAL_STM32_WIRE::requestFrom(const uint8_t address, size_t size) {
+    (void)address; // compiler complains because it is unused but why is it unused?? check arduino Wire library...
     if (size > PAL_STM32_WIRE::RX_BUFFER_SIZE) {
         size = PAL_STM32_WIRE::RX_BUFFER_SIZE;
     }

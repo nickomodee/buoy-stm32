@@ -18,37 +18,70 @@ bool SI1145::init() {
 
     // enable UV sensor
     write_param(SI1145_PARAM_CHLIST, SI1145_PARAM_CHLIST_ENUV | SI1145_PARAM_CHLIST_ENALSIR | SI1145_PARAM_CHLIST_ENALSVIS | SI1145_PARAM_CHLIST_ENPS1);
-    // enable interrupt on every sample
-    write_8(SI1145_REG_INTCFG, SI1145_REG_INTCFG_INTOE);
-    write_8(SI1145_REG_IRQEN, SI1145_REG_IRQEN_ALSEVERYSAMPLE);
+
+    // write_8(SI1145_REG_PS_LED21, SI1145_PS21_DISABLED);
+    // write_8(SI1145_REG_PS_LED3, SI1145_PS3_DISABLED);
+
+    write_param(SI1145_ALS_VIS_ADC_GAIN, SI1145_ADC_GAIN_DIV1);
+    write_param(SI1145_ALS_VIS_ADC_COUNTER, SI1145_ADC_COUNTER_511ADCCLK);
+    write_param(SI1145_ALS_VIS_ADC_MISC, SI1145_ADC_MISC_LOWRANGE);
+
+    write_param(SI1145_ALS_IR_ADC_GAIN, SI1145_ADC_GAIN_DIV1);
+    write_param(SI1145_ALS_IR_ADC_COUNTER, SI1145_ADC_COUNTER_511ADCCLK);
+    write_param(SI1145_ALS_IR_ADC_MISC, SI1145_ADC_MISC_LOWRANGE);
+
+    // // enable interrupt on every sample
+    // write_8(SI1145_REG_INTCFG, SI1145_REG_INTCFG_INTOE);
+    // write_8(SI1145_REG_IRQEN, SI1145_REG_IRQEN_ALSEVERYSAMPLE);
+    // disable interrupts
+    write_8(SI1145_REG_INTCFG, SI1145_REG_INTCFG_DISABLED);
+    write_8(SI1145_REG_IRQEN, SI1145_REG_IRQEN_DISABLED);
 
     // measurement rate for auto
     write_8(SI1145_REG_MEASRATE0, 0xFF); // 255 * 31.25uS = 8ms
+    // // forced measurement rate
+    // write_8(SI1145_REG_MEASRATE0, SI1145_FORCED_MEASRATE0);
+    // write_8(SI1145_REG_MEASRATE1, SI1145_FORCED_MEASRATE1);
 
-    // auto run
-    write_8(SI1145_REG_COMMAND, SI1145_PSALS_AUTO);
+    write_8(SI1145_REG_COMMAND, SI1145_PSALS_AUTO); // auto run mode
+    // write_8(SI1145_REG_COMMAND, SI1145_PSALS_FORCE); // forced conversion mode
 
     return true;
 }
 
 float SI1145::read_uv_index() {
-    return read_16(SI1145_REG_UVINDEX) / 100.0;
+    return read_16(SI1145_REG_UVINDEX) / 100.0f;
 }
 
-uint16_t SI1145::read_visible_counts() {
+uint16_t SI1145::read_visible() {
     return read_16(SI1145_REG_VISIBLE);
 }
 
-float SI1145::read_visible_lux() {
-    return read_visible_counts() / VISIBLE_SUNLIGHT_LUX;
-}
-
-uint16_t SI1145::read_ir_counts() {
+uint16_t SI1145::read_ir() {
     return read_16(SI1145_REG_IR);
 }
 
-float SI1145::read_ir_lux() {
-    return read_ir_counts() / IR_SUNLIGHT_LUX;
+// source: https://github.com/wollewald/SI1145_WE/blob/master/examples/SI1145_lux_calculation/SI1145_lux_calculation.ino
+float SI1145::calculate_lux(const uint16_t visible, const uint16_t ir) {
+    const uint16_t visible_dark = 258; // this is my empirical value
+    const uint16_t ir_dark = 250; // this is my empirical value
+
+    const float gain_factor = 1.0f;
+    const float visible_coeff = 5.41f; // application notes AN523
+    const float ir_coeff = 0.08f; // application notes AN523
+
+    // const float visible_count_per_lux = VISIBLE_FLUORESCENT_LUX; // change for light source
+    // const float ir_count_per_lux = IR_FLUORESCENT_LUX; // change for light source
+    // const float corr_factor = 0.18; // his empirical correction factor
+
+    // according to application notes AN523: 
+    const float lux = ((visible - visible_dark) * visible_coeff - (ir - ir_dark) * ir_coeff) * gain_factor;
+
+    // // the equation above does not consider the counts/Lux depending on light source type
+    // // he suggests the following equation
+    // const float lux = (((visible - visible_dark) / visible_count_per_lux) * visible_coeff - ((ir - ir_dark) / ir_count_per_lux) * ir_coeff) * gain_factor * corr_factor;
+
+    return lux;
 }
 
 void SI1145::reset() {
@@ -90,12 +123,12 @@ uint16_t SI1145::read_16(const uint8_t reg) {
         return -1; // idk what to do here
     }
     wire_->requestFrom(i2c_address_, 2);
-    return ((uint16_t)wire_->read() << 8) | ((uint16_t)wire_->read());
+    return ((uint16_t)wire_->read()) | ((uint16_t)wire_->read() << 8); // little endian format
 }
 
 bool SI1145::write_8(const uint8_t reg, const uint8_t data) {
     wire_->beginTransmission(i2c_address_);
-    wire_->write(reg);
-    wire_->write(data);
+    const uint8_t buffer[2] = {reg, data};
+    wire_->write(buffer, ARR_SIZE(buffer));
     return wire_->endTransmission() == 0;
 }

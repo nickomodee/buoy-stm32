@@ -606,31 +606,31 @@ return true;
 
 /******************************************************************************/
 
-void AES::printArray(const byte output[],bool p_pad)
-{
-uint8_t i,j;
-uint8_t loops = size/N_BLOCK;
-uint8_t outp = N_BLOCK;
-for (j = 0; j < loops; j += 1){
-  if (p_pad && (j == (loops  - 1)) ) { outp = N_BLOCK - pad; }
-  for (i = 0; i < outp; i++)
-  {
-    printf("%c", output[j*N_BLOCK + i]);
-  }
-}
-  printf("\n");
-}
+// void AES::printArray(const byte output[],bool p_pad)
+// {
+// uint8_t i,j;
+// uint8_t loops = size/N_BLOCK;
+// uint8_t outp = N_BLOCK;
+// for (j = 0; j < loops; j += 1){
+//   if (p_pad && (j == (loops  - 1)) ) { outp = N_BLOCK - pad; }
+//   for (i = 0; i < outp; i++)
+//   {
+//     printf("%c", output[j*N_BLOCK + i]);
+//   }
+// }
+//   printf("\n");
+// }
 
-/******************************************************************************/
+// /******************************************************************************/
 
-void AES::printArray(const byte output[],int sizel)
-{
-  for (int i = 0; i < sizel; i++)
-  {
-    printf("%x", output[i]);
-  }
-  printf("\n");
-}
+// void AES::printArray(const byte output[],int sizel)
+// {
+//   for (int i = 0; i < sizel; i++)
+//   {
+//     printf("%x", output[i]);
+//   }
+//   printf("\n");
+// }
 
 
 /******************************************************************************/

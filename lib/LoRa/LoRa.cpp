@@ -25,11 +25,78 @@ bool LoRa::reset() {
     return this->send_command_(command_buffer, strlen(command_buffer), expected_buffer, strlen(expected_buffer));
 }
 
+static char* ultoa_internal(char* buffer, size_t buf_size, unsigned long val) {
+    char* ptr = &buffer[buf_size - 1];
+    *ptr = '\0';
+    do {
+        *--ptr = '0' + (val % 10);
+        val /= 10;
+    } while (val > 0);
+    return ptr;
+}
+
+static char* utoa_internal(char* buffer, size_t buf_size, unsigned int val) {
+    char* ptr = &buffer[buf_size - 1];
+    *ptr = '\0';
+    do {
+        *--ptr = '0' + (val % 10);
+        val /= 10;
+    } while (val > 0);
+    return ptr;
+}
+
+// copy string and return new end pointer (different to normal `strcpy` sort of like `strcat`)
+static char* strcpy_internal(char* dest, const char* src) {
+    while (*src) {
+        *dest++ = *src++;
+    }
+    return dest;
+}
+
 bool LoRa::configure() {
     char command_buffer[length(AT_CCONF) + 40];
-    snprintf(command_buffer, ARR_SIZE(command_buffer), AT_CCONF "=%lu:%u:%u:%u:4/%u:%u:%u\r\n", this->freq_, this->tx_power_, (uint8_t)this->bandwidth_, (uint8_t)this->data_rate_, (uint8_t)this->code_rate_, (uint8_t)this->lna_, (uint8_t)this->low_dr_opt_);
+    // snprintf(command_buffer, ARR_SIZE(command_buffer), AT_CCONF "=%lu:%u:%u:%u:4/%u:%u:%u\r\n", this->freq_, this->tx_power_, (uint8_t)this->bandwidth_, (uint8_t)this->data_rate_, (uint8_t)this->code_rate_, (uint8_t)this->lna_, (uint8_t)this->low_dr_opt_);
+    char* ptr = command_buffer;
+    
+    // Copy the AT command prefix
+    ptr = strcpy_internal(ptr, AT_CCONF "=");
+    
+    // Convert frequency
+    char freq_buf[12];  // Max 10 digits for 32-bit + null
+    char* freq_ptr = ultoa_internal(freq_buf, sizeof(freq_buf), this->freq_);
+    ptr = strcpy_internal(ptr, freq_ptr);
+    *ptr++ = ':';
+    
+    // Convert and append other parameters
+    char num_buf[6];  // Max 5 digits + null
+    
+    ptr = strcpy_internal(ptr, utoa_internal(num_buf, sizeof(num_buf), this->tx_power_));
+    *ptr++ = ':';
+    
+    ptr = strcpy_internal(ptr, utoa_internal(num_buf, sizeof(num_buf), (uint8_t)this->bandwidth_));
+    *ptr++ = ':';
+    
+    ptr = strcpy_internal(ptr, utoa_internal(num_buf, sizeof(num_buf), (uint8_t)this->data_rate_));
+    *ptr++ = ':';
+    
+    *ptr++ = '4';
+    *ptr++ = '/';
+    
+    ptr = strcpy_internal(ptr, utoa_internal(num_buf, sizeof(num_buf), (uint8_t)this->code_rate_));
+    *ptr++ = ':';
+    
+    ptr = strcpy_internal(ptr, utoa_internal(num_buf, sizeof(num_buf), (uint8_t)this->lna_));
+    *ptr++ = ':';
+    
+    ptr = strcpy_internal(ptr, utoa_internal(num_buf, sizeof(num_buf), (uint8_t)this->low_dr_opt_));
+    
+    // Add line ending
+    *ptr++ = '\r';
+    *ptr++ = '\n';
+    *ptr = '\0';
+    
     const char expected_buffer[] = "\r\nOK\r\n";
-    return this->send_command_(command_buffer, strlen(command_buffer), expected_buffer, strlen(expected_buffer));
+    return this->send_command_(command_buffer, ptr - command_buffer, expected_buffer, strlen(expected_buffer));
 }
 
 bool LoRa::send_command_(const char* command, const size_t command_length, const char* expected, const size_t expected_length) {
@@ -42,6 +109,12 @@ bool LoRa::send_command_(const char* command, const size_t command_length, const
         return true;
     }
     return false;
+}
+
+static void byte_to_hex(uint8_t byte, char* out) {
+    static const char hex_chars[] = "0123456789abcdef";
+    out[0] = hex_chars[byte >> 4];
+    out[1] = hex_chars[byte & 0x0F];
 }
 
 bool LoRa::send(const char* data, const size_t data_size) {
@@ -67,7 +140,8 @@ bool LoRa::send(const char* data, const size_t data_size) {
         if (data_offset + 2 >= buffer_size) {
             break;
         }
-        snprintf(buffer_ + data_offset, buffer_size - data_offset, "%02x", data[i]);
+        // snprintf(buffer_ + data_offset, buffer_size - data_offset, "%02x", data[i]);
+        byte_to_hex(data[i], buffer_ + data_offset);
         data_offset += 2;
     }
 
@@ -191,6 +265,14 @@ bool LoRa::recv() {
         if (!this->lora_serial_->expected(expected_buffer_3, strlen(expected_buffer_3), serial_buffer_, LORA_SERIAL_BUFFER_SIZE, this->timeout_)) {
             goto fail;
         }
+        #ifdef DEBUG
+        int rssi = 0, snr = 0;
+        sscanf(serial_buffer_, "%d dBm, snr = %d dB\r\n", &rssi, &snr);
+        #endif
+        DEBUG_LORA_PRINT("Received rssi: ");
+        DEBUG_LORA_PRINT(rssi);
+        DEBUG_LORA_PRINT(", snr: ");
+        DEBUG_LORA_PRINTLN(snr);
         this->set_state(saved_state);
         return true;
     }
@@ -203,6 +285,6 @@ const char* LoRa::get_buffer() {
     return this->buffer_;
 }
 
-const uint8_t LoRa::get_buffer_len() {
+uint8_t LoRa::get_buffer_len() {
     return this->buffer_counter_;
 }

@@ -11,7 +11,7 @@
 #define SHT30_I2C_ADDRESS 0x44
 #define SHT30_STATUS_FAIL 0xFFFF
 #define SHT30_STATUS_HEATER_BIT 0x0D /**< Status Register Heater Bit */
-#define SHT30_HEATER_HUMIDITY_THRESHOLD 0.90 ///< the threshold humidity RH% to cycle the heater in case of condensation
+#define SHT30_HEATER_HUMIDITY_THRESHOLD 0.90f ///< the threshold humidity RH% to cycle the heater in case of condensation
 #define SHT30_HEATER_CYCLE_ENABLED_TIME 1000 ///< the time to enable the heater to prevent condensation
 #define SHT30_HEATER_CYCLE_DISABLED_TIME 1000 ///< the time to enable the heater to prevent condensation
 #define SHT30_TEMP_SCALE_MULTIPLIER 4375

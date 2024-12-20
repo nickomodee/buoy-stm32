@@ -38,6 +38,7 @@
 class DS18B20_Base {
     public:
         DS18B20_Base(uint8_t pin);
+        void begin();
         uint8_t select(uint8_t address[]);
         uint8_t selectNext();
         uint8_t selectNextAlarm();

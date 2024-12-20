@@ -4,11 +4,11 @@ from typing import Literal, Optional, List, Callable
 from enum import Enum
 
 import logging
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('[Packet]')
 
-MAX_PACKET_SIZE: Literal[54] = 54
+MAX_PACKET_SIZE: Literal[246] = 246
 PACKET_OVERHEAD: Literal[6] = 6  # the packet 'overhead' that isn't encrypted data
-MAX_MESSAGE_SIZE: Literal[47] = 47
+MAX_MESSAGE_SIZE: Literal[239] = 239
 MESSAGE_OVERHEAD: Literal[8] = 8 # the message 'overhead' that isn't data
 MAX_DATA_SIZE: int = MAX_MESSAGE_SIZE - MESSAGE_OVERHEAD
 

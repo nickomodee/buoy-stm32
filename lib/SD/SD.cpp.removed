@@ -11,6 +11,7 @@ static void __FIRMWARE SPI_MSP_INIT(const SPI_TypeDef* instance) {
         __HAL_RCC_SPI1_CLK_ENABLE();
 
         __HAL_RCC_GPIOA_CLK_ENABLE();
+        // this requires solder bridges SB16 and SB18 to be disconnected so that we can also use the I2C pins, as per section 6.10 on pages 20 and 21 in the user manual at: https://www.st.com/resource/en/user_manual/um1956-stm32-nucleo32-boards-mb1180-stmicroelectronics.pdf
         /* SPI1 GPIO Configuration
         PA5     ------> SPI1_SCK
         PA6     ------> SPI1_MISO
@@ -25,7 +26,21 @@ static void __FIRMWARE SPI_MSP_INIT(const SPI_TypeDef* instance) {
     }
 }
 
-__FIRMWARE SD::SD() {
+__FIRMWARE SD::SD() {}
+
+__FIRMWARE SD::~SD() {
+    if (dir_open_) {
+        close_dir();
+    }
+
+    if (mounted_) {
+        unmount();
+    }
+}
+
+extern Disk_drvTypeDef __FIRMWARE_BSS disk;
+
+bool __FIRMWARE SD::begin() {
     GPIO_InitTypeDef GPIO_InitStruct = {0};
 
     /* GPIO Ports Clock Enable */
@@ -75,21 +90,7 @@ __FIRMWARE SD::SD() {
     }
 
     MX_FATFS_Init();
-}
 
-__FIRMWARE SD::~SD() {
-    if (dir_open_) {
-        close_dir();
-    }
-
-    if (mounted_) {
-        unmount();
-    }
-}
-
-extern Disk_drvTypeDef __FIRMWARE_BSS disk;
-
-bool __FIRMWARE SD::begin() {
     FatFs_ = {0};
     dir_ = {0};
     dir_open_ = false;
@@ -159,7 +160,8 @@ uint32_t __FIRMWARE SD::write(FIL* file, const char* str) {
 }
 
 bool __FIRMWARE SD::write(FIL* file, const char data) {
-    return f_putc(data, file) == 1;
+    unsigned int bytes_written;
+    return (f_write(file, (const uint8_t*)&data, sizeof(data), &bytes_written) == FR_OK) && (bytes_written == sizeof(data));
 }
 
 bool __FIRMWARE SD::write(FIL* file, const uint8_t data) {

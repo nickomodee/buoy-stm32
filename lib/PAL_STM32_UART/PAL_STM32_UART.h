@@ -36,8 +36,8 @@ class PAL_STM32_UART_STREAM : public PAL_STM32_STREAM {
         size_t print(const uint32_t n, const int base);
         size_t print(const float n, const uint8_t digits = 2);
         size_t print(const float n, const int digits);
-        size_t print(const double n, const uint8_t digits = 2);
-        size_t print(const double n, const int digits);
+        // size_t print(const double n, const uint8_t digits = 2);
+        // size_t print(const double n, const int digits);
 
         size_t println(const char* str);
         size_t println(const char n);
@@ -53,8 +53,8 @@ class PAL_STM32_UART_STREAM : public PAL_STM32_STREAM {
         size_t println(const uint32_t n, const int base);
         size_t println(const float n, const uint8_t digits = 2);
         size_t println(const float n, const int digits);
-        size_t println(const double n, const uint8_t digits = 2);
-        size_t println(const double n, const int digits);
+        // size_t println(const double n, const uint8_t digits = 2);
+        // size_t println(const double n, const int digits);
         size_t println();
 
         UART_HandleTypeDef* get_huart_ptr();

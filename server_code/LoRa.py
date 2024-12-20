@@ -2,6 +2,10 @@ import serial
 import time
 from typing import Literal, List
 from enum import Enum
+import re
+
+import logging
+logger = logging.getLogger('[LoRa]')
 
 LORA_MAX_SIZE = 255 # max packet size
 
@@ -74,6 +78,7 @@ class LoRa:
         self._low_dr_opt: LowDrOpt = low_dr_opt
         self._state: LoRaState = LoRaState.IDLE
         self._buffer: bytes = b""
+        self._serial_buffer: bytes = b""
 
     def begin(self) -> bool:
         self._flush_serial()
@@ -196,6 +201,15 @@ class LoRa:
             expected_buffer = b" dB\r\n"
             if not self._expected(expected_buffer):
                 return fail()
+            
+            regex_match = re.match(rb"([+-]?\d+) dBm, snr = ([+-]?\d+) dB", self._serial_buffer)
+            if regex_match:
+                rssi = int(regex_match.group(1))
+                snr = int(regex_match.group(2))
+                logger.debug(f"Received rssi: {rssi}, snr: {snr}")
+            else:
+                logger.debug(f"Received regex failed: {self._serial_buffer}")
+
             return success()
         return fail()
 
@@ -213,15 +227,15 @@ class LoRa:
 
     def _expected(self, expected: bytes) -> bool:
         START_TIME: float = time.time()
-        result: bytes = b""
-        while len(result) < len(expected) or result[-len(expected):] != expected:
+        self._serial_buffer = b""
+        while len(self._serial_buffer) < len(expected) or self._serial_buffer[-len(expected):] != expected:
             # check if timeout reached
             if (self._lora_serial.in_waiting == 0) and (time.time() - START_TIME >= self._timeout): # `self._lora_serial.in_waiting == 0` so that we don't "cut-off" in the middle of receiving data
                 return False
             
             # check if byte available to read (so that we don't block)
             if self._lora_serial.in_waiting:
-                result += self._lora_serial.read(1)
+                self._serial_buffer += self._lora_serial.read(1)
         return True
     
     def _read_blocking(self) -> int:

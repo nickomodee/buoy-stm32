@@ -141,7 +141,7 @@ bool Packet::from_raw() {
     memcpy(encrypted_data, this->packet + PACKET_OVERHEAD, encrypted_data_size); // unfortunately, we do have to use this buffer because don't want to modify `this->packet` (if we simply use a pointer to `this->packet + PACKET_OVERHEAD`)
     char message[MAX_MESSAGE_SIZE + AES_BLOCK_SIZE]; // Even though we know the maximum size, according to the BCP, the encryption library checks the WORST case, which is when there is no padding, so it is safest to append the block size just in case to avoid buffer overflow
     const size_t message_size = this->encryption_->decrypt(encrypted_data, encrypted_data_size, message, sizeof(message) / sizeof(message[0]), this->iv);
-    if ((message_size < MESSAGE_DATA_START_INDEX - 1) || (message_size != MESSAGE_OVERHEAD + message[MESSAGE_DATA_SIZE_INDEX])) {
+    if ((message_size < MESSAGE_DATA_START_INDEX - 1) || (message_size != (size_t)MESSAGE_OVERHEAD + (uint8_t)message[MESSAGE_DATA_SIZE_INDEX])) {
         DEBUG_PACKET_PRINT("Error while decrypting message with invalid size: ");
         DEBUG_PACKET_PRINTLN(message_size);
         return false;
@@ -149,7 +149,7 @@ bool Packet::from_raw() {
     this->set_type((PacketType)message[MESSAGE_TYPE_INDEX]);
     this->set_index((uint32_t)(uint8_t)message[MESSAGE_INDEX_1_INDEX] | ((uint32_t)(uint8_t)message[MESSAGE_INDEX_2_INDEX] << 8) | ((uint32_t)(uint8_t)message[MESSAGE_INDEX_3_INDEX] << 16) | ((uint32_t)(uint8_t)message[MESSAGE_INDEX_4_INDEX] << 24));
     this->set_message_checksum((uint16_t)(uint8_t)message[MESSAGE_CHECKSUM_1_INDEX] | ((uint16_t)(uint8_t)message[MESSAGE_CHECKSUM_2_INDEX] << 8));
-    this->set_data_size(message[MESSAGE_DATA_SIZE_INDEX]); // this SHOULD equal `message_size - MESSAGE_OVERHEAD`
+    this->set_data_size((uint8_t)message[MESSAGE_DATA_SIZE_INDEX]); // this SHOULD equal `message_size - MESSAGE_OVERHEAD`
     this->set_data(&message[MESSAGE_DATA_START_INDEX]);
     return true;
 }

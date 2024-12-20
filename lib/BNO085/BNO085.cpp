@@ -24,19 +24,7 @@ bool BNO085::begin() {
 bool BNO085::init_(const int32_t sensor_id) {
     hardware_reset();
 
-    // if (!soft_reset()) {
-    //     return false;
-    // }
-
-    // PAL_DELAY(100);
-
-    // if (!wake_up()) {
-    //     PAL_SERIAL.println("#$");
-    //     return false;
-    // }
-    // PAL_SERIAL.println("$");
-
-    PAL_DELAY(100);
+    PAL_DELAY(500);
 
     // open SH2 interface (also registers non-sensor event handler.)
     int status = sh2_open(&HAL_, hal_callback, nullptr);
@@ -82,8 +70,8 @@ bool BNO085::enable_report(const sh2_SensorId_t sensor_id, const uint32_t interv
     config.changeSensitivity = 0;
     config.batchInterval_us = 0;
     config.sensorSpecific = 0;
-
     config.reportInterval_us = interval_us;
+
     const int status = sh2_setSensorConfig(sensor_id, &config);
 
     if (status != SH2_OK) {

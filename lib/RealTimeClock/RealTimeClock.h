@@ -9,8 +9,11 @@ class RealTimeClock {
     public:
         RealTimeClock();
         bool begin();
+        uint32_t read_backup_domain_register(const uint32_t backup_register);
+        void write_backup_domain_register(const uint32_t backup_register, const uint32_t data);
         bool fetch();
         bool set(const uint8_t second, const uint8_t minute, const uint8_t hour, const uint8_t day, const uint8_t dayofweek, const uint8_t month, const uint16_t year);
+        bool is_alarm_set();
         bool set_alarm(const uint8_t second, const uint8_t minute, const uint8_t hour, const bool mask_dateweekday = false, const bool mask_hour = false, const bool mask_minute = false);
         bool disable_alarm();
         uint8_t get_second();
@@ -35,7 +38,7 @@ class RealTimeClock {
         static RTC_HandleTypeDef hrtc_;
         static const constexpr uint32_t alarm_ = RTC_ALARM_A;
         static bool calibrating_;
-        static constexpr uint32_t calibrated_asynch_prevdiv_ = 127;
+        static constexpr uint32_t calibrated_asynch_prevdiv_ = 127; // keep this constant when calibrating and change the synch prediv
         static constexpr uint32_t calibrated_synch_prevdiv_ = 317; // with calibrated LSI clock frequency of 40740 Hz
 
         uint8_t second_;

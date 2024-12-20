@@ -7,46 +7,39 @@ static ADC_HandleTypeDef hadc1;
 
 // Modified from: https://visualgdb.com/tutorials/arm/stm32/adc/
 static void configure_ADC() {
-    GPIO_InitTypeDef gpioInit;
- 
-    __HAL_RCC_GPIOA_CLK_ENABLE();
     __HAL_RCC_ADC1_CLK_ENABLE();
  
-    gpioInit.Pin = GPIO_PIN_0;
-    gpioInit.Mode = GPIO_MODE_ANALOG;
-    gpioInit.Pull = GPIO_NOPULL;
-    HAL_GPIO_Init(GPIOA, &gpioInit);
- 
-    HAL_NVIC_SetPriority(ADC1_IRQn, 0, 0);
-    HAL_NVIC_EnableIRQ(ADC1_IRQn);
- 
-    ADC_ChannelConfTypeDef adcChannel;
+    ADC_ChannelConfTypeDef adc_channel;
  
     hadc1.Instance = ADC1;
  
-    hadc1.Init.ClockPrescaler = ADC_CLOCKPRESCALER_PCLK_DIV2;
+    hadc1.Instance = ADC1;
+    hadc1.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV1;  // faster ADC clock for more noise
     hadc1.Init.Resolution = ADC_RESOLUTION_12B;
-    hadc1.Init.ScanConvMode = DISABLE;
-    hadc1.Init.ContinuousConvMode = ENABLE;
-    hadc1.Init.DiscontinuousConvMode = DISABLE;
-    hadc1.Init.NbrOfDiscConversion = 0;
-    hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
-    hadc1.Init.ExternalTrigConv = ADC_EXTERNALTRIGCONV_T1_CC1;
     hadc1.Init.DataAlign = ADC_DATAALIGN_RIGHT;
-    hadc1.Init.NbrOfConversion = 1;
-    hadc1.Init.DMAContinuousRequests = ENABLE;
-    hadc1.Init.EOCSelection = DISABLE;
+    hadc1.Init.ScanConvMode = ADC_SCAN_DISABLE;
+    hadc1.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
+    hadc1.Init.LowPowerAutoWait = DISABLE;
+    hadc1.Init.ContinuousConvMode = DISABLE; // irregular sampling for more noise
+    hadc1.Init.DiscontinuousConvMode = DISABLE;
+    hadc1.Init.ExternalTrigConv = ADC_SOFTWARE_START;
+    hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
+    hadc1.Init.DMAContinuousRequests = DISABLE;
+    hadc1.Init.Overrun = ADC_OVR_DATA_PRESERVED;
  
     if (HAL_ADC_Init(&hadc1) != HAL_OK) {
         Error_Handler();
     }
  
-    adcChannel.Channel = ADC_CHANNEL_1;
-    adcChannel.Rank = 1;
-    // adcChannel.SamplingTime = ADC_SAMPLETIME_480CYCLES;
-    adcChannel.Offset = 0;
+    adc_channel.Channel = ADC_CHANNEL_VBAT; // we can use VREFINT, TEMPSENSOR, VBAT (seems the most noisy since I believe it is floating idrk docs are confusing)
+    adc_channel.Rank = 1;
+    adc_channel.Rank = ADC_REGULAR_RANK_1;
+    adc_channel.SamplingTime = ADC_SAMPLETIME_1CYCLE_5; // shortest sampling time to increase volatility for more noise
+    adc_channel.SingleDiff = ADC_SINGLE_ENDED;
+    adc_channel.OffsetNumber = ADC_OFFSET_NONE;
+    adc_channel.Offset = 0;
  
-    if (HAL_ADC_ConfigChannel(&hadc1, &adcChannel) != HAL_OK) {
+    if (HAL_ADC_ConfigChannel(&hadc1, &adc_channel) != HAL_OK) {
         Error_Handler();
     }
 }
@@ -77,22 +70,22 @@ static uint32_t get_adc_random_value() {
     return seed;
 }
 
-static uint32_t get_micros_random_value() {
-    uint32_t seed = 0;
+// static uint32_t get_micros_random_value() {
+//     uint32_t seed = 0;
 
-    for (int i = 0; i < 32; i++) {
-        const uint32_t micros = PAL_STM32_MICROS();
-        seed ^= (micros & 0x1) << i; // Use only the least significant bit of each sample
-    }
+//     for (int i = 0; i < 32; i++) {
+//         const uint32_t micros = PAL_STM32_MICROS();
+//         seed ^= (micros & 0x1) << i; // Use only the least significant bit of each sample
+//     }
 
-    return seed;
-}
+//     return seed;
+// }
 
 uint32_t PAL_STM32_RANDOMSEED_INIT_ENTROPY() {
-    // init_adc_for_entropy();
+    init_adc_for_entropy();
 
-    // const uint32_t seed = get_adc_random_value();
-    const uint32_t seed = get_micros_random_value();
+    const uint32_t seed = get_adc_random_value();
+    // const uint32_t seed = get_micros_random_value();
     PAL_GENERAL_RANDOMSEED(seed);
     return seed;
 }

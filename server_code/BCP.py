@@ -2,13 +2,14 @@ from Packet import Packet, PacketType, MAX_DATA_SIZE
 from Encryption import Encryption
 from LoRa import LoRa, LoRaState, DataRate, Bandwidth, CodeRate, LNA, LowDrOpt
 from CRC import crc32
+from DataStreamParser import DataStreamParser
 import serial, serial.serialutil, serial.tools.list_ports
 import time
 from typing import Literal, List, Callable
 from enum import Enum
 
 import logging
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('[BCP]')
 
 BCP_SENT_HISTORY_SIZE: Literal[4] = 4
 BCP_RECVD_HISTORY_SIZE: Literal[4] = 4
@@ -27,10 +28,11 @@ def print_hex(data: bytes, func: Callable[[object], None]) -> None:
     func(" ".join([f"0x{x:02x}" for x in data]))
 
 class BCP:
-    def __init__(self, timeout: float, num_retries: int, lora: LoRa, encryption: Encryption) -> None:
+    def __init__(self, timeout: float, num_retries: int, lora: LoRa, generate_data_func: Callable[[None], bytes], encryption: Encryption) -> None:
         self._timeout: float = timeout
         self._num_retries: int = num_retries
         self._lora: LoRa = lora
+        self._generate_data_func: Callable[[None], bytes] = generate_data_func
         self.__current_index: int = 0
         self._sent_packet_history: List[Packet] = [Packet(encryption) for i in range(BCP_SENT_HISTORY_SIZE)]
         self._recvd_packet_history: List[Packet] = [Packet(encryption) for i in range(BCP_RECVD_HISTORY_SIZE)]
@@ -49,15 +51,15 @@ class BCP:
         # logger.debug(f"Setting _current_index to: {value}")
         self.__current_index = value
 
-    def listen(self, data: bytes) -> bytes:
+    def listen(self, data_stream_func: Callable[[bytes, int, int], None]) -> bytes:
         while True:
             if not self._lora.begin():
                 continue
             saved_state: LoRaState = self._lora.get_state()
             self._current_index = 0
             self._recv_buffer = b""
-            self._sent_packet_history = [Packet(encryption) for i in range(BCP_SENT_HISTORY_SIZE)]
-            self._recvd_packet_history = [Packet(encryption) for i in range(BCP_RECVD_HISTORY_SIZE)]
+            self._sent_packet_history = [Packet(self._encryption) for i in range(BCP_SENT_HISTORY_SIZE)]
+            self._recvd_packet_history = [Packet(self._encryption) for i in range(BCP_RECVD_HISTORY_SIZE)]
             self._lora.set_state(LoRaState.RX)
             self._set_retransmission_control(RetransmissionController.BUOY)
             if self._handle_recv(PacketType.SYN) == PacketStatus.SUCCESS:
@@ -71,9 +73,11 @@ class BCP:
                 if not self._recv_data_desc():
                     continue
                 logger.info("Receiving data")
-                if not self._recv_data():
+                if not self._recv_data(data_stream_func):
                     continue
                 self._set_retransmission_control(RetransmissionController.SERVER)
+                # now that we have received the data, we can generate our dynamic data as it depends on the buoy's data
+                data: bytes = self._generate_data_func()
                 logger.info("Sending DATA_DESC")
                 if not self._send_data_desc(len(data)):
                     continue
@@ -129,6 +133,8 @@ class BCP:
         for i in range(self._num_retries):
             send_failed: bool = False
             for packet_index in range(num_packets - 1, -1, -1):
+                if packet_index < num_packets - 1:
+                    time.sleep(1.0)
                 if self._send_packet(packet_index) != PacketStatus.SUCCESS:
                     send_failed = True
                     break
@@ -185,8 +191,8 @@ class BCP:
             # don't do anything if it is invalid (the packet is already rejected in `recv_packet()`) or timedout
         return False
 
-    def _recv_data(self) -> bool:
-        i = 0
+    def _recv_data(self, data_stream_func: Callable[[bytes, int, int], None]) -> bool:
+        i: int = 0
         while i < self._total_msg_packets:
             logger.debug(f"Receiving Data: {i + 1} / {self._total_msg_packets}")
 
@@ -201,7 +207,9 @@ class BCP:
 
                 if PACKET_STATUS == PacketStatus.SUCCESS:
                     if self._recvd_packet_history[0].get_type() == PacketType.DATA:
-                        self._recv_buffer += self._recvd_packet_history[0].get_data()
+                        buffer: bytes = self._recvd_packet_history[0].get_data()
+                        self._recv_buffer += buffer
+                        data_stream_func(buffer, i, self._total_msg_packets - 1)
 
                         new_packet: Packet = self._new_send_packet()
                         new_packet.set(PacketType.ACK, -1, b"")
@@ -261,6 +269,8 @@ class BCP:
                     self._reject_recvd_packet()
                     continue
                 logger.debug(f"Recvd packet: {new_packet.get_type()}, Index: {new_packet.get_index()}")
+                print_hex(new_packet.get_packet(), logger.debug)
+                print_hex(new_packet.get_data(), logger.debug)
                 PACKET_VALIDATION_STATUS: PacketStatus = self._validate_recvd_packet()
                 if PACKET_VALIDATION_STATUS == PacketStatus.INVALID:
                     self._reject_recvd_packet()
@@ -310,8 +320,8 @@ if __name__ == "__main__":
     LORA_COM_PORT: Literal['COM7'] = 'COM7'
     LORA_BAUDRATE: Literal[9600] = 9600
     # LoRa config
-    LORA_TIMEOUT: float = 0.5
-    LORA_NUM_RETRIES: Literal[5] = 5
+    LORA_TIMEOUT: float = 10.0
+    LORA_NUM_RETRIES: Literal[1] = 1
     LORA_FREQ: Literal[915000000] = 915000000  # 915 MHz
     LORA_DATA_RATE: DataRate = DataRate.SF12
     LORA_BANDWIDTH: Bandwidth = Bandwidth.BANDWIDTH_250_KHZ
@@ -321,8 +331,8 @@ if __name__ == "__main__":
     LORA_LOW_DR_OPT: LowDrOpt = LowDrOpt.AUTO
 
     # BCP config
-    BCP_TIMEOUT: float = 7.0 # these should be different between the buoy and the server and ideally prime to avoid getting stuck
-    BCP_NUM_RETRIES: Literal[10] = 10 # `timeout * num_retries` should be equal between the buoy and the server
+    BCP_TIMEOUT: float = 17.0 # these should be different between the buoy and the server and ideally prime to avoid getting stuck
+    BCP_NUM_RETRIES: Literal[8] = 8 # `timeout * num_retries` should be similar between the buoy and the server
 
     # Firmware path for the bin file for OTA update (MAKE SURE THAT THE FIRMWARE UPDATE CRITICAL SECTION IS CONSISTENT!!)
     FIRMWARE_PATH = "firmware.bin"
@@ -338,7 +348,7 @@ if __name__ == "__main__":
     encryption_key: List[int] = [0x41] * 16
     encryption: Encryption = Encryption(encryption_key)
 
-    def generate_BCP_data_for_firmware(firmware_path: str): # we need to prepend the 4 bytes of the file size and the 2 bytes for the checksum
+    def generate_BCP_data_for_firmware(firmware_path: str) -> bytes: # we need to prepend the 4 bytes of the file size and the 2 bytes for the checksum
         with open(firmware_path, 'rb') as f:
             firmware_data: bytes = f.read()
             firmware_size: int = len(firmware_data)
@@ -349,16 +359,19 @@ if __name__ == "__main__":
             output: bytes = firmware_size_bytes + firmware_checksum_bytes + firmware_data
             print(f"Firmware Size: {firmware_size}, Firmware Checksum: {firmware_checksum}")
             return output
+    
+    def process_data(data: dict) -> None:
+        print(data)
+    data_stream_parser: DataStreamParser = DataStreamParser(process_func=process_data)
 
     while True:
         try:
             lora_serial.close()
             lora_serial.open()
             while True:
-                bcp_instance: BCP = BCP(timeout=BCP_TIMEOUT, num_retries=BCP_NUM_RETRIES, lora=lora, encryption=encryption)
+                bcp_instance: BCP = BCP(timeout=BCP_TIMEOUT, num_retries=BCP_NUM_RETRIES, lora=lora, generate_data_func=lambda: generate_BCP_data_for_firmware(FIRMWARE_PATH), encryption=encryption)
                 # data: bytes = b"A" * 70
-                data: bytes = generate_BCP_data_for_firmware(FIRMWARE_PATH)
-                print(f"BCP Message received: {bcp_instance.listen(data)!r}")
+                print(f"BCP Message received: {bcp_instance.listen(data_stream_parser.parse_data)!r}")
         except serial.serialutil.SerialException as e:
             print(f"Serial Error: {e}")
             time.sleep(5)

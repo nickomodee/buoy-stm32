@@ -18,6 +18,8 @@ Encryption encryption(encryption_key);
 
 void setup() {
     PAL_SERIAL.begin(9600);
+    encryption.begin();
+    
     const char data[] = "package this";
     const uint8_t data_size = strlen(data);
     const PacketType packet_type = PacketType::DATA;

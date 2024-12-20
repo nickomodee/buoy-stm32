@@ -23,6 +23,11 @@ class Encryption : public AES {
          */
         Encryption(const uint8_t key[AES_BLOCK_SIZE]);
         /**
+         * @brief Initialise the random seed
+         * 
+         */
+        void begin();
+        /**
          * @brief Encrypts the input data using AES encryption in CBC mode.
          * 
          * Encrypts the given input data, applying padding if necessary, and writes the encrypted output to the provided output buffer.

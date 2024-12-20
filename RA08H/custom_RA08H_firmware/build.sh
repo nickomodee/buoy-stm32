@@ -1,0 +1,1 @@
+export TREMO_SDK_PATH=/c/Users/User/OneDrive/Documents/buoy-stm32/RA08H/asr_lora_6601-master/ && make

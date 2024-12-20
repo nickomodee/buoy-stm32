@@ -17,10 +17,6 @@ void print_time() {
 
 void setup() {
     PAL_SERIAL.begin(9600);
-    
-    if (!rtc.begin()) {
-        PAL_SERIAL.println("RTC initialisation failed");
-    }
 
     PAL_SERIAL.print("RTC begin status: ");
     PAL_SERIAL.println(rtc.begin() ? "true" : "false");

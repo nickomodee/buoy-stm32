@@ -40,107 +40,105 @@
 #define BME280_REGISTER_CONTROL (0xF4)
 #define BME280_REGISTER_CONFIG (0xF5)
 
-namespace {
-    struct BME280Status {
-        // temperature compensation values
-        uint16_t dig_T1;
-        int16_t dig_T2;
-        int16_t dig_T3;
+struct BME280Status {
+    // temperature compensation values
+    uint16_t dig_T1;
+    int16_t dig_T2;
+    int16_t dig_T3;
 
-        // pressure compensation values
-        uint16_t dig_P1;
-        int16_t dig_P2;
-        int16_t dig_P3;
-        int16_t dig_P4;
-        int16_t dig_P5;
-        int16_t dig_P6;
-        int16_t dig_P7;
-        int16_t dig_P8;
-        int16_t dig_P9;
+    // pressure compensation values
+    uint16_t dig_P1;
+    int16_t dig_P2;
+    int16_t dig_P3;
+    int16_t dig_P4;
+    int16_t dig_P5;
+    int16_t dig_P6;
+    int16_t dig_P7;
+    int16_t dig_P8;
+    int16_t dig_P9;
 
-        // humidity compensation values
-        uint8_t dig_H1;
-        int16_t dig_H2;
-        uint8_t dig_H3;
-        int16_t dig_H4;
-        int16_t dig_H5;
-        int8_t dig_H6;
-    };
+    // humidity compensation values
+    uint8_t dig_H1;
+    int16_t dig_H2;
+    uint8_t dig_H3;
+    int16_t dig_H4;
+    int16_t dig_H5;
+    int8_t dig_H6;
+};
 
-    struct Config {
-        // inactive duration (standby time) in normal mode
-        // 000 = 0.5 ms
-        // 001 = 62.5 ms
-        // 010 = 125 ms
-        // 011 = 250 ms
-        // 100 = 500 ms
-        // 101 = 1000 ms
-        // 110 = 10 ms
-        // 111 = 20 ms
-        uint8_t t_sb : 3; ///< inactive duration (standby time) in normal mode
+struct Config {
+    // inactive duration (standby time) in normal mode
+    // 000 = 0.5 ms
+    // 001 = 62.5 ms
+    // 010 = 125 ms
+    // 011 = 250 ms
+    // 100 = 500 ms
+    // 101 = 1000 ms
+    // 110 = 10 ms
+    // 111 = 20 ms
+    uint8_t t_sb : 3; ///< inactive duration (standby time) in normal mode
 
-        // filter settings
-        // 000 = filter off
-        // 001 = 2x filter
-        // 010 = 4x filter
-        // 011 = 8x filter
-        // 100 and above = 16x filter
-        uint8_t filter : 3; ///< filter settings
+    // filter settings
+    // 000 = filter off
+    // 001 = 2x filter
+    // 010 = 4x filter
+    // 011 = 8x filter
+    // 100 and above = 16x filter
+    uint8_t filter : 3; ///< filter settings
 
-        // unused - don't set
-        uint8_t none : 1;     ///< unused - don't set
-        uint8_t spi3w_en : 1; ///< unused - don't set
+    // unused - don't set
+    uint8_t none : 1;     ///< unused - don't set
+    uint8_t spi3w_en : 1; ///< unused - don't set
 
-        /// @returns combined config register
-        uint8_t get() { return (t_sb << 5) | (filter << 2) | spi3w_en; }
-    };
+    /// @returns combined config register
+    uint8_t get() { return (t_sb << 5) | (filter << 2) | spi3w_en; }
+};
 
-    struct CtrlMeas {
-        // temperature oversampling
-        // 000 = skipped
-        // 001 = x1
-        // 010 = x2
-        // 011 = x4
-        // 100 = x8
-        // 101 and above = x16
-        uint8_t osrs_t : 3; ///< temperature oversampling
+struct CtrlMeas {
+    // temperature oversampling
+    // 000 = skipped
+    // 001 = x1
+    // 010 = x2
+    // 011 = x4
+    // 100 = x8
+    // 101 and above = x16
+    uint8_t osrs_t : 3; ///< temperature oversampling
 
-        // pressure oversampling
-        // 000 = skipped
-        // 001 = x1
-        // 010 = x2
-        // 011 = x4
-        // 100 = x8
-        // 101 and above = x16
-        uint8_t osrs_p : 3; ///< pressure oversampling
+    // pressure oversampling
+    // 000 = skipped
+    // 001 = x1
+    // 010 = x2
+    // 011 = x4
+    // 100 = x8
+    // 101 and above = x16
+    uint8_t osrs_p : 3; ///< pressure oversampling
 
-        // device mode
-        // 00       = sleep
-        // 01 or 10 = forced
-        // 11       = normal
-        uint8_t mode : 2; ///< device mode
+    // device mode
+    // 00       = sleep
+    // 01 or 10 = forced
+    // 11       = normal
+    uint8_t mode : 2; ///< device mode
 
-        /// @returns combined ctrl register
-        uint8_t get() { return (osrs_t << 5) | (osrs_p << 2) | mode; }
-    };
+    /// @returns combined ctrl register
+    uint8_t get() { return (osrs_t << 5) | (osrs_p << 2) | mode; }
+};
 
-    struct CtrlHum {
-        /// unused - don't set
-        uint8_t none : 5;
+struct CtrlHum {
+    /// unused - don't set
+    uint8_t none : 5;
 
-        // pressure oversampling
-        // 000 = skipped
-        // 001 = x1
-        // 010 = x2
-        // 011 = x4
-        // 100 = x8
-        // 101 and above = x16
-        uint8_t osrs_h : 3; ///< pressure oversampling
+    // pressure oversampling
+    // 000 = skipped
+    // 001 = x1
+    // 010 = x2
+    // 011 = x4
+    // 100 = x8
+    // 101 and above = x16
+    uint8_t osrs_h : 3; ///< pressure oversampling
 
-        /// @returns combined ctrl hum register
-        uint8_t get() { return osrs_h; }
-    };
-}
+    /// @returns combined ctrl hum register
+    uint8_t get() { return osrs_h; }
+};
 
 /**************************************************************************/
 /*!
@@ -201,12 +199,14 @@ class BME280 : public TempSensor, public PressureSensor, public HumiditySensor {
     public:
         BME280(const uint8_t i2c_address = BME280_PRIMARY_I2C_ADDRESS, PAL_TWOWIRE* wire = &PAL_WIRE);
         bool init() override;
-        void set_sampling(SensorMode mode = SensorMode::MODE_NORMAL,
+        // as per section 3.5.1 on page 19 in the datasheet at: https://www.mouser.com/datasheet/2/783/BST-BME280-DS002-1509607.pdf
+        // however we are going to use the highest sampling because the time is not important to us and the increase in the proportion of power consumption is negligible
+        void set_sampling(SensorMode mode = SensorMode::MODE_FORCED,
                           SensorSampling temp_sampling = SensorSampling::SAMPLING_X16,
                           SensorSampling press_sampling = SensorSampling::SAMPLING_X16,
                           SensorSampling hum_sampling = SensorSampling::SAMPLING_X16,
-                          SensorFilter filter = SensorFilter::FILTER_OFF,
-                          StandbyDuration duration = StandbyDuration::STANDBY_MS_0_5);
+                          SensorFilter filter = SensorFilter::FILTER_OFF, // filter off because we have a very long period and we want immediate unaltered readings
+                          StandbyDuration duration = StandbyDuration::STANDBY_MS_0_5); // not applicable in forced mode
         float read_temp() override;
         float read_pressure() override;
         float read_humidity() override;

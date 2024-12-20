@@ -4,7 +4,7 @@
 #include "stm32f3xx_hal.h"
 
 static void SystemClock_Config();
-static void MX_GPIO_Init();
+// static void MX_GPIO_Init();
 void Error_Handler();
 
 extern void setup(); // `setup()` function in main file
@@ -22,7 +22,7 @@ extern void loop(); // `loop()` function in main file
 int main() {
     HAL_Init();
     SystemClock_Config();
-    MX_GPIO_Init();
+    // MX_GPIO_Init();
 
     setup();
 
@@ -34,9 +34,9 @@ int main() {
 
 /* System Clock Configuration -----------------------------------------------*/
 void SystemClock_Config() {
-  RCC_OscInitTypeDef RCC_OscInitStruct = {0};
-  RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
-  RCC_PeriphCLKInitTypeDef PeriphClkInit = {0};
+  RCC_OscInitTypeDef RCC_OscInitStruct = {};
+  RCC_ClkInitTypeDef RCC_ClkInitStruct = {};
+  RCC_PeriphCLKInitTypeDef PeriphClkInit = {};
 
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
@@ -73,26 +73,26 @@ void SystemClock_Config() {
 }
 
 /* GPIO Initialization Function ---------------------------------------------*/
-static void MX_GPIO_Init()
-{
-    // GPIO_InitTypeDef GPIO_InitStruct = {0};
-    // /* USER CODE BEGIN MX_GPIO_Init_1 */
-    // /* USER CODE END MX_GPIO_Init_1 */
+// static void MX_GPIO_Init()
+// {
+//     GPIO_InitTypeDef GPIO_InitStruct = {0};
+//     /* USER CODE BEGIN MX_GPIO_Init_1 */
+//     /* USER CODE END MX_GPIO_Init_1 */
 
-    // /* GPIO Ports Clock Enable */
-    // __HAL_RCC_GPIOA_CLK_ENABLE();
-    // __HAL_RCC_GPIOB_CLK_ENABLE();
+//     /* GPIO Ports Clock Enable */
+//     __HAL_RCC_GPIOA_CLK_ENABLE();
+//     __HAL_RCC_GPIOB_CLK_ENABLE();
 
-    // /*Configure GPIO pin Output Level */
-    // HAL_GPIO_WritePin(GPIOB, GPIO_PIN_3, GPIO_PIN_RESET);
+//     /*Configure GPIO pin Output Level */
+//     HAL_GPIO_WritePin(GPIOB, GPIO_PIN_3, GPIO_PIN_RESET);
 
-    // /*Configure GPIO pin : PB3 */
-    // GPIO_InitStruct.Pin = GPIO_PIN_3;
-    // GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-    // GPIO_InitStruct.Pull = GPIO_NOPULL;
-    // GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-    // HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-}
+//     /*Configure GPIO pin : PB3 */
+//     GPIO_InitStruct.Pin = GPIO_PIN_3;
+//     GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+//     GPIO_InitStruct.Pull = GPIO_NOPULL;
+//     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+//     HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+// }
 
 /* Error Handler ------------------------------------------------------------*/
 extern void error_handler();

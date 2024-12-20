@@ -8,6 +8,8 @@ bool RealTimeClock::calibrating_ = false;
 RealTimeClock::RealTimeClock() {}
 
 bool RealTimeClock::begin() {
+    HAL_PWR_EnableBkUpAccess(); // enable access to the backup domain
+    
     hrtc_.Instance = RTC_instance_;
     hrtc_.Init.HourFormat = RTC_HOURFORMAT_24;
     hrtc_.Init.AsynchPrediv = calibrated_asynch_prevdiv_;
@@ -28,8 +30,16 @@ bool RealTimeClock::begin() {
     return true;
 }
 
+uint32_t RealTimeClock::read_backup_domain_register(const uint32_t backup_register) {
+    return HAL_RTCEx_BKUPRead(&hrtc_, backup_register);
+}
+
+void RealTimeClock::write_backup_domain_register(const uint32_t backup_register, const uint32_t data) {
+    return HAL_RTCEx_BKUPWrite(&hrtc_, backup_register, data);
+}
+
 bool RealTimeClock::fetch() {
-    RTC_TimeTypeDef time = {0};
+    RTC_TimeTypeDef time = {};
     if (HAL_RTC_GetTime(&hrtc_, &time, RTC_FORMAT_BIN) != HAL_OK) {
         return false;
     }
@@ -37,7 +47,7 @@ bool RealTimeClock::fetch() {
     minute_ = time.Minutes;
     hour_ = time.Hours;
     
-    RTC_DateTypeDef date = {0};
+    RTC_DateTypeDef date = {};
     if (HAL_RTC_GetDate(&hrtc_, &date, RTC_FORMAT_BIN) != HAL_OK) {
         return false;
     }
@@ -50,7 +60,7 @@ bool RealTimeClock::fetch() {
 }
 
 bool RealTimeClock::set(const uint8_t second, const uint8_t minute, const uint8_t hour, const uint8_t day, const uint8_t dayofweek, const uint8_t month, const uint16_t year) {
-    RTC_TimeTypeDef time = {0};
+    RTC_TimeTypeDef time = {};
     time.Seconds = second;
     time.Minutes = minute;
     time.Hours = hour;
@@ -60,16 +70,21 @@ bool RealTimeClock::set(const uint8_t second, const uint8_t minute, const uint8_
         return false;
     }
 
-    RTC_DateTypeDef date = {0};
+    RTC_DateTypeDef date = {};
     date.Date = day;
     date.WeekDay = dayofweek;
     date.Month = month;
-    date.Year = year;
+    date.Year = year - year_offset;
 
     return HAL_RTC_SetDate(&hrtc_, &date, RTC_FORMAT_BIN) == HAL_OK;
 }
+
+bool RealTimeClock::is_alarm_set() {
+    return __HAL_RTC_ALARM_GET_FLAG(&hrtc_, (alarm_ == RTC_ALARM_A) ? RTC_FLAG_ALRAF : RTC_FLAG_ALRBF);
+}
+
 bool RealTimeClock::set_alarm(const uint8_t second, const uint8_t minute, const uint8_t hour, const bool mask_dateweekday/* = false*/, const bool mask_hour/* = false*/, const bool mask_minute/* = false*/) {
-    RTC_AlarmTypeDef alarm = {0};
+    RTC_AlarmTypeDef alarm = {};
     alarm.AlarmTime.Seconds = second;
     alarm.AlarmTime.Minutes = minute;
     alarm.AlarmTime.Hours = hour;
@@ -129,7 +144,7 @@ void RealTimeClock::enable_clock_output() {
 
 bool RealTimeClock::enable_calibration_output() {
     calibrating_ = true;
-    GPIO_InitTypeDef GPIO_InitStruct = {0};
+    GPIO_InitTypeDef GPIO_InitStruct = {};
 
     __HAL_RCC_GPIOB_CLK_ENABLE();
 
@@ -150,14 +165,14 @@ bool RealTimeClock::enable_calibration_output() {
 }
 
 bool RealTimeClock::set_calibrate_alarm() {
-    RTC_TimeTypeDef currentTime = {0};
+    RTC_TimeTypeDef currentTime = {};
     if (HAL_RTC_GetTime(&hrtc_, &currentTime, RTC_FORMAT_BIN) != HAL_OK) {
         return false;
     }
     currentTime.Seconds += 2;
     currentTime.Seconds %= 60;
     
-    RTC_AlarmTypeDef alarm = {0};
+    RTC_AlarmTypeDef alarm = {};
     alarm.Alarm = alarm_;
     alarm.AlarmTime.Hours = 0;
     alarm.AlarmTime.Minutes = 0;
@@ -191,6 +206,7 @@ void RealTimeClock::alarm_callback() {
 }
 
 extern "C" void HAL_RTC_AlarmAEventCallback(RTC_HandleTypeDef *hrtc) {
+    (void)hrtc;
     rtc.alarm_callback();
 }
 

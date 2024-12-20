@@ -3,6 +3,9 @@
 Encryption::Encryption(const uint8_t key[AES_BLOCK_SIZE]) {
     this->set_encryption_key(key);
     this->setPadMode(paddingMode::CMS); // standard PKCS7 inverted padding (padding occurs after the data)
+}
+
+void Encryption::begin() {
     PAL_RANDOMSEED_INIT_ENTROPY();
 }
 

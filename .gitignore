@@ -22,7 +22,6 @@ __pycache__/
 firmware_updater_build/
 
 # Build artifacts
-firmware.bin
 firmware.elf
 firmware.hex
 firmware.map

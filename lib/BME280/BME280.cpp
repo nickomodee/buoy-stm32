@@ -135,7 +135,7 @@ float BME280::read_pressure() {
     var2 = (((int64_t)status_.dig_P8) * var4) / 524288;
     var4 = ((var4 + var1 + var2) / 256) + (((int64_t)status_.dig_P7) * 16);
 
-    const float P = var4 / 256.0;
+    const float P = var4 / 256.0f;
 
     return P;
 }
@@ -170,7 +170,7 @@ float BME280::read_humidity() {
     var5 = (var5 > 419430400 ? 419430400 : var5);
     const uint32_t H = (uint32_t)(var5 / 4096);
 
-    return (float)H / 1024.0;
+    return (float)H / 1024.0f;
 }
 
 uint8_t BME280::read_8(const uint8_t reg) {

@@ -6,9 +6,9 @@
 #include "../Debug/Debug.h"
 #include <cstdint>
 
-#define MAX_PACKET_SIZE 54
+#define MAX_PACKET_SIZE 246
 #define PACKET_OVERHEAD 6 // the packet 'overhead' that isn't encrypted data
-#define MAX_MESSAGE_SIZE 47
+#define MAX_MESSAGE_SIZE 239
 #define MESSAGE_OVERHEAD 8 // the message 'overhead' that isn't data
 #define MAX_DATA_SIZE (MAX_MESSAGE_SIZE - MESSAGE_OVERHEAD) // the brackets are crucial... found out the hard way
 

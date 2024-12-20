@@ -1,3 +1,4 @@
+#include "Sleep.h"
 #include "RealTimeClock.h"
 #include "PAL.h"
 
@@ -17,27 +18,16 @@ void print_time() {
 
 void setup() {
     PAL_SERIAL.begin(9600);
-    
-    if (!rtc.begin()) {
-        PAL_SERIAL.println("RTC initialisation failed");
-    }
 
     PAL_SERIAL.print("RTC begin status: ");
     PAL_SERIAL.println(rtc.begin() ? "true" : "false");
+    
+    sleep.check_and_sleep();
 
     PAL_SERIAL.print("RTC fetch status: ");
     PAL_SERIAL.println(rtc.fetch() ? "true" : "false");
     PAL_SERIAL.print("Current time: ");
     print_time();
-
-    rtc.enable_clock_output();
-
-    if (!rtc.enable_calibration_output()) {
-        PAL_SERIAL.println("Enabling RTC calibration output failed");
-    }
-
-    PAL_SERIAL.print("Alarm status: ");
-    PAL_SERIAL.println(rtc.set_alarm(10, 0, 0, true, true, true) ? "true" : "false");
 }
 
 void loop() {
@@ -50,8 +40,7 @@ void loop() {
     }
 
     if (rtc.get_second() == 0) {
-        // PAL_SLEEP();
-        PAL_STM32_SLEEP();
+        sleep.prepare_for_sleep(10, 0, 0, true, true);
     }
 
     PAL_DELAY(10);

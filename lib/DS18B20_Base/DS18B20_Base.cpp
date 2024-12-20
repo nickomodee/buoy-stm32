@@ -1,6 +1,8 @@
 #include "DS18B20_Base.h"
 
-DS18B20_Base::DS18B20_Base(uint8_t pin) : oneWire(PAL_ONEWIRE(pin)), numberOfDevices(0), globalResolution(0), selectedResolution(0), selectedPowerMode(0) {
+DS18B20_Base::DS18B20_Base(uint8_t pin) : oneWire(PAL_ONEWIRE(pin)), numberOfDevices(0), globalResolution(0), selectedResolution(0), selectedPowerMode(0) {}
+
+void DS18B20_Base::begin() {
     resetSearch();
     sendCommand(SKIP_ROM, READ_POWER_SUPPLY);
     globalPowerMode = oneWire.read_bit();
@@ -80,11 +82,11 @@ float DS18B20_Base::getTempC() {
         temp = ((temp ^ 0xffff) + 1) * -1;
     }
 
-    return temp / 16.0;
+    return temp / 16.0f;
 }
 
 float DS18B20_Base::getTempF() {
-    return getTempC() * 1.8 + 32;
+    return getTempC() * 1.8f + 32;
 }
 
 uint8_t DS18B20_Base::getResolution() {

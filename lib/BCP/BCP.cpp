@@ -50,7 +50,10 @@ PacketStatus BCP::send_recv(uint8_t num_packets, PacketType expected_packet_type
 
     for (uint8_t i = 0; i < this->num_retries_; ++i) {
         bool send_failed = false;
-        for (int8_t packet_index = num_packets - 1; packet_index >= 0; --packet_index) {
+        for (int8_t packet_index = num_packets - 1; packet_index >= 0; --packet_index) { // int8_t in case someone passes `0` for `num_packets`
+            if (packet_index < num_packets - 1) {
+                PAL_DELAY(1000);
+            }
             if (this->send_packet(packet_index) != PacketStatus::SUCCESS) {
                 send_failed = true;
                 break;
@@ -232,6 +235,7 @@ PacketStatus BCP::recv_packet() {
 }
 
 static void print_hex(const char* str, size_t str_length) {
+    (void)str; // compiler complains if we don't define `DEBUG` as `str` is unused
     for (size_t i = 0; i < str_length; ++i) {
         DEBUG_BCP_PRINT(F("0x"));
         DEBUG_BCP_PRINT((uint8_t)str[i], PAL_HEX);
@@ -304,18 +308,12 @@ void BCP::set_retransmission_control(RetransmissionController controller) {
 bool BCP::send(const char* data, size_t data_size) {
     const LoRaState saved_state = this->lora_->get_state();
     for (uint8_t i = 0; i < this->num_retries_; ++i) {
-        bool LoRa_begin_success = false;
-        for (uint8_t i = 0; i < this-> num_retries_; ++i) {
-            if (this->lora_->begin()) {
-                DEBUG_BCP_PRINTLN(F("LoRa begin success..."));
-                LoRa_begin_success = true;
-                break;
-            }
-        }
-        if (!LoRa_begin_success) {
+        if (!this->lora_->begin()) {
             DEBUG_BCP_PRINTLN(F("LoRa begin failed..."));
             continue;
         }
+        DEBUG_BCP_PRINTLN(F("LoRa begin success..."));
+
         this->lora_->set_state(LoRaState::RX); // we do this so that after TX, we immediately revert to RX to catch packets
         this->current_index_ = 0;
         this->set_retransmission_control(RetransmissionController::BUOY);

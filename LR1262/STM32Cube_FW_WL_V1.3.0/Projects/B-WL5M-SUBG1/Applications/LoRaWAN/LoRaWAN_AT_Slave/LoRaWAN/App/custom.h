@@ -17,7 +17,7 @@ extern "C" {
 #define CONTINUOUS_TIMEOUT            0xFFFF
 #define LORA_PREAMBLE_LENGTH          8         // same for TX and RX
 #define LORA_SYMBOL_TIMEOUT           30        // symbols
-#define TX_TIMEOUT_VALUE              20000
+#define TX_TIMEOUT_VALUE              120000
 #define LORA_FIX_LENGTH_packet_OFF    false
 #define LORA_IQ_INVERSION_OFF         false
 #define RX_TIMEOUT_VALUE              0 // CONTINUOUS

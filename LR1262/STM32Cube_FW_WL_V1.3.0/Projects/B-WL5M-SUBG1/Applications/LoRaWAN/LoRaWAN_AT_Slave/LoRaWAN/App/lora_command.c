@@ -59,7 +59,7 @@ struct ATCommand_s
 
 /* Private define ------------------------------------------------------------*/
 #define CMD_SIZE                        1024
-#define CIRC_BUFF_SIZE                  8
+#define CIRC_BUFF_SIZE                  32
 
 /* USER CODE BEGIN PD */
 

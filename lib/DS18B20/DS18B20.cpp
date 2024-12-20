@@ -3,6 +3,7 @@
 DS18B20::DS18B20(const uint8_t physical_pin) : DS18B20_Base(physical_pin) {}
 
 bool DS18B20::init() {
+    DS18B20_Base::begin();
     return (bool)DS18B20_Base::selectNext();
 }
 

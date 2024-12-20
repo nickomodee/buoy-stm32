@@ -2171,12 +2171,16 @@ uint8_t hex_char_to_byte(char c) {
 #define ARR_SIZE(x) sizeof(x) / sizeof(x[0])
 
 ATEerror_t AT_custom_tx(const char *param) {
+	if (param[0] == '\0') {
+		return AT_ERROR;
+	}
+
 	static uint8_t packet[LORA_MAX_PACKET_SIZE];
 	uint16_t packet_index = 0;
 
 	uint16_t i = 0;
 	while (i < ARR_SIZE(packet) * 2) { // * 2 because hex uses 2 characters per byte
-		if (param[i] == '\0') {
+		if (param[i + 1] == '\0') {
 			return AT_ERROR; // uneven hex bytes
 		}
 		const uint8_t msb = hex_char_to_byte(param[i++]);

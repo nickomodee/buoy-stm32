@@ -17,6 +17,7 @@ void print_hex(const char* str, size_t str_length) {
 
 void setup() {
     PAL_SERIAL.begin(9600);
+    encryption.begin();
     const uint16_t iv = encryption.generate_random_iv();
     PAL_SERIAL.print("0x"); PAL_SERIAL.println(iv, PAL_HEX);
     

@@ -185,7 +185,7 @@ public:
      * 
      * @returns The length of the data in the buffer, `buffer[]`.
      */
-    const uint8_t get_buffer_len();
+    uint8_t get_buffer_len();
 
 private:
     LoRaSerial* lora_serial_; ///< Pointer to the LoRaSerial object for communication.

@@ -22,7 +22,7 @@ PAL_STM32_UART_STREAM::PAL_STM32_UART_STREAM(USART_TypeDef* UART_instance) : PAL
 }
 
 static void UART_MSP_INIT(const USART_TypeDef* UART_instance) {
-    GPIO_InitTypeDef GPIO_InitStruct = {0};
+    GPIO_InitTypeDef GPIO_InitStruct = {};
     if (UART_instance == USART1) {
         /* Peripheral clock enable */
         __HAL_RCC_USART1_CLK_ENABLE();
@@ -177,13 +177,13 @@ size_t PAL_STM32_UART_STREAM::print(const float n, const int digits) {
     return print(n, (uint8_t)digits);
 }
 
-size_t PAL_STM32_UART_STREAM::print(const double n, const uint8_t digits) {
-    return print((float)n, digits);
-}
+// size_t PAL_STM32_UART_STREAM::print(const double n, const uint8_t digits) {
+//     return print((float)n, digits);
+// }
 
-size_t PAL_STM32_UART_STREAM::print(const double n, const int digits) {
-    return print((float)n, (uint8_t)digits);
-}
+// size_t PAL_STM32_UART_STREAM::print(const double n, const int digits) {
+//     return print((float)n, (uint8_t)digits);
+// }
 
 // Modified from: https://github.com/arduino/ArduinoCore-avr/blob/master/cores/arduino/Print.cpp
 size_t PAL_STM32_UART_STREAM::printNumber(uint32_t n, uint8_t base) {
@@ -211,19 +211,19 @@ size_t PAL_STM32_UART_STREAM::printFloat(float number, uint8_t digits) {
 
     if (std::isnan(number)) return print("nan");
     if (std::isinf(number)) return print("inf");
-    if (number > 4294967040.0) return print("ovf");  // constant determined empirically
-    if (number < -4294967040.0) return print("ovf");  // constant determined empirically
+    if (number > 4294967040.0f) return print("ovf");  // constant determined empirically
+    if (number < -4294967040.0f) return print("ovf");  // constant determined empirically
 
     // Handle negative numbers
-    if (number < 0.0) {
+    if (number < 0.0f) {
         n += print('-');
         number = -number;
     }
 
     // Round correctly so that print(1.999, 2) prints as "2.00"
-    float rounding = 0.5;
+    float rounding = 0.5f;
     for (uint8_t i=0; i < digits; ++i)
-    rounding /= 10.0;
+    rounding /= 10.0f;
 
     number += rounding;
 
@@ -239,7 +239,7 @@ size_t PAL_STM32_UART_STREAM::printFloat(float number, uint8_t digits) {
 
     // Extract digits from the remainder one at a time
     while (digits-- > 0) {
-        remainder *= 10.0;
+        remainder *= 10.0f;
         unsigned int toPrint = (unsigned int)(remainder);
         n += print(toPrint);
         remainder -= toPrint; 
@@ -304,13 +304,13 @@ size_t PAL_STM32_UART_STREAM::println(const float n, const int digits) {
     return println(n, (uint8_t)digits);
 }
 
-size_t PAL_STM32_UART_STREAM::println(const double n, const uint8_t digits) {
-    return println((float)n, digits);
-}
+// size_t PAL_STM32_UART_STREAM::println(const double n, const uint8_t digits) {
+//     return println((float)n, digits);
+// }
 
-size_t PAL_STM32_UART_STREAM::println(const double n, const int digits) {
-    return println((float)n, (uint8_t)digits);
-}
+// size_t PAL_STM32_UART_STREAM::println(const double n, const int digits) {
+//     return println((float)n, (uint8_t)digits);
+// }
 
 size_t PAL_STM32_UART_STREAM::println() {
     return write("\r\n");

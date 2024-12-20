@@ -121,7 +121,7 @@ const volatile uint8_t* PAL_STM32_STREAM::get_rx_byte_ptr() const {
     return &this->rx_byte_;
 }
 
-const uint8_t PAL_STM32_STREAM::get_rx_byte() const {
+uint8_t PAL_STM32_STREAM::get_rx_byte() const {
     return this->rx_byte_;
 }
 
