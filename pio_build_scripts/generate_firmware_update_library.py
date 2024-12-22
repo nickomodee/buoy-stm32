@@ -60,6 +60,10 @@ CFLAGS = [
     "-fno-inline-functions",
     "-ffunction-sections",
     "-fdata-sections",
+    "-Wl,-Map,firmware_updater.map",
+    "-fstack-usage",
+    "-fdump-ipa-cgraph",
+    "-fdump-tree-optimized"
 ]
 if DEBUG:
     CFLAGS.append("-g")

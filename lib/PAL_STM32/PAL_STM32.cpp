@@ -6,13 +6,11 @@ PAL_STM32_WIRE Wire;
 static ADC_HandleTypeDef hadc1;
 
 // Modified from: https://visualgdb.com/tutorials/arm/stm32/adc/
-static void configure_ADC() {
+static bool configure_ADC() {
     __HAL_RCC_ADC1_CLK_ENABLE();
  
     ADC_ChannelConfTypeDef adc_channel;
- 
-    hadc1.Instance = ADC1;
- 
+  
     hadc1.Instance = ADC1;
     hadc1.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV1;  // faster ADC clock for more noise
     hadc1.Init.Resolution = ADC_RESOLUTION_12B;
@@ -28,7 +26,7 @@ static void configure_ADC() {
     hadc1.Init.Overrun = ADC_OVR_DATA_PRESERVED;
  
     if (HAL_ADC_Init(&hadc1) != HAL_OK) {
-        Error_Handler();
+        return false;
     }
  
     adc_channel.Channel = ADC_CHANNEL_VBAT; // we can use VREFINT, TEMPSENSOR, VBAT (seems the most noisy since I believe it is floating idrk docs are confusing)
@@ -39,27 +37,31 @@ static void configure_ADC() {
     adc_channel.OffsetNumber = ADC_OFFSET_NONE;
     adc_channel.Offset = 0;
  
-    if (HAL_ADC_ConfigChannel(&hadc1, &adc_channel) != HAL_OK) {
-        Error_Handler();
-    }
+    return HAL_ADC_ConfigChannel(&hadc1, &adc_channel) == HAL_OK;
 }
 
 static bool is_adc_initialised = false;
-static void init_adc_for_entropy() {
+static bool init_adc_for_entropy() {
     if (is_adc_initialised) {
-        return;
+        return true;
     }
 
-    configure_ADC();
+    if (!configure_ADC()) {
+        return false;
+    }
 
     is_adc_initialised = true;
+    
+    return true;
 }
 
 static uint32_t get_adc_random_value() {
     uint32_t seed = 0;
 
     for (int i = 0; i < 32; i++) {
-        HAL_ADC_Start(&hadc1);
+        if (HAL_ADC_Start(&hadc1) != HAL_OK) {
+            continue;
+        }
         if (HAL_ADC_PollForConversion(&hadc1, 100) == HAL_OK) {
             uint32_t adc_value = HAL_ADC_GetValue(&hadc1);
             seed ^= (adc_value & 0x1) << i; // Use only the least significant bit of each sample
@@ -82,7 +84,9 @@ static uint32_t get_adc_random_value() {
 // }
 
 uint32_t PAL_STM32_RANDOMSEED_INIT_ENTROPY() {
-    init_adc_for_entropy();
+    if (!init_adc_for_entropy()) {
+        return 0xF60D68EC; // just random number
+    }
 
     const uint32_t seed = get_adc_random_value();
     // const uint32_t seed = get_micros_random_value();

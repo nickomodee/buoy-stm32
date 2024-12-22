@@ -146,79 +146,84 @@ firmware_checksum_type __FIRMWARE FirmwareUpdater::calculate_flash_firmware_chec
 }
 
 void __FIRMWARE FirmwareUpdater::begin_() {
-    SD_File firmware_update_checksum_file{firmware_update_checksum_path};
-    if (!firmware_update_checksum_file.open(FA_READ)) {
-        return;
-    }
-    if (firmware_update_checksum_file.get_size() != update_checksum_size) {
-        return;
-    }
     firmware_checksum_type expected_firmware_checksum = 0;
-    int checksum_byte;
-    for (uint8_t i = 0; i < update_checksum_size; i++) {
-        checksum_byte = firmware_update_checksum_file.read();
-        if (checksum_byte == -1) {
+    {
+        SD_File firmware_update_checksum_file{firmware_update_checksum_path};
+        if (!firmware_update_checksum_file.open(FA_READ)) {
             return;
         }
-        expected_firmware_checksum |= (uint8_t)checksum_byte << (i * 8); // little endian format
-    }
-    firmware_update_checksum_file.close();
-
-    SD_File firmware_file{firmware_update_path};
-    if (!firmware_file.open(FA_READ)) {
-        return;
-    }
-
-    const firmware_size_type firmware_update_size = firmware_file.get_size();
-
-    const uint32_t flash_update_start_address = (uint32_t)&_flash_update_start; // this MUST be the same across all firmwares and SHOULD REALLY also be page aligned (so that we can utilise as much space as possible for updates)
-    const uint32_t flash_update_end_address = (uint32_t)&_flash_update_end; // this MUST be the same across all firmwares and SHOULD REALLY also be page aligned (so that we can utilise as much space as possible for updates)
-
-    const uint32_t flash_update_start_page_aligned_address = PAGE_ALIGN_LEFT(flash_update_start_address);
-    const uint32_t flash_update_end_page_aligned_address = PAGE_ALIGN_RIGHT(flash_update_end_address);
-
-    STM32_INTERRUPT_GUARD interrupt_guard; // really important because we are overwriting the current isr table
-    
-    const uint32_t firmware_end_address = FLASH_BASE + firmware_update_size; // the byte after the end
-
-    for (uint8_t i = 0; i < firmware_update_retries; i++) {
-        for (uint32_t flash_address = FLASH_BASE; flash_address < firmware_end_address; flash_address += 2) {
-            if (flash_address >= flash_update_start_page_aligned_address && flash_address < flash_update_end_page_aligned_address) {
-                continue;
-            }
-
-            if ((flash_address % FLASH_PAGE_SIZE) == 0) {
-                if (!FirmwareUpdater::flash_erase_page_(flash_address)) {
-                    return;
-                }
-            }
-
-            int firmware_byte = firmware_file.read();
-            if (firmware_byte == -1) {
+        if (firmware_update_checksum_file.get_size() != update_checksum_size) {
+            return;
+        }
+        int checksum_byte;
+        for (uint8_t i = 0; i < update_checksum_size; i++) {
+            checksum_byte = firmware_update_checksum_file.read();
+            if (checksum_byte == -1) {
                 return;
             }
-            const uint8_t firmware_byte_1 = (uint8_t)firmware_byte;
-            uint8_t firmware_byte_2 = 0xFF;
-            if (flash_address < firmware_end_address - 1) { // since we increment in 2s we may cause a read on a file with no more contents
-                firmware_byte = firmware_file.read();
+            expected_firmware_checksum |= (uint8_t)checksum_byte << (i * 8); // little endian format
+        }
+        firmware_update_checksum_file.close();
+    }
+
+    {
+        SD_File firmware_file{firmware_update_path};
+        if (!firmware_file.open(FA_READ)) {
+            return;
+        }
+
+        const firmware_size_type firmware_update_size = firmware_file.get_size();
+
+        const uint32_t flash_update_start_address = (uint32_t)&_flash_update_start; // this MUST be the same across all firmwares and SHOULD REALLY also be page aligned (so that we can utilise as much space as possible for updates)
+        const uint32_t flash_update_end_address = (uint32_t)&_flash_update_end; // this MUST be the same across all firmwares and SHOULD REALLY also be page aligned (so that we can utilise as much space as possible for updates)
+
+        const uint32_t flash_update_start_page_aligned_address = PAGE_ALIGN_LEFT(flash_update_start_address);
+        const uint32_t flash_update_end_page_aligned_address = PAGE_ALIGN_RIGHT(flash_update_end_address);
+
+        STM32_INTERRUPT_GUARD interrupt_guard; // really important because we are overwriting the current isr table
+        
+        const uint32_t firmware_end_address = FLASH_BASE + firmware_update_size; // the byte after the end
+
+        for (uint8_t i = 0; i < firmware_update_retries; i++) {
+            for (uint32_t flash_address = FLASH_BASE; flash_address < firmware_end_address; flash_address += 2) {
+                if (flash_address >= flash_update_start_page_aligned_address && flash_address < flash_update_end_page_aligned_address) {
+                    continue;
+                }
+
+                if ((flash_address % FLASH_PAGE_SIZE) == 0) {
+                    if (!FirmwareUpdater::flash_erase_page_(flash_address)) {
+                        return;
+                    }
+                }
+
+                int firmware_byte = firmware_file.read();
                 if (firmware_byte == -1) {
                     return;
                 }
-                firmware_byte_2 = (uint8_t)firmware_byte;
+                const uint8_t firmware_byte_1 = (uint8_t)firmware_byte;
+                uint8_t firmware_byte_2 = 0xFF;
+                if (flash_address < firmware_end_address - 1) { // since we increment in 2s we may cause a read on a file with no more contents
+                    firmware_byte = firmware_file.read();
+                    if (firmware_byte == -1) {
+                        return;
+                    }
+                    firmware_byte_2 = (uint8_t)firmware_byte;
+                }
+
+                const uint16_t firmware_halfword = ((uint16_t)firmware_byte_2 << 8U) | (uint16_t)firmware_byte_1;
+
+                if (!FirmwareUpdater::flash_write_byte_(flash_address, firmware_halfword)) {
+                    return;
+                }
             }
 
-            const uint16_t firmware_halfword = ((uint16_t)firmware_byte_2 << 8U) | (uint16_t)firmware_byte_1;
-
-            if (!FirmwareUpdater::flash_write_byte_(flash_address, firmware_halfword)) {
-                return;
+            const firmware_checksum_type firmware_checksum = calculate_flash_firmware_checksum_(FLASH_BASE, firmware_end_address);
+            if (firmware_checksum == expected_firmware_checksum) {
+                end_(); // reset
+                return; // won't reach here
             }
         }
-
-        const firmware_checksum_type firmware_checksum = calculate_flash_firmware_checksum_(FLASH_BASE, firmware_end_address);
-        if (firmware_checksum == expected_firmware_checksum) {
-            end_(); // reset
-            return; // won't reach here
-        }
+        firmware_file.close();
     }
 
     return;

@@ -35,9 +35,9 @@ static void I2C_MspInit(const I2C_TypeDef* instance) {
 
 PAL_STM32_WIRE::PAL_STM32_WIRE() : PAL_STM32_STREAM(RX_BUFFER_SIZE) {};
 
-void PAL_STM32_WIRE::begin() {
+bool PAL_STM32_WIRE::begin() {
     this->hi2c_.Instance = I2C1;
-    this->hi2c_.Init.Timing = 0x0010020A; // 10 kHz: 0x10108CFF; 50 kHz: 0x00201E7A; 100 kHz: 0x00201D2B; 400 kHz: 0x0010020A;
+    this->hi2c_.Init.Timing = 0x00201D2B; // 10 kHz: 0x10108CFF; 50 kHz: 0x00201E7A; 100 kHz: 0x00201D2B; 400 kHz: 0x0010020A;
     this->hi2c_.Init.OwnAddress1 = 0;
     this->hi2c_.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
     this->hi2c_.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
@@ -51,20 +51,18 @@ void PAL_STM32_WIRE::begin() {
 
     // Initialise I2C Peripheral
     if (HAL_I2C_Init(PAL_STM32_WIRE::get_hi2c_ptr()) != HAL_OK) {
-        Error_Handler();
+        return false;
     }
 
     /** Configure Analogue filter
      */
     if (HAL_I2CEx_ConfigAnalogFilter(PAL_STM32_WIRE::get_hi2c_ptr(), I2C_ANALOGFILTER_ENABLE) != HAL_OK) {
-        Error_Handler();
+        return false;
     }
 
     /** Configure Digital filter
      */
-    if (HAL_I2CEx_ConfigDigitalFilter(PAL_STM32_WIRE::get_hi2c_ptr(), 0) != HAL_OK) {
-        Error_Handler();
-    }
+    return HAL_I2CEx_ConfigDigitalFilter(PAL_STM32_WIRE::get_hi2c_ptr(), 0) == HAL_OK;
 }
 
 void PAL_STM32_WIRE::beginTransmission(const uint8_t address) {
@@ -88,7 +86,7 @@ uint8_t PAL_STM32_WIRE::endTransmission() {
         case HAL_BUSY:
             return 4;   // line busy
         default:
-            Error_Handler(); // this will never happen, as `HAL_TIMEOUT` can not return from `HAL_I2C_Master_Transmit()`
+            // Error_Handler(); // this will never happen, as `HAL_TIMEOUT` can not return from `HAL_I2C_Master_Transmit()`
             return -1;   // make compiler happy, this never happens
     }
 

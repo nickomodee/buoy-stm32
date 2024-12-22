@@ -4,7 +4,7 @@
 #include "../Debug/Debug.h"
 
 #define ARR_SIZE(x) sizeof(x) / sizeof(x[0])
-#define LORA_SERIAL_BUFFER_SIZE 640
+#define LORA_SERIAL_BUFFER_SIZE 256
 #define LORA_MAX_SIZE 255 // max packet size
 
 /**

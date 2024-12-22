@@ -7,6 +7,8 @@
 #include "FirmwareUpdater.h"
 #include "DataStreamParser.h"
 
+#include "BNO085.h"
+#include "BatteryVoltageReader.h"
 #include <array>
 #include "TempSensor.h"
 #include "HumiditySensor.h"
@@ -50,9 +52,16 @@ const BCPDataStreamFunc bcp_data_stream_func = [](const char* data, const size_t
 };
 BCP bcp_instance(BCP_TIMEOUT, BCP_NUM_RETRIES, &lora, bcp_data_stream_func, &encryption);
 
+constexpr uint8_t bno085_reset_pin = 11;
+BNO085 bno085(bno085_reset_pin);
+
+BatteryVoltageReader battery_voltage_reader;
+
 BME280 bme280;
-DS18B20 water_temp(9);
-DS18B20 air_temp(3);
+constexpr uint8_t water_temp_pin = 9;
+DS18B20 water_temp(water_temp_pin);
+constexpr uint8_t air_temp_pin = 3;
+DS18B20 air_temp(air_temp_pin);
 SHT30 sht30;
 SI1145 si1145;
 
@@ -64,9 +73,9 @@ const std::array<VisibleLightSensor*, 1> visible_light_sensors_array = {&si1145}
 const std::array<IRLightSensor*, 1> ir_light_sensors_array = {&si1145};
 
 constexpr uint8_t buoy_init_retries = 10;
-constexpr firmware_version_type buoy_firmware_version = 1.105f;
+constexpr firmware_version_type buoy_firmware_version = 1.0f;
 
-Buoy<temp_sensors_array.size(), humidity_sensors_array.size(), pressure_sensors_array.size(), uv_sensors_array.size(), visible_light_sensors_array.size(), ir_light_sensors_array.size()> buoy(buoy_init_retries, buoy_firmware_version, &bcp_instance, temp_sensors_array, humidity_sensors_array, pressure_sensors_array, uv_sensors_array, visible_light_sensors_array, ir_light_sensors_array);
+Buoy<temp_sensors_array.size(), humidity_sensors_array.size(), pressure_sensors_array.size(), uv_sensors_array.size(), visible_light_sensors_array.size(), ir_light_sensors_array.size()> buoy(buoy_init_retries, buoy_firmware_version, &bcp_instance, &bno085, &battery_voltage_reader, temp_sensors_array, humidity_sensors_array, pressure_sensors_array, uv_sensors_array, visible_light_sensors_array, ir_light_sensors_array);
 
 void HardFault_Handler() { // unrecoverable error: invalid memory access, illegal instruction
     NVIC_SystemReset();

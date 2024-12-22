@@ -8,16 +8,19 @@ static PAL_STM32_UART_STREAM* USART2_STREAM = nullptr;
 PAL_STM32_UART_STREAM::PAL_STM32_UART_STREAM(USART_TypeDef* UART_instance) : PAL_STM32_STREAM(RX_BUFFER_SIZE), UART_instance_(UART_instance) {
 	if (UART_instance == USART1) {
         if (USART1_STREAM != nullptr) {
-            Error_Handler(); // There should only be a single Stream tied to a USART instance
+            // Error_Handler(); // There should only be a single Stream tied to a USART instance
+            return;
         }
         USART1_STREAM = this;
     } else if (UART_instance == USART2) {
         if (USART2_STREAM != nullptr) {
-            Error_Handler(); // There should only be a single Stream tied to a USART instance
+            // Error_Handler(); // There should only be a single Stream tied to a USART instance
+            return;
         }
         USART2_STREAM = this;
     } else {
-        Error_Handler(); // Must be a valid USART instance for the Nucleo F303k8 (USART1 or USART2)
+        // Error_Handler(); // Must be a valid USART instance for the Nucleo F303k8 (USART1 or USART2)
+        return;
     }
 }
 
@@ -81,7 +84,8 @@ void PAL_STM32_UART_STREAM::begin(uint32_t baud_rate) {
 
     // Initialise UART peripheral
     if (HAL_UART_Init(get_huart_ptr()) != HAL_OK) {
-        Error_Handler();
+        // Error_Handler();
+        return;
     }
 
     // Start UART reception in interrupt mode

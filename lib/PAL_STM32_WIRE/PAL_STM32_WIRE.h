@@ -6,7 +6,7 @@
 #include <cstddef>
 #include <cstring>
 
-extern void Error_Handler();
+// extern void Error_Handler();
 
 #define WIRE_MAX_TIMEOUT 1000 // 1 second for the timeout for HAL Wire events
 
@@ -16,7 +16,7 @@ class PAL_STM32_WIRE : public PAL_STM32_STREAM {
         static const uint16_t RX_BUFFER_SIZE = 256;
         static const uint16_t TX_BUFFER_SIZE = 256;
         PAL_STM32_WIRE();
-        void begin();
+        bool begin();
         void beginTransmission(const uint8_t address);
         uint8_t endTransmission();
         uint8_t endTransmission(const bool send_stop);

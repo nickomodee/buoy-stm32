@@ -6,7 +6,25 @@
 #include "../LoRa/LoRa.h"
 #include "../Debug/Debug.h"
 #include "../PAL/PAL.h"
+#include "../SD_File/SD_File.h"
 #include <cstddef>
+#include <new>
+
+// maybe in the future we will want to send multiple files?
+class BCPDataFetcher {
+    public:
+        BCPDataFetcher(const char* data, const size_t data_size, const char* file_path);
+        ~BCPDataFetcher();
+        uint32_t get_total_data_size();
+        uint8_t fetch(char* buffer, const uint8_t buffer_size);
+
+    private:
+        const char* data_;
+        const size_t data_size_;
+        SD_File sd_file_;
+        uint32_t file_size_ = 0;
+        uint32_t data_count_ = 0;
+};
 
 typedef void (*BCPDataStreamFunc)(const char* data, const size_t size, const uint32_t current_index, const uint32_t final_index);
 
@@ -69,7 +87,7 @@ class BCP : public DataSender {
         /**
          * @copydoc DataSender::send
          */
-        bool send(const char* data, size_t data_size) override;
+        bool send(const char* data, size_t data_size, const char* file_path = nullptr) override;
     private:
         const uint16_t timeout_; ///< Timeout duration in milliseconds for receiving LoRa packets.
         const uint8_t num_retries_; ///< Number of retries for sending or receiving packets.
@@ -141,15 +159,16 @@ class BCP : public DataSender {
          * @param[in] data_size The size of the data array that will be sent to the other device in bytes.
          * @returns A boolean if the data description was successfully sent
          */
-        bool send_data_desc(size_t data_size);
-        /**
-         * @brief Send the entire data buffer in chunks of packets.
-         * 
-         * Expects an `ACK` packet between each packet sent.
-         * 
-         * @returns A boolean if all of the data was successfully sent to the other device with acknowledgements.
-         */
-        bool send_data(const char* data, size_t data_size);
+        bool send_data_desc(uint32_t data_size);
+        // /**
+        //  * @brief Send the entire data buffer in chunks of packets.
+        //  * 
+        //  * Expects an `ACK` packet between each packet sent.
+        //  * 
+        //  * @returns A boolean if all of the data was successfully sent to the other device with acknowledgements.
+        //  */
+        // bool send_data(const char* data, uint32_t data_size);
+        bool send_data(BCPDataFetcher* data_fetcher, const uint32_t data_size);
         /**
          * @brief Receive the data description packet from the other device to determine the size of the data buffer that the other server will send.
          * 

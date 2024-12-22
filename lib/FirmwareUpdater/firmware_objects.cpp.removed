@@ -883,8 +883,7 @@ __FIRMWARE void __DSB(void) {
 
 __FIRMWARE void Error_Handler() {
     __disable_irq();
-    while (1) {
-    }
+    NVIC_SystemReset();
 }
 
 extern "C" {

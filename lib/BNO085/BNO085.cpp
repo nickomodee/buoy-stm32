@@ -4,7 +4,7 @@ PAL_TWOWIRE* BNO085::wire_ = &PAL_WIRE;
 uint8_t BNO085::i2c_address_ = 0xFF;
 int8_t BNO085::reset_pin_ = -1;
 bool BNO085::reset_occurred_ = false;
-sh2_SensorValue_t BNO085::sensor_value_ = {0};
+sh2_SensorValue_t BNO085::sensor_value_ = {};
 
 BNO085::BNO085(int8_t reset_pin, const uint8_t i2c_address/* = BNO085_I2C_ADDRESS*/, const int32_t sensor_id/* = 0*/) : sensor_id_(sensor_id) {
     i2c_address_ = i2c_address;
@@ -22,6 +22,8 @@ bool BNO085::begin() {
 }
 
 bool BNO085::init_(const int32_t sensor_id) {
+    (void)sensor_id; // make compiler happy
+
     hardware_reset();
 
     PAL_DELAY(500);
@@ -211,7 +213,7 @@ void BNO085::hal_hardware_reset() {
         return;
     }
     #if PLATFORM == STM32
-        GPIO_InitTypeDef GPIO_init = {0};
+        GPIO_InitTypeDef GPIO_init = {};
 
         const uint16_t GPIO_pin = get_GPIO_pin(reset_pin_);
         GPIO_TypeDef* GPIO_port = get_GPIO_port(reset_pin_);

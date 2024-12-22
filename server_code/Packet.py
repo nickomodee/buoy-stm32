@@ -149,9 +149,12 @@ class Packet:
         return self._illegal_char_replacement
 
     def from_raw(self) -> bool:
+        if len(self._packet) < PACKET_OVERHEAD:
+            logger.debug(f"Error while parsing: Packet size is not large enough. Expected at least: {PACKET_OVERHEAD}, got: {len(self._packet)}")
+            return False
         self.revert_illegal_char() # Do this FIRST THING
         if self._packet[PACKET_SIZE_INDEX] != len(self._packet):
-            logger.debug("Error while decrypting: Packet size not equal to expected packet size")
+            logger.debug(f"Error while parsing: Packet size not equal to expected packet size. Expected: {len(self._packet)}, got: {self._packet[PACKET_SIZE_INDEX]}")
             return False
         self.set_illegal_char_replacement(self._packet[PACKET_ILLEGAL_CHAR_INDEX])
         self.set_iv(self._packet[PACKET_IV_1_INDEX] | (self._packet[PACKET_IV_2_INDEX] << 8))

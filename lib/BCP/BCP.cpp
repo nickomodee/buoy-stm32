@@ -1,5 +1,45 @@
 #include "BCP.h"
 
+BCPDataFetcher::BCPDataFetcher(const char* data, const size_t data_size, const char* file_path) : data_(data), data_size_(data_size), sd_file_{(file_path != nullptr) ? file_path : ""} {
+    if ((file_path != nullptr) && (sd_file_.open(FA_READ))) {
+        file_size_ = sd_file_.get_size();
+    }
+}
+
+BCPDataFetcher::~BCPDataFetcher() {
+    sd_file_.close();
+}
+
+uint32_t BCPDataFetcher::get_total_data_size() {
+    return data_size_ + file_size_;
+}
+
+uint8_t BCPDataFetcher::fetch(char* buffer, const uint8_t buffer_size) {
+    if ((buffer == nullptr) || (buffer_size == 0)) {
+        return 0;
+    }
+
+    uint8_t packet_data_size = 0;
+    if (data_size_ > data_count_) {
+        const size_t amount_to_copy = PAL_MIN((size_t)buffer_size, data_size_ - data_count_);
+        memcpy(buffer, data_, amount_to_copy);
+        packet_data_size += amount_to_copy;
+        buffer += amount_to_copy;
+        data_count_ += amount_to_copy;
+    }
+
+    const uint32_t file_count = data_count_ - data_size_;
+    if ((packet_data_size < buffer_size) && (file_size_ > file_count)) {
+        const uint32_t amount_to_read = PAL_MIN((uint32_t)(buffer_size - packet_data_size), file_size_ - file_count);
+        const uint32_t read_amount = sd_file_.read(buffer, amount_to_read);
+        packet_data_size += read_amount;
+        buffer += read_amount;
+        data_count_ += read_amount;
+    }
+
+    return packet_data_size;
+}
+
 BCP::BCP(const uint16_t timeout, const uint8_t num_retries, LoRa* lora, const BCPDataStreamFunc data_stream_func, Encryption* encryption) : timeout_(timeout), num_retries_(num_retries), lora_(lora), data_stream_func_(data_stream_func), encryption_(encryption) {}
 
 PacketStatus BCP::send_packet(uint8_t history_index) {
@@ -26,21 +66,19 @@ Packet* BCP::new_send_packet() {
     for (size_t i = BCP_SENT_HISTORY_SIZE - 1; i > 0; --i) { // we don't want to include 0
         this->sent_packet_history_[i] = this->sent_packet_history_[i - 1];
     }
-    Packet& new_packet = this->sent_packet_history_[0];
-    new_packet = Packet(this->encryption_);
-    new_packet.set_index(this->current_index_);
+    Packet* new_packet = new(&this->sent_packet_history_[0]) Packet(this->encryption_);
+    new_packet->set_index(this->current_index_);
     this->current_index_++;
-    return &new_packet;
+    return new_packet;
 }
 
 Packet* BCP::new_recv_packet() {
     for (size_t i = BCP_RECVD_HISTORY_SIZE - 1; i > 0; --i) { // we don't want to include 0
         this->recvd_packet_history_[i] = this->recvd_packet_history_[i - 1];
     }
-    Packet& new_packet = this->recvd_packet_history_[0];
-    new_packet = Packet(this->encryption_);
+    Packet* new_packet = new(&this->recvd_packet_history_[0]) Packet(this->encryption_);
     this->current_index_++;
-    return &new_packet;
+    return new_packet;
 }
 
 PacketStatus BCP::send_recv(uint8_t num_packets, PacketType expected_packet_type) {
@@ -88,12 +126,12 @@ bool BCP::synchronise() {
 
     new_packet = this->new_send_packet();
     new_packet->set(PacketType::ACK, -1, 0, "");
-    // we don't send this packet because it is sent in `send_data_desc(size_t)` since if we timeout, we must send both, which is easier to implement in that method
+    // we don't send this packet because it is sent in `send_data_desc(uin32_t)` since if we timeout, we must send both, which is easier to implement in that method
 
     return true;
 }
 
-bool BCP::send_data_desc(size_t data_size) {
+bool BCP::send_data_desc(uint32_t data_size) {
     Packet* new_packet = this->new_send_packet();
     const uint32_t num_packets = data_size / MAX_DATA_SIZE + (data_size % MAX_DATA_SIZE ? 1 : 0);
     DEBUG_BCP_PRINT(F("Send DATA_DESC, Num packets: "));
@@ -103,11 +141,25 @@ bool BCP::send_data_desc(size_t data_size) {
 }
 
 
-bool BCP::send_data(const char* data, size_t data_size) {
+// bool BCP::send_data(const char* data, uint32_t data_size) {
+//     const uint32_t num_packets = data_size / MAX_DATA_SIZE + (data_size % MAX_DATA_SIZE ? 1 : 0);
+//     for (uint32_t i = 0; i < num_packets; ++i) {
+//         Packet* new_packet = this->new_send_packet();
+//         new_packet->set(PacketType::DATA, -1, (i == num_packets - 1) ? data_size % MAX_DATA_SIZE : MAX_DATA_SIZE, &data[i * MAX_DATA_SIZE]);
+//         if (this->send_recv(1, PacketType::ACK) != PacketStatus::SUCCESS) {
+//             return false;
+//         }
+//     }
+//     return true;
+// }
+
+bool BCP::send_data(BCPDataFetcher* data_fetcher, const uint32_t data_size) {
+    char buffer[MAX_DATA_SIZE];
     const uint32_t num_packets = data_size / MAX_DATA_SIZE + (data_size % MAX_DATA_SIZE ? 1 : 0);
     for (uint32_t i = 0; i < num_packets; ++i) {
+        const uint8_t packet_data_size = data_fetcher->fetch(buffer, MAX_DATA_SIZE); // we expect this to be `(i == num_packets - 1) ? data_size % MAX_DATA_SIZE : MAX_DATA_SIZE`, but what are we meant to do if it isn't lol
         Packet* new_packet = this->new_send_packet();
-        new_packet->set(PacketType::DATA, -1, (i == num_packets - 1) ? data_size % MAX_DATA_SIZE : MAX_DATA_SIZE, &data[i * MAX_DATA_SIZE]);
+        new_packet->set(PacketType::DATA, -1, packet_data_size, buffer);
         if (this->send_recv(1, PacketType::ACK) != PacketStatus::SUCCESS) {
             return false;
         }
@@ -159,7 +211,7 @@ bool BCP::recv_data() {
                     Packet* new_packet = this->new_send_packet();
                     new_packet->set(PacketType::ACK, -1, 0, "");
 
-                    if (i == this->total_msg_packets_ - 1) { // if this is the last data packet, don't send the ACK, as we will do this in `finish()` (similar to how we send the ACK and DATA_DESC in `send_data_desc(size_t)`)
+                    if (i == this->total_msg_packets_ - 1) { // if this is the last data packet, don't send the ACK, as we will do this in `finish()` (similar to how we send the ACK and DATA_DESC in `send_data_desc(uint32_t)`)
                         return true;
                     }
                     if (this->send_packet(0) != PacketStatus::SUCCESS) {
@@ -296,7 +348,7 @@ void BCP::reject_recvd_packet() {
     for (size_t i = 0; i < BCP_RECVD_HISTORY_SIZE - 1; ++i) {
         this->recvd_packet_history_[i] = this->recvd_packet_history_[i + 1];
     }
-    this->recvd_packet_history_[BCP_RECVD_HISTORY_SIZE - 1] = Packet(this->encryption_);
+    new (&this->recvd_packet_history_[BCP_RECVD_HISTORY_SIZE - 1]) Packet(this->encryption_);
     this->current_index_--;
     DEBUG_BCP_PRINTLN(F("Packet rejected"));
 }
@@ -305,7 +357,7 @@ void BCP::set_retransmission_control(RetransmissionController controller) {
     this->retransmission_control_ = controller;
 }
 
-bool BCP::send(const char* data, size_t data_size) {
+bool BCP::send(const char* data, size_t data_size, const char* file_path/* = nullptr*/) {
     const LoRaState saved_state = this->lora_->get_state();
     for (uint8_t i = 0; i < this->num_retries_; ++i) {
         if (!this->lora_->begin()) {
@@ -322,14 +374,20 @@ bool BCP::send(const char* data, size_t data_size) {
         if (!this->synchronise()) {
             continue;
         }
-        DEBUG_BCP_PRINTLN(F("Sending DATA_DESC"));
-        if (!this->send_data_desc(data_size)) {
-            continue;
+
+        {
+            BCPDataFetcher data_fetcher{data, data_size, file_path};
+
+            DEBUG_BCP_PRINTLN(F("Sending DATA_DESC"));
+            if (!this->send_data_desc(data_fetcher.get_total_data_size())) {
+                continue;
+            }
+            DEBUG_BCP_PRINTLN(F("Sending data"));
+            if (!this->send_data(&data_fetcher, data_fetcher.get_total_data_size())) {
+                continue;
+            }
         }
-        DEBUG_BCP_PRINTLN(F("Sending data"));
-        if (!this->send_data(data, data_size)) {
-            continue;
-        }
+
         DEBUG_BCP_PRINTLN(F("Receiving DATA_DESC"));
         if (!this->recv_data_desc()) {
             continue;

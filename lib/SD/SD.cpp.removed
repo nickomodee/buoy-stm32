@@ -86,10 +86,8 @@ bool __FIRMWARE SD::begin() {
 
     // Initialise SPI peripheral
     if (HAL_SPI_Init(get_hspi_ptr()) != HAL_OK) {
-        Error_Handler();
+        return false;
     }
-
-    MX_FATFS_Init();
 
     FatFs_ = {0};
     dir_ = {0};

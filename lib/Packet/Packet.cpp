@@ -133,6 +133,12 @@ char Packet::get_illegal_char_replacement() const {
 bool Packet::from_raw() {
     this->revert_illegal_char(); // Do this FIRST THING
     this->set_packet_size(this->get_packet_size());
+    if (this->packet_size > MAX_PACKET_SIZE) {
+        DEBUG_PACKET_PRINT("Error while parsing. Packet size: ");
+        DEBUG_PACKET_PRINT(this->packet_size);
+        DEBUG_PACKET_PRINT(" is larger than the maximum packet size: ");
+        DEBUG_PACKET_PRINTLN(MAX_PACKET_SIZE);
+    }
     this->set_illegal_char_replacement(this->packet[PACKET_ILLEGAL_CHAR_INDEX]);
     this->set_iv((uint16_t)(uint8_t)this->packet[PACKET_IV_1_INDEX] | ((uint16_t)(uint8_t)this->packet[PACKET_IV_2_INDEX] << 8));
     this->set_packet_checksum((uint16_t)(uint8_t)this->packet[PACKET_CHECKSUM_1_INDEX] | ((uint16_t)(uint8_t)this->packet[PACKET_CHECKSUM_2_INDEX] << 8));

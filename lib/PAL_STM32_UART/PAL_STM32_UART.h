@@ -10,11 +10,11 @@
 
 #define UART_MAX_TIMEOUT 1000 // 1 second for the timeout for HAL UART events
 
-extern void Error_Handler(); // From main STM32 PAL
+// extern void Error_Handler(); // From main STM32 PAL
 
 class PAL_STM32_UART_STREAM : public PAL_STM32_STREAM {
     public:
-        static const uint16_t RX_BUFFER_SIZE = 1024;
+        static const uint16_t RX_BUFFER_SIZE = 256;
         PAL_STM32_UART_STREAM(USART_TypeDef* UART_instance);
         void begin(uint32_t baud_rate);
         size_t write(const uint8_t data) override;

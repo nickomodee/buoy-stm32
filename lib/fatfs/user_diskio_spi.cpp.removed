@@ -131,7 +131,7 @@ void __FIRMWARE xmit_spi_multi (
 	UINT btx			/* Number of bytes to send (even number) */
 )
 {
-	HAL_SPI_Transmit(&SD_SPI_HANDLE, (uint8_t*)buff, btx, HAL_MAX_DELAY);
+	HAL_SPI_Transmit(&SD_SPI_HANDLE, (uint8_t*)buff, btx, 10000);
 }
 #endif
 

@@ -7,7 +7,7 @@
 #include "../PAL/PAL.h"
 #include <cstring>
 
-extern void Error_Handler();
+// extern void Error_Handler();
 
 class SD {
     public:

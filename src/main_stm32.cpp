@@ -5,7 +5,7 @@
 
 static void SystemClock_Config();
 // static void MX_GPIO_Init();
-void Error_Handler();
+extern void Error_Handler();
 
 extern void setup(); // `setup()` function in main file
 extern void loop(); // `loop()` function in main file
@@ -45,7 +45,9 @@ void SystemClock_Config() {
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
   RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
   RCC_OscInitStruct.LSIState = RCC_LSI_ON;
-  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_NONE;
+  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
+  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
+  RCC_OscInitStruct.PLL.PLLMUL = RCC_PLL_MUL4;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
   {
     Error_Handler();
@@ -64,7 +66,8 @@ void SystemClock_Config() {
   {
     Error_Handler();
   }
-  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_RTC;
+  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_RTC | RCC_PERIPHCLK_ADC12;
+  PeriphClkInit.Adc12ClockSelection = RCC_ADC12PLLCLK_DIV1;
   PeriphClkInit.RTCClockSelection = RCC_RTCCLKSOURCE_LSI;
   if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
   {
@@ -95,7 +98,6 @@ void SystemClock_Config() {
 // }
 
 /* Error Handler ------------------------------------------------------------*/
-extern void error_handler();
 
 extern "C" void SysTick_Handler() { // make this visible to C files
     HAL_IncTick();

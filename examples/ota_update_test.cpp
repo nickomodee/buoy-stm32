@@ -58,7 +58,7 @@ void setup() {
             break;
         }
 
-        PAL_SERIAL.print("SD Initialisation Failed, Status: "); // TODO: when the SD is not initialised from the beginning (e.g. unplugged), it will never be initialised (e.g. if you plug it back in)
+        PAL_SERIAL.print("SD Initialisation Failed, Status: ");
         PAL_SERIAL.println(sd_init_status);
         PAL_DELAY(1000);
     }
