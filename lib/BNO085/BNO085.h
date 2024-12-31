@@ -3,7 +3,8 @@
 #include "sh2.h"
 #include "sh2_SensorValue.h"
 #include "sh2_err.h"
-#include "PAL.h"
+#include "../PAL/PAL.h"
+#include "../Watchdog/Watchdog.h"
 
 #define ARR_SIZE(x) sizeof(x) / sizeof(x[0])
 

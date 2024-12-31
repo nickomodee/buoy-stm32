@@ -75,6 +75,7 @@ uint8_t PAL_STM32_WIRE::endTransmission() {
     uint8_t* data_ptr = const_cast<uint8_t*>(PAL_STM32_WIRE::tx_buffer_.get_read_ptr()); // for some reason it is not marked as const in `HAL_I2C_Master_Transmit()` even though it is not modified
     const uint16_t data_size = PAL_STM32_WIRE::tx_buffer_.get_count();
     const HAL_StatusTypeDef tx_status = HAL_I2C_Master_Transmit(PAL_STM32_WIRE::get_hi2c_ptr(), PAL_STM32_WIRE::tx_address_, data_ptr, data_size, WIRE_MAX_TIMEOUT);
+    watchdog.refresh();
     PAL_STM32_WIRE::transmitting_ = false;
     PAL_STM32_WIRE::tx_buffer_.reset();
 
@@ -110,6 +111,7 @@ size_t PAL_STM32_WIRE::requestFrom(const uint8_t address, size_t size) {
     }
     uint8_t* write_ptr = const_cast<uint8_t*>(this->rx_buffer_.get_write_ptr()); // I mean this isn't good, but I'd rather use the memory used for the rx buffer in base `Stream` instead of just using an extra array
     const HAL_StatusTypeDef receive_status = HAL_I2C_Master_Receive(PAL_STM32_WIRE::get_hi2c_ptr(), PAL_STM32_WIRE::tx_address_, write_ptr, size, WIRE_MAX_TIMEOUT);
+    watchdog.refresh();
     if (receive_status != HAL_OK) {
         return 0;
     }
@@ -131,6 +133,7 @@ size_t PAL_STM32_WIRE::write(const uint8_t data) {
         PAL_STM32_WIRE::tx_buffer_.put(data);
     } else {
         HAL_I2C_Slave_Transmit(PAL_STM32_WIRE::get_hi2c_ptr(), const_cast<uint8_t*>(&data), 1, WIRE_MAX_TIMEOUT);
+        watchdog.refresh();
     }
     return 1;
 }

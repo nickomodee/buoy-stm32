@@ -133,6 +133,7 @@ size_t PAL_STM32_STREAM::write(const uint8_t* buffer, const size_t size) {
     size_t written = 0;
 
     for (size_t i = 0; i < size; i++) {
+        watchdog.refresh();
         written += write(buffer[i]);
     }
 

@@ -4,6 +4,7 @@
 int LoRaSerial::read_blocking(uint16_t timeout) {
     unsigned long start_time = PAL_MILLISECONDS();
     while (!this->available()) {
+        watchdog.refresh();
         if (PAL_MILLISECONDS() - start_time >= timeout) {
             return -1;
         }
@@ -22,6 +23,7 @@ bool LoRaSerial::expected(const char* target, size_t target_length, char* result
     size_t result_length = 0;
     // keep reading until result ends with specified text or timeout is reached
     while ((result_length < target_length) || (strcmp(&result[result_length - target_length], target) != 0)) {
+        watchdog.refresh();
         // prevent buffer overflow
         if (result_length >= result_size - 1) { // ` - 1` for the null terminator
             return false;
@@ -47,6 +49,7 @@ bool LoRaSerial::expected(const char* target, size_t target_length, char* result
 
 void LoRaSerial::flush_buffer() {
     while (this->available() > 0) {
+        watchdog.refresh();
         this->read();
     }
 }

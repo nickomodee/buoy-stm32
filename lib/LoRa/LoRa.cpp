@@ -102,6 +102,7 @@ bool LoRa::configure() {
 bool LoRa::send_command_(const char* command, const size_t command_length, const char* expected, const size_t expected_length) {
     this->lora_serial_->flush_buffer();
     for (uint8_t i = 0; i < this->num_retries_; ++i) {
+        watchdog.refresh();
         this->lora_serial_->write(command, command_length);
         if (!this->lora_serial_->expected(expected, expected_length, serial_buffer_, LORA_SERIAL_BUFFER_SIZE, this->timeout_)) {
             continue;
@@ -220,6 +221,7 @@ bool LoRa::recv() {
         goto fail;
     }
     for (uint8_t i = 0; i < this->num_retries_; ++i) {
+        watchdog.refresh();
         buffer_counter_ = 0;
         const char expected_buffer[] = "Recv:\r\n";
         if (!this->lora_serial_->expected(expected_buffer, strlen(expected_buffer), serial_buffer_, LORA_SERIAL_BUFFER_SIZE, this->timeout_)) {
@@ -234,6 +236,7 @@ bool LoRa::recv() {
             goto fail;
         }
         while (c1 != '\r') {
+            watchdog.refresh();
             if (buffer_counter_ >= LORA_MAX_SIZE) {
                 goto fail;
             }

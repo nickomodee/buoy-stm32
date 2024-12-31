@@ -7,6 +7,7 @@
 #include "../Debug/Debug.h"
 #include "../PAL/PAL.h"
 #include "../SD_File/SD_File.h"
+#include "../Watchdog/Watchdog.h"
 #include <cstddef>
 #include <new>
 

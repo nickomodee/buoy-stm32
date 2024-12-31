@@ -137,6 +137,7 @@ uint32_t __FIRMWARE SD::write(FIL* file, const uint8_t* buffer, const size_t siz
     size_t written_amount = 0;
     FRESULT status = FR_OK;
     while (((int32_t)count < (int32_t)size - (int32_t)_MIN_SS) && (status == FR_OK)) {
+        watchdog.refresh();
         status = f_write(file, buffer + count, _MIN_SS, &written_amount);
         count += written_amount;
     }
@@ -171,6 +172,7 @@ uint32_t __FIRMWARE SD::read(FIL* file, uint8_t* buffer, const size_t size) {
     size_t read_amount = 0;
     FRESULT status = FR_OK;
     while (((int32_t)count < (int32_t)size - (int32_t)_MIN_SS) && (status == FR_OK)) {
+        watchdog.refresh();
         status = f_read(file, buffer + count, _MIN_SS, &read_amount);
         count += read_amount;
         if (read_amount < _MIN_SS) { // EOF

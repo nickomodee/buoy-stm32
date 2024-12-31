@@ -66,6 +66,7 @@ bool PAL_STM32_ONEWIRE::reset() {
 
     // wait until the wire is high... just in case
     for (uint8_t retries = 0; retries < 125; retries++) {
+        watchdog.refresh();
         PAL_STM32_DELAY_US(2);
         if (read_pin()) {
             break;
@@ -114,6 +115,7 @@ uint8_t PAL_STM32_ONEWIRE::read_bit() {
 
 void PAL_STM32_ONEWIRE::write(const uint8_t value, const bool power) {
     for (uint8_t bit_mask = 1; bit_mask; bit_mask <<= 1) {
+        watchdog.refresh();
         write_bit((value & bit_mask) ? 1 : 0); 
     }
 
@@ -125,6 +127,7 @@ void PAL_STM32_ONEWIRE::write(const uint8_t value, const bool power) {
 
 void PAL_STM32_ONEWIRE::write_bytes(const uint8_t *buffer, const uint16_t buffer_size, const bool power) {
     for (uint16_t i = 0; i < buffer_size; i++) {
+        watchdog.refresh();
         write(buffer[i]);
     }
     if (!power) {
@@ -136,6 +139,7 @@ void PAL_STM32_ONEWIRE::write_bytes(const uint8_t *buffer, const uint16_t buffer
 uint8_t PAL_STM32_ONEWIRE::read() {
     uint8_t value = 0;
     for (uint8_t bit_mask = 1; bit_mask; bit_mask <<= 1) {
+        watchdog.refresh();
         if (read_bit()) {
             value |= bit_mask;
         }
@@ -145,6 +149,7 @@ uint8_t PAL_STM32_ONEWIRE::read() {
 
 void PAL_STM32_ONEWIRE::read_bytes(uint8_t* buffer, uint16_t buffer_size) {
     for (uint16_t i = 0; i < buffer_size; i++) {
+        watchdog.refresh();
         buffer[i] = read();
     }
 }
@@ -152,6 +157,7 @@ void PAL_STM32_ONEWIRE::read_bytes(uint8_t* buffer, uint16_t buffer_size) {
 void PAL_STM32_ONEWIRE::select(const uint8_t rom[8]) {
     write(ONEWIRE_CHOOSE_ROM);
     for (uint8_t i = 0; i < 8; i++) {
+        watchdog.refresh();
         write(rom[i]);
     }
 }

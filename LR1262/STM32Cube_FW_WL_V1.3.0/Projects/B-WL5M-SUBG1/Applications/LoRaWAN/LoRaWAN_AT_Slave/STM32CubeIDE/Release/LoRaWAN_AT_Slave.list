@@ -2693,21 +2693,21 @@ Disassembly of section .text:
  8001b76:	b08a      	sub	sp, #40	@ 0x28
  8001b78:	4681      	mov	r9, r0
  8001b7a:	460e      	mov	r6, r1
- 8001b7c:	d860      	bhi.n	8001c40 <custom_tx_start+0xd0>
- 8001b7e:	4832      	ldr	r0, [pc, #200]	@ (8001c48 <custom_tx_start+0xd8>)
- 8001b80:	4b32      	ldr	r3, [pc, #200]	@ (8001c4c <custom_tx_start+0xdc>)
+ 8001b7c:	d85f      	bhi.n	8001c3e <custom_tx_start+0xce>
+ 8001b7e:	4831      	ldr	r0, [pc, #196]	@ (8001c44 <custom_tx_start+0xd4>)
+ 8001b80:	4b31      	ldr	r3, [pc, #196]	@ (8001c48 <custom_tx_start+0xd8>)
  8001b82:	6003      	str	r3, [r0, #0]
- 8001b84:	4b32      	ldr	r3, [pc, #200]	@ (8001c50 <custom_tx_start+0xe0>)
+ 8001b84:	4b31      	ldr	r3, [pc, #196]	@ (8001c4c <custom_tx_start+0xdc>)
  8001b86:	6083      	str	r3, [r0, #8]
- 8001b88:	4b32      	ldr	r3, [pc, #200]	@ (8001c54 <custom_tx_start+0xe4>)
- 8001b8a:	4c33      	ldr	r4, [pc, #204]	@ (8001c58 <custom_tx_start+0xe8>)
+ 8001b88:	4b31      	ldr	r3, [pc, #196]	@ (8001c50 <custom_tx_start+0xe0>)
+ 8001b8a:	4c32      	ldr	r4, [pc, #200]	@ (8001c54 <custom_tx_start+0xe4>)
  8001b8c:	6043      	str	r3, [r0, #4]
- 8001b8e:	4b33      	ldr	r3, [pc, #204]	@ (8001c5c <custom_tx_start+0xec>)
- 8001b90:	4d33      	ldr	r5, [pc, #204]	@ (8001c60 <custom_tx_start+0xf0>)
+ 8001b8e:	4b32      	ldr	r3, [pc, #200]	@ (8001c58 <custom_tx_start+0xe8>)
+ 8001b90:	4d32      	ldr	r5, [pc, #200]	@ (8001c5c <custom_tx_start+0xec>)
  8001b92:	60c3      	str	r3, [r0, #12]
- 8001b94:	f8df b0cc 	ldr.w	fp, [pc, #204]	@ 8001c64 <custom_tx_start+0xf4>
- 8001b98:	4b33      	ldr	r3, [pc, #204]	@ (8001c68 <custom_tx_start+0xf8>)
- 8001b9a:	4f34      	ldr	r7, [pc, #208]	@ (8001c6c <custom_tx_start+0xfc>)
+ 8001b94:	f8df b0c8 	ldr.w	fp, [pc, #200]	@ 8001c60 <custom_tx_start+0xf0>
+ 8001b98:	4b32      	ldr	r3, [pc, #200]	@ (8001c64 <custom_tx_start+0xf4>)
+ 8001b9a:	4f33      	ldr	r7, [pc, #204]	@ (8001c68 <custom_tx_start+0xf8>)
  8001b9c:	6103      	str	r3, [r0, #16]
  8001b9e:	f04f 0800 	mov.w	r8, #0
  8001ba2:	6823      	ldr	r3, [r4, #0]
@@ -2725,69 +2725,69 @@ Disassembly of section .text:
  8001bc2:	f88d 300e 	strb.w	r3, [sp, #14]
  8001bc6:	69ab      	ldr	r3, [r5, #24]
  8001bc8:	f88d 300f 	strb.w	r3, [sp, #15]
- 8001bcc:	4b28      	ldr	r3, [pc, #160]	@ (8001c70 <custom_tx_start+0x100>)
+ 8001bcc:	4b27      	ldr	r3, [pc, #156]	@ (8001c6c <custom_tx_start+0xfc>)
  8001bce:	9304      	str	r3, [sp, #16]
  8001bd0:	6fa3      	ldr	r3, [r4, #120]	@ 0x78
  8001bd2:	9301      	str	r3, [sp, #4]
  8001bd4:	f995 2004 	ldrsb.w	r2, [r5, #4]
- 8001bd8:	f88d 8014 	strb.w	r8, [sp, #20]
- 8001bdc:	a903      	add	r1, sp, #12
- 8001bde:	f644 6320 	movw	r3, #20000	@ 0x4e20
- 8001be2:	9d01      	ldr	r5, [sp, #4]
- 8001be4:	2001      	movs	r0, #1
- 8001be6:	47a8      	blx	r5
- 8001be8:	6da3      	ldr	r3, [r4, #88]	@ 0x58
- 8001bea:	4640      	mov	r0, r8
- 8001bec:	4798      	blx	r3
- 8001bee:	6aa3      	ldr	r3, [r4, #40]	@ 0x28
- 8001bf0:	b2f1      	uxtb	r1, r6
- 8001bf2:	4648      	mov	r0, r9
- 8001bf4:	4798      	blx	r3
- 8001bf6:	2001      	movs	r0, #1
- 8001bf8:	f00e fccc 	bl	8010594 <UTIL_SEQ_WaitEvt>
- 8001bfc:	6ae3      	ldr	r3, [r4, #44]	@ 0x2c
- 8001bfe:	4798      	blx	r3
- 8001c00:	f8db 3000 	ldr.w	r3, [fp]
- 8001c04:	2b01      	cmp	r3, #1
- 8001c06:	d10c      	bne.n	8001c22 <custom_tx_start+0xb2>
- 8001c08:	4c1a      	ldr	r4, [pc, #104]	@ (8001c74 <custom_tx_start+0x104>)
- 8001c0a:	2200      	movs	r2, #0
- 8001c0c:	4623      	mov	r3, r4
- 8001c0e:	4611      	mov	r1, r2
- 8001c10:	4610      	mov	r0, r2
- 8001c12:	f00e fae1 	bl	80101d8 <UTIL_ADV_TRACE_COND_FSend>
- 8001c16:	2800      	cmp	r0, #0
- 8001c18:	d1f7      	bne.n	8001c0a <custom_tx_start+0x9a>
- 8001c1a:	2000      	movs	r0, #0
- 8001c1c:	b00a      	add	sp, #40	@ 0x28
- 8001c1e:	e8bd 8bf0 	ldmia.w	sp!, {r4, r5, r6, r7, r8, r9, fp, pc}
- 8001c22:	683b      	ldr	r3, [r7, #0]
- 8001c24:	2b01      	cmp	r3, #1
- 8001c26:	d1f8      	bne.n	8001c1a <custom_tx_start+0xaa>
- 8001c28:	4c13      	ldr	r4, [pc, #76]	@ (8001c78 <custom_tx_start+0x108>)
- 8001c2a:	2200      	movs	r2, #0
- 8001c2c:	4623      	mov	r3, r4
- 8001c2e:	4611      	mov	r1, r2
- 8001c30:	4610      	mov	r0, r2
- 8001c32:	f00e fad1 	bl	80101d8 <UTIL_ADV_TRACE_COND_FSend>
- 8001c36:	2800      	cmp	r0, #0
- 8001c38:	d1f7      	bne.n	8001c2a <custom_tx_start+0xba>
- 8001c3a:	f04f 30ff 	mov.w	r0, #4294967295
- 8001c3e:	e7ed      	b.n	8001c1c <custom_tx_start+0xac>
- 8001c40:	f06f 0001 	mvn.w	r0, #1
- 8001c44:	e7ea      	b.n	8001c1c <custom_tx_start+0xac>
- 8001c46:	bf00      	nop
- 8001c48:	20000324 	.word	0x20000324
- 8001c4c:	08001b15 	.word	0x08001b15
- 8001c50:	08001a81 	.word	0x08001a81
- 8001c54:	08001b05 	.word	0x08001b05
- 8001c58:	08013988 	.word	0x08013988
- 8001c5c:	08001a65 	.word	0x08001a65
- 8001c60:	20000000 	.word	0x20000000
- 8001c64:	20000344 	.word	0x20000344
- 8001c68:	08001a49 	.word	0x08001a49
- 8001c6c:	20000340 	.word	0x20000340
- 8001c70:	01000008 	.word	0x01000008
+ 8001bd8:	4b25      	ldr	r3, [pc, #148]	@ (8001c70 <custom_tx_start+0x100>)
+ 8001bda:	9d01      	ldr	r5, [sp, #4]
+ 8001bdc:	f88d 8014 	strb.w	r8, [sp, #20]
+ 8001be0:	a903      	add	r1, sp, #12
+ 8001be2:	2001      	movs	r0, #1
+ 8001be4:	47a8      	blx	r5
+ 8001be6:	6da3      	ldr	r3, [r4, #88]	@ 0x58
+ 8001be8:	4640      	mov	r0, r8
+ 8001bea:	4798      	blx	r3
+ 8001bec:	6aa3      	ldr	r3, [r4, #40]	@ 0x28
+ 8001bee:	b2f1      	uxtb	r1, r6
+ 8001bf0:	4648      	mov	r0, r9
+ 8001bf2:	4798      	blx	r3
+ 8001bf4:	2001      	movs	r0, #1
+ 8001bf6:	f00e fccd 	bl	8010594 <UTIL_SEQ_WaitEvt>
+ 8001bfa:	6ae3      	ldr	r3, [r4, #44]	@ 0x2c
+ 8001bfc:	4798      	blx	r3
+ 8001bfe:	f8db 3000 	ldr.w	r3, [fp]
+ 8001c02:	2b01      	cmp	r3, #1
+ 8001c04:	d10c      	bne.n	8001c20 <custom_tx_start+0xb0>
+ 8001c06:	4c1b      	ldr	r4, [pc, #108]	@ (8001c74 <custom_tx_start+0x104>)
+ 8001c08:	2200      	movs	r2, #0
+ 8001c0a:	4623      	mov	r3, r4
+ 8001c0c:	4611      	mov	r1, r2
+ 8001c0e:	4610      	mov	r0, r2
+ 8001c10:	f00e fae2 	bl	80101d8 <UTIL_ADV_TRACE_COND_FSend>
+ 8001c14:	2800      	cmp	r0, #0
+ 8001c16:	d1f7      	bne.n	8001c08 <custom_tx_start+0x98>
+ 8001c18:	2000      	movs	r0, #0
+ 8001c1a:	b00a      	add	sp, #40	@ 0x28
+ 8001c1c:	e8bd 8bf0 	ldmia.w	sp!, {r4, r5, r6, r7, r8, r9, fp, pc}
+ 8001c20:	683b      	ldr	r3, [r7, #0]
+ 8001c22:	2b01      	cmp	r3, #1
+ 8001c24:	d1f8      	bne.n	8001c18 <custom_tx_start+0xa8>
+ 8001c26:	4c14      	ldr	r4, [pc, #80]	@ (8001c78 <custom_tx_start+0x108>)
+ 8001c28:	2200      	movs	r2, #0
+ 8001c2a:	4623      	mov	r3, r4
+ 8001c2c:	4611      	mov	r1, r2
+ 8001c2e:	4610      	mov	r0, r2
+ 8001c30:	f00e fad2 	bl	80101d8 <UTIL_ADV_TRACE_COND_FSend>
+ 8001c34:	2800      	cmp	r0, #0
+ 8001c36:	d1f7      	bne.n	8001c28 <custom_tx_start+0xb8>
+ 8001c38:	f04f 30ff 	mov.w	r0, #4294967295
+ 8001c3c:	e7ed      	b.n	8001c1a <custom_tx_start+0xaa>
+ 8001c3e:	f06f 0001 	mvn.w	r0, #1
+ 8001c42:	e7ea      	b.n	8001c1a <custom_tx_start+0xaa>
+ 8001c44:	20000324 	.word	0x20000324
+ 8001c48:	08001b15 	.word	0x08001b15
+ 8001c4c:	08001a81 	.word	0x08001a81
+ 8001c50:	08001b05 	.word	0x08001b05
+ 8001c54:	08013988 	.word	0x08013988
+ 8001c58:	08001a65 	.word	0x08001a65
+ 8001c5c:	20000000 	.word	0x20000000
+ 8001c60:	20000344 	.word	0x20000344
+ 8001c64:	08001a49 	.word	0x08001a49
+ 8001c68:	20000340 	.word	0x20000340
+ 8001c6c:	01000008 	.word	0x01000008
+ 8001c70:	0001d4c0 	.word	0x0001d4c0
  8001c74:	08011356 	.word	0x08011356
  8001c78:	08011361 	.word	0x08011361
 

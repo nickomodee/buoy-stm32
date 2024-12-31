@@ -184,6 +184,7 @@ bool FirmwareUpdater::check() {
         }
         int checksum_byte;
         for (uint8_t i = 0; i < update_checksum_size; i++) {
+            watchdog.refresh();
             checksum_byte = firmware_update_checksum_file.read();
             if (checksum_byte == -1) {
                 DEBUG_FIRMWAREUPDATER_PRINTLN("Failed to read checksum byte.");
@@ -209,6 +210,7 @@ bool FirmwareUpdater::check() {
         }
         int size_byte;
         for (uint8_t i = 0; i < update_size_size; i++) {
+            watchdog.refresh();
             size_byte = firmware_update_size_file.read();
             if (size_byte == -1) {
                 DEBUG_FIRMWAREUPDATER_PRINTLN("Failed to read size byte.");
@@ -239,6 +241,7 @@ bool FirmwareUpdater::check() {
         crc32.reset();
         int firmware_byte;
         for (firmware_size_type i = 0; i < firmware_size; i++) {
+            watchdog.refresh();
             firmware_byte = firmware_file.read();
             if (firmware_byte == -1) {
                 DEBUG_FIRMWAREUPDATER_PRINTLN("Failed to read firmware byte.");

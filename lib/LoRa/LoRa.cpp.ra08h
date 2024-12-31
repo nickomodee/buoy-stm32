@@ -16,6 +16,7 @@ LoRa::LoRa(LoRaSerial* lora_serial, uint16_t timeout, uint8_t num_retries, uint1
 
 bool LoRa::begin() {
     for (uint8_t i = 0; i < this->num_retries; i++) {
+        watchdog.refresh();
         this->lora_serial->write("+++\r\n");
     }
     this->lora_serial->flush_buffer();
@@ -35,6 +36,7 @@ bool LoRa::begin() {
 bool LoRa::send_command(const char* command, size_t command_length, const char* expected, size_t expected_length) {
     this->lora_serial->flush_buffer();
     for (uint8_t i = 0; i < this->num_retries; ++i) {
+        watchdog.refresh();
         this->lora_serial->write(command, command_length);
         if (!this->lora_serial->expected(expected, expected_length, serial_buffer, LORA_SERIAL_BUFFER_SIZE, this->timeout)) {
             continue;
@@ -194,6 +196,7 @@ bool LoRa::recv() {
         goto fail;
     }
     for (uint8_t i = 0; i < this->num_retries; ++i) {
+        watchdog.refresh();
         buffer_counter = 0;
         const char expected_buffer[] = "Recv:\r\n";
         if (!this->lora_serial->expected(expected_buffer, strlen(expected_buffer), serial_buffer, LORA_SERIAL_BUFFER_SIZE, this->timeout)) {
@@ -208,6 +211,7 @@ bool LoRa::recv() {
             goto fail;
         }
         while (c1 != '\r') {
+            watchdog.refresh();
             if (buffer_counter >= LORA_MAX_SIZE) {
                 goto fail;
             }

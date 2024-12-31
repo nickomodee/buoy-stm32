@@ -66,6 +66,7 @@ Packet* BCP::new_send_packet() {
     for (size_t i = BCP_SENT_HISTORY_SIZE - 1; i > 0; --i) { // we don't want to include 0
         this->sent_packet_history_[i] = this->sent_packet_history_[i - 1];
     }
+    this->sent_packet_history_[0].~Packet();
     Packet* new_packet = new(&this->sent_packet_history_[0]) Packet(this->encryption_);
     new_packet->set_index(this->current_index_);
     this->current_index_++;
@@ -76,6 +77,7 @@ Packet* BCP::new_recv_packet() {
     for (size_t i = BCP_RECVD_HISTORY_SIZE - 1; i > 0; --i) { // we don't want to include 0
         this->recvd_packet_history_[i] = this->recvd_packet_history_[i - 1];
     }
+    this->recvd_packet_history_[0].~Packet();
     Packet* new_packet = new(&this->recvd_packet_history_[0]) Packet(this->encryption_);
     this->current_index_++;
     return new_packet;
@@ -87,8 +89,10 @@ PacketStatus BCP::send_recv(uint8_t num_packets, PacketType expected_packet_type
     }
 
     for (uint8_t i = 0; i < this->num_retries_; ++i) {
+        watchdog.refresh();
         bool send_failed = false;
         for (int8_t packet_index = num_packets - 1; packet_index >= 0; --packet_index) { // int8_t in case someone passes `0` for `num_packets`
+            watchdog.refresh();
             if (packet_index < num_packets - 1) {
                 PAL_DELAY(1000);
             }
@@ -102,6 +106,7 @@ PacketStatus BCP::send_recv(uint8_t num_packets, PacketType expected_packet_type
         }
         unsigned long start_time = PAL_MILLISECONDS();
         while (PAL_MILLISECONDS() - start_time < this->timeout_) {
+            watchdog.refresh();
             if (this->recv_packet() == PacketStatus::SUCCESS) { // retransmission is not possible, so only check for success
                 if (this->recvd_packet_history_[0].get_type() != expected_packet_type) {
                     this->reject_recvd_packet();
@@ -144,6 +149,7 @@ bool BCP::send_data_desc(uint32_t data_size) {
 // bool BCP::send_data(const char* data, uint32_t data_size) {
 //     const uint32_t num_packets = data_size / MAX_DATA_SIZE + (data_size % MAX_DATA_SIZE ? 1 : 0);
 //     for (uint32_t i = 0; i < num_packets; ++i) {
+//         watchdog.refresh();
 //         Packet* new_packet = this->new_send_packet();
 //         new_packet->set(PacketType::DATA, -1, (i == num_packets - 1) ? data_size % MAX_DATA_SIZE : MAX_DATA_SIZE, &data[i * MAX_DATA_SIZE]);
 //         if (this->send_recv(1, PacketType::ACK) != PacketStatus::SUCCESS) {
@@ -157,6 +163,7 @@ bool BCP::send_data(BCPDataFetcher* data_fetcher, const uint32_t data_size) {
     char buffer[MAX_DATA_SIZE];
     const uint32_t num_packets = data_size / MAX_DATA_SIZE + (data_size % MAX_DATA_SIZE ? 1 : 0);
     for (uint32_t i = 0; i < num_packets; ++i) {
+        watchdog.refresh();
         const uint8_t packet_data_size = data_fetcher->fetch(buffer, MAX_DATA_SIZE); // we expect this to be `(i == num_packets - 1) ? data_size % MAX_DATA_SIZE : MAX_DATA_SIZE`, but what are we meant to do if it isn't lol
         Packet* new_packet = this->new_send_packet();
         new_packet->set(PacketType::DATA, -1, packet_data_size, buffer);
@@ -170,6 +177,7 @@ bool BCP::send_data(BCPDataFetcher* data_fetcher, const uint32_t data_size) {
 bool BCP::recv_data_desc() {
     unsigned long start_time = PAL_MILLISECONDS();
     while (PAL_MILLISECONDS() - start_time < this->num_retries_ * this->timeout_) { // now, transmission control is up to the server, so timeout should be multiplied by num of retries to allow server to send packet in case of packet loss
+        watchdog.refresh();
         const PacketStatus packet_status = this->recv_packet();
         if (packet_status == PacketStatus::SUCCESS) { // retransmission is not possible, so only check for success
             if (this->recvd_packet_history_[0].get_type() != PacketType::DATA_DESC) {
@@ -197,6 +205,7 @@ bool BCP::recv_data() {
         bool timed_out = true;
         unsigned long start_time = PAL_MILLISECONDS();
         while (PAL_MILLISECONDS() - start_time < this->num_retries_ * this->timeout_) { // now, transmission control is up to the server, so timeout should be multiplied by num of retries to allow server to send packet in case of packet loss
+            watchdog.refresh();
             const PacketStatus packet_status = this->recv_packet();
             if (packet_status == PacketStatus::RETRANSMISSION) { // if this is a retransmission just resend last sent packet, but we don't break, as we need to keep checking for the expected next packet
                 this->send_packet(0); // doesn't matter if this fails
@@ -243,6 +252,7 @@ bool BCP::finish() {
 
     unsigned long start_time = PAL_MILLISECONDS();
     while (PAL_MILLISECONDS() - start_time < this->num_retries_ * this->timeout_) { // now, transmission control is up to the server, so timeout should be multiplied by num of retries to allow server to send packet in case of packet loss
+        watchdog.refresh();
         if (this->recv_packet() == PacketStatus::SUCCESS) { // retransmission is not possible, so only check for success
             if (this->recvd_packet_history_[0].get_type() != PacketType::FIN) {
                 this->reject_recvd_packet();
@@ -261,6 +271,7 @@ bool BCP::finish() {
 PacketStatus BCP::recv_packet() {
     unsigned long start_time = PAL_MILLISECONDS();
     while (PAL_MILLISECONDS() - start_time < this->timeout_) {
+        watchdog.refresh();
         if (this->lora_->recv()) {
             const char* data = this->lora_->get_buffer();
             Packet* new_packet = this->new_recv_packet();
@@ -348,7 +359,7 @@ void BCP::reject_recvd_packet() {
     for (size_t i = 0; i < BCP_RECVD_HISTORY_SIZE - 1; ++i) {
         this->recvd_packet_history_[i] = this->recvd_packet_history_[i + 1];
     }
-    new (&this->recvd_packet_history_[BCP_RECVD_HISTORY_SIZE - 1]) Packet(this->encryption_);
+    new(&this->recvd_packet_history_[BCP_RECVD_HISTORY_SIZE - 1]) Packet(this->encryption_);
     this->current_index_--;
     DEBUG_BCP_PRINTLN(F("Packet rejected"));
 }
@@ -360,6 +371,7 @@ void BCP::set_retransmission_control(RetransmissionController controller) {
 bool BCP::send(const char* data, size_t data_size, const char* file_path/* = nullptr*/) {
     const LoRaState saved_state = this->lora_->get_state();
     for (uint8_t i = 0; i < this->num_retries_; ++i) {
+        watchdog.refresh();
         if (!this->lora_->begin()) {
             DEBUG_BCP_PRINTLN(F("LoRa begin failed..."));
             continue;

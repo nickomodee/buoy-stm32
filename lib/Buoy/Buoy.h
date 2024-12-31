@@ -16,6 +16,7 @@
 #include "../RealTimeClock/RealTimeClock.h"
 #include "../SD_File/SD_File.h"
 #include "../Half/Half.h"
+#include "../Watchdog/Watchdog.h"
 
 using firmware_version_type = float;
 constexpr uint8_t firmware_version_type_size = sizeof(firmware_version_type);
@@ -77,7 +78,7 @@ class Buoy {
 
     private:
         static constexpr uint32_t IMU_RECORD_DURATION_ = 30000; // in ms
-        static constexpr uint8_t IMU_RECORD_FREQUENCY_ = 20; // in Hertz
+        static constexpr uint8_t IMU_RECORD_FREQUENCY_ = 10; // in Hertz
         static constexpr char IMU_RECORD_FILE_PATH_[] = "imu_data.bin";
 
         static constexpr uint8_t WAKE_PERIOD_ = 15; // in minutes
@@ -152,6 +153,7 @@ template<const uint8_t num_temp_sensors, const uint8_t num_humidity_sensors, con
 bool Buoy<num_temp_sensors, num_humidity_sensors, num_pressure_sensors, num_uv_sensors, num_visible_light_sensors, num_ir_light_sensors>::init_rtc() {
     rtc_status_ = false;
     for (uint8_t i = 0; i < init_retries_; i++) {
+        watchdog.refresh();
         if (rtc.begin()) {
             rtc_status_ = true;
             break;
@@ -201,6 +203,7 @@ template<const uint8_t num_temp_sensors, const uint8_t num_humidity_sensors, con
 bool Buoy<num_temp_sensors, num_humidity_sensors, num_pressure_sensors, num_uv_sensors, num_visible_light_sensors, num_ir_light_sensors>::init_sd() {
     sd_status_ = false;
     for (uint8_t i = 0; i < init_retries_; i++) {
+        watchdog.refresh();
         if (sd.begin()) {
             sd_status_ = true;
             break;
@@ -216,12 +219,14 @@ bool Buoy<num_temp_sensors, num_humidity_sensors, num_pressure_sensors, num_uv_s
     }
 
     return bno085_->enable_report(SH2_LINEAR_ACCELERATION, 10000);
+    // return bno085_->enable_report(SH2_ACCELEROMETER, 10000);
 }
 
 template<const uint8_t num_temp_sensors, const uint8_t num_humidity_sensors, const uint8_t num_pressure_sensors, const uint8_t num_uv_sensors, const uint8_t num_visible_light_sensors, const uint8_t num_ir_light_sensors>
 bool Buoy<num_temp_sensors, num_humidity_sensors, num_pressure_sensors, num_uv_sensors, num_visible_light_sensors, num_ir_light_sensors>::init_imu_() {
     imu_status_ = false;
     for (uint8_t i = 0; i < init_retries_; i++) {
+        watchdog.refresh();
         if (bno085_->begin() && set_imu_reports_()) {
             imu_status_ = true;
             break;
@@ -234,6 +239,7 @@ template<const uint8_t num_temp_sensors, const uint8_t num_humidity_sensors, con
 bool Buoy<num_temp_sensors, num_humidity_sensors, num_pressure_sensors, num_uv_sensors, num_visible_light_sensors, num_ir_light_sensors>::init_battery_voltage_reader_() {
     battery_voltage_reader_status_ = false;
     for (uint8_t i = 0; i < init_retries_; i++) {
+        watchdog.refresh();
         if (battery_voltage_reader_->init()) {
             battery_voltage_reader_status_ = true;
             break;
@@ -248,6 +254,7 @@ bool Buoy<num_temp_sensors, num_humidity_sensors, num_pressure_sensors, num_uv_s
     bool status = true;
 
     for (size_t i = 0; i < sensors_array.size(); ++i) {
+        watchdog.refresh();
         auto sensor = sensors_array[i];
         
         if (!sensor) {
@@ -258,6 +265,7 @@ bool Buoy<num_temp_sensors, num_humidity_sensors, num_pressure_sensors, num_uv_s
 
         status_type sensor_status = false;
         for (uint8_t i = 0; i < init_retries_; i++) {
+            watchdog.refresh();
             if (sensor->init()) {
                 sensor_status = true;
                 break;
@@ -359,6 +367,7 @@ bool Buoy<num_temp_sensors, num_humidity_sensors, num_pressure_sensors, num_uv_s
     const uint32_t start_time = PAL_MILLISECONDS();
     uint32_t last_record_time = start_time;
     while (PAL_MILLISECONDS() - start_time <= IMU_RECORD_DURATION_) {
+        watchdog.refresh();
         if (bno085_->was_reset()) {
             set_imu_reports_();
         }
@@ -379,6 +388,11 @@ bool Buoy<num_temp_sensors, num_humidity_sensors, num_pressure_sensors, num_uv_s
                     acceleration_y = acceleration_data_type{sensor_value.un.linearAcceleration.y};
                     acceleration_z = acceleration_data_type{sensor_value.un.linearAcceleration.z};
                     break;
+                // case SH2_ACCELEROMETER:
+                //     acceleration_x = acceleration_data_type{sensor_value.un.accelerometer.x};
+                //     acceleration_y = acceleration_data_type{sensor_value.un.accelerometer.y};
+                //     acceleration_z = acceleration_data_type{sensor_value.un.accelerometer.z};
+                //     break;
             }
         }
 
@@ -496,6 +510,7 @@ bool Buoy<num_temp_sensors, num_humidity_sensors, num_pressure_sensors, num_uv_s
 
     bool success = true;
     for (size_t i = 0; i < sensors_array.size(); ++i) {
+        watchdog.refresh();
         auto sensor = sensors_array[i];
         
         if (!sensor) {

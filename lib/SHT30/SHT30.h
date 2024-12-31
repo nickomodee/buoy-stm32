@@ -3,6 +3,7 @@
 #include "../PAL/PAL.h"
 #include "../interfaces/TempSensor.h"
 #include "../interfaces/HumiditySensor.h"
+#include "../Watchdog/Watchdog.h"
 #include <cstdint>
 
 #define ARR_SIZE(x) sizeof(x) / sizeof(x[0])

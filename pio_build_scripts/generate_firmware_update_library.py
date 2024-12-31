@@ -18,7 +18,8 @@ SOURCE_FILES = [
     "lib/PAL_STM32_COMMON/PAL_STM32_COMMON.cpp",
     "lib/SD/SD.cpp",
     "lib/SD_File/SD_File.cpp",
-    "lib/CRC/CRC.cpp"
+    "lib/CRC/CRC.cpp",
+    "lib/Watchdog/Watchdog.cpp"
 ]
 
 OUTPUT_DIR = "firmware_updater_build"

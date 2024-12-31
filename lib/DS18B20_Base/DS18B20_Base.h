@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../PAL/PAL.h"
+#include "../Watchdog/Watchdog.h"
 
 // values
 #define SEARCH_ROM 0xF0

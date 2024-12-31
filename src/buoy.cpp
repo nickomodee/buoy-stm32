@@ -6,6 +6,7 @@
 #include "SD.h"
 #include "FirmwareUpdater.h"
 #include "DataStreamParser.h"
+#include "Watchdog.h"
 
 #include "BNO085.h"
 #include "BatteryVoltageReader.h"
@@ -27,8 +28,8 @@
 #define LORA_TIMEOUT 10000
 #define LORA_NUM_RETRIES 1
 #define LORA_FREQ 915000000 // 915 MHz
-#define LORA_DATA_RATE DataRate::SF7
-#define LORA_BANDWIDTH Bandwidth::BANDWIDTH_250_KHZ
+#define LORA_DATA_RATE DataRate::SF12
+#define LORA_BANDWIDTH Bandwidth::BANDWIDTH_500_KHZ
 #define LORA_CODE_RATE CodeRate::RATE_4_BY_5
 #define LORA_TX_POWER 22
 #define LORA_LNA LNA::ON
@@ -102,6 +103,7 @@ void setup() {
 
     buoy.init_rtc();
     buoy.check_and_sleep();
+    watchdog.init(); // if we don't need to sleep immediately start the watchdog
 
     // PAL_SERIAL.begin(9600);
     LORA_SERIAL_INTERFACE.begin(9600);

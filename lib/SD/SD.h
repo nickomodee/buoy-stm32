@@ -5,6 +5,7 @@
 #include "stm32f3xx_hal.h"
 #include "../FirmwareUpdater/firmware_update_linker.h"
 #include "../PAL/PAL.h"
+#include "../Watchdog/Watchdog.h"
 #include <cstring>
 
 // extern void Error_Handler();

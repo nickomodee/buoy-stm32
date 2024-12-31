@@ -5,6 +5,7 @@
 #include <cstring>
 #include <cstdint>
 #include "../PAL/PAL.h"
+#include "../Watchdog/Watchdog.h"
 
 /**
  * @brief A wrapper class for serial communication with LoRa devices using a PAL_STREAM object.

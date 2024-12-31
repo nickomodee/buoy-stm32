@@ -108,6 +108,7 @@ int BNO085::i2c_open(sh2_Hal_t *self) {
     
     bool success = false;
     for (uint8_t attempts = 0; attempts < 5; attempts++) {
+        watchdog.refresh();
         wire_->beginTransmission(i2c_address_);
         if ((wire_->write(softreset_pkt, ARR_SIZE(softreset_pkt)) == ARR_SIZE(softreset_pkt)) && (wire_->endTransmission() == 0)) {
             success = true;
@@ -134,6 +135,7 @@ int BNO085::i2c_read(sh2_Hal_t* self, uint8_t* pBuffer, unsigned int len, uint32
         return 0;
     }
     for (uint8_t i = 0; i < ARR_SIZE(header); i++) {
+        watchdog.refresh();
         read_data = wire_->read();
         if (read_data == -1) {
             return 0;
@@ -170,6 +172,7 @@ int BNO085::i2c_read(sh2_Hal_t* self, uint8_t* pBuffer, unsigned int len, uint32
             return 0;
         }
         for (uint16_t i = 0; i < read_size; i++) {
+            watchdog.refresh();
             read_data = wire_->read();
             if (read_data == -1) {
                 return 0;

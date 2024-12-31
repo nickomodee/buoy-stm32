@@ -4,6 +4,7 @@
 #include "../PAL_STM32_UART/PAL_STM32_UART.h" // PAL_STM32_UART_STREAM
 #include "../PAL_STM32_WIRE/PAL_STM32_WIRE.h" // PAL_STM32_WIRE
 #include "../PAL_STM32_ONEWIRE/PAL_STM32_ONEWIRE.h" // PAL_STM32_ONEWIRE
+#include "../Watchdog/Watchdog.h"
 #include <cstdbool>
 #include "stm32f3xx_hal.h"
 #include "stm32f3xx_hal_adc.h"

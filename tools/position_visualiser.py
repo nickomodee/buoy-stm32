@@ -30,26 +30,39 @@ def high_pass_filter(data, cutoff, fs, order=1):
     normal_cutoff = cutoff / nyquist
     b, a = butter(order, normal_cutoff, btype='high', analog=False)
     return filtfilt(b, a, data)
+    # return data
 
 # better than trapezium method, approximate using parabolas between points instead of a straight line. source: chatgpt
+# def simpsons_rule_integration(data, time_delta):
+#     n = len(data)
+#     integral = np.zeros_like(data)
+#     for i in range(1, n - 1, 2):
+#         integral[i] = integral[i - 1] + (time_delta / 3) * (data[i - 1] + 4 * data[i] + data[i+1])
+#     integral[-1] = integral[-2] + (time_delta / 2) * (data[-2] + data[-1]) # handle the last poiint
+#     return integral
+
 def simpsons_rule_integration(data, time_delta):
-    n = len(data)
-    integral = np.zeros_like(data)
-    for i in range(1, n - 1, 2):
-        integral[i] = integral[i - 1] + (time_delta / 3) * (data[i - 1] + 4 * data[i] + data[i+1])
-    integral[-1] = integral[-2] + (time_delta / 2) * (data[-2] + data[-1]) # handle the last poiint
+    time = np.arange(len(data)) * time_delta
+    
+    integral = [simpson(data[:i+1], x=time[:i+1]) for i in range(len(data))]
+    return np.array(integral)
+
+def trapezium_integration(data, time_delta):
+    integral = np.cumsum(data) * time_delta
     return integral
 
-sample_period = 0.05
+integration_func = trapezium_integration
+
+sample_period = 0.1
 sample_frequency = 1 / sample_period
 
 # integrate the linear accelerations to get linear velocities
-velocity_x = simpsons_rule_integration(imu_acceleration_x, sample_period)
-velocity_y = simpsons_rule_integration(imu_acceleration_y, sample_period)
-velocity_z = simpsons_rule_integration(imu_acceleration_z, sample_period)
+velocity_x = integration_func(imu_acceleration_x, sample_period)
+velocity_y = integration_func(imu_acceleration_y, sample_period)
+velocity_z = integration_func(imu_acceleration_z, sample_period)
 
 # filter using the settings from the matlab code
-cutoff_velocity = 0.001 # 0.1 Hz. we should test what works best
+cutoff_velocity = 0.1 # 0.1 Hz. we should test what works best
 velocity_x_filtered = high_pass_filter(velocity_x, cutoff_velocity, sample_frequency)
 velocity_y_filtered = high_pass_filter(velocity_y, cutoff_velocity, sample_frequency)
 velocity_z_filtered = high_pass_filter(velocity_z, cutoff_velocity, sample_frequency)
@@ -67,12 +80,12 @@ plt.grid(True)
 plt.show()
 
 # integrate the filtered linear velocities to get an estimate for displacement
-displacement_x = simpsons_rule_integration(velocity_x_filtered, sample_period)
-displacement_y = simpsons_rule_integration(velocity_y_filtered, sample_period)
-displacement_z = simpsons_rule_integration(velocity_z_filtered, sample_period)
+displacement_x = integration_func(velocity_x_filtered, sample_period)
+displacement_y = integration_func(velocity_y_filtered, sample_period)
+displacement_z = integration_func(velocity_z_filtered, sample_period)
 
 # filter the estimate to remove drift
-cutoff_position = 0.001 # 0.1 Hz. we should test what works best
+cutoff_position = 0.1 # 0.1 Hz. we should test what works best
 displacement_x_filtered = high_pass_filter(displacement_x, cutoff_position, sample_frequency)
 displacement_y_filtered = high_pass_filter(displacement_y, cutoff_position, sample_frequency)
 displacement_z_filtered = high_pass_filter(displacement_z, cutoff_position, sample_frequency)

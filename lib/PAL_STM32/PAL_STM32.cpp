@@ -59,6 +59,7 @@ static uint32_t get_adc_random_value() {
     uint32_t seed = 0;
 
     for (int i = 0; i < 32; i++) {
+        watchdog.refresh();
         if (HAL_ADC_Start(&hadc1) != HAL_OK) {
             continue;
         }
@@ -76,6 +77,7 @@ static uint32_t get_adc_random_value() {
 //     uint32_t seed = 0;
 
 //     for (int i = 0; i < 32; i++) {
+//         watchdog.refresh();
 //         const uint32_t micros = PAL_STM32_MICROS();
 //         seed ^= (micros & 0x1) << i; // Use only the least significant bit of each sample
 //     }

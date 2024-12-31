@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../PAL_STM32_STREAM/PAL_STM32_STREAM.h"
+#include "../Watchdog/Watchdog.h"
 #include <cstdint>
 #include <cstdbool>
 #include <cstddef>

@@ -207,6 +207,7 @@ uint8_t DS18B20_Base::readScratchpad() {
     sendCommand(MATCH_ROM, READ_SCRATCHPAD);
 
     for (uint8_t i = 0; i < SIZE_SCRATCHPAD; i++) {
+        watchdog.refresh();
         selectedScratchpad[i] = oneWire.read();
     }
 
@@ -278,6 +279,7 @@ uint8_t DS18B20_Base::oneWireSearch(uint8_t romCommand) {
     uint8_t direction, byteNumber, bitNumber, currentBit, currentBitComp;
 
     for (uint8_t bitPosition = 0; bitPosition < 64; bitPosition++) {
+        watchdog.refresh();
         currentBit = oneWire.read_bit();
         currentBitComp = oneWire.read_bit();
 
@@ -327,6 +329,7 @@ uint8_t DS18B20_Base::isConnected(uint8_t address[]) {
     uint8_t currentBit, currentBitComp, byteNumber, bitNumber;
 
     for (uint8_t bitPosition = 0; bitPosition < 64; bitPosition++) {
+        watchdog.refresh();
         currentBit = oneWire.read_bit();
         currentBitComp = oneWire.read_bit();
 

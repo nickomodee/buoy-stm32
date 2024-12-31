@@ -5,6 +5,7 @@
 #include "../CRC/CRC.h"
 #include "../PAL/PAL.h"
 #include "../Debug/Debug.h"
+#include "../Watchdog/Watchdog.h"
 
 extern const char __FIRMWARE_RODATA firmware_update_path[];
 extern const char __FIRMWARE_RODATA new_firmware_path[];

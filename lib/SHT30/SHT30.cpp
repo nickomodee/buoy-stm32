@@ -15,6 +15,7 @@ uint16_t SHT30::read_status() {
         return SHT30_STATUS_FAIL;
     }
     for (uint8_t i = 0; i < ARR_SIZE(data); i++) {
+        watchdog.refresh();
         read_data = wire_->read();
         if (read_data == -1) {
             return SHT30_STATUS_FAIL;
@@ -112,6 +113,7 @@ bool SHT30::read_temp_hum_() {
         return false;
     }
     for (uint8_t i = 0; i < ARR_SIZE(read_buffer); i++) {
+        watchdog.refresh();
         read_data = wire_->read();
         if (read_data == -1) {
             return false;

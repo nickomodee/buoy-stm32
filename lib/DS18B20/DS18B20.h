@@ -5,8 +5,11 @@
 
 class DS18B20 : public DS18B20_Base, public TempSensor {
     public:
-        DS18B20(const uint8_t physical_pin); // not GPIO pin
+        DS18B20(const uint8_t physical_pin, const uint8_t resolution = 12); // `physical_pin` is not GPIO pin
         bool init() override; // selects the first device connected
         bool init(const uint8_t address[8]); // selects the device at the address
         float read_temp() override;
+    
+    private:
+        uint8_t resolution_;
 };

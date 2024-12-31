@@ -94,20 +94,16 @@ void PAL_STM32_UART_STREAM::begin(uint32_t baud_rate) {
 
 size_t PAL_STM32_UART_STREAM::write(const uint8_t data) {
     STM32_INTERRUPT_GUARD interrupt_guard;
-    if (HAL_UART_Transmit(get_huart_ptr(), const_cast<uint8_t*>(&data), 1, UART_MAX_TIMEOUT)) {
-    	return 1;
-    }
-
-    return 0;
+    const bool transmit_status = HAL_UART_Transmit(get_huart_ptr(), const_cast<uint8_t*>(&data), 1, UART_MAX_TIMEOUT) == HAL_OK;
+    watchdog.refresh();
+    return transmit_status ? 1 : 0;
 }
 
 size_t PAL_STM32_UART_STREAM::write(const uint8_t* buffer, const size_t size) {
     STM32_INTERRUPT_GUARD interrupt_guard;
-    if (HAL_UART_Transmit(get_huart_ptr(), const_cast<uint8_t*>(buffer), size, UART_MAX_TIMEOUT)) {
-        return size;
-    }
-
-    return 0;
+    const bool transmit_status = HAL_UART_Transmit(get_huart_ptr(), const_cast<uint8_t*>(buffer), size, UART_MAX_TIMEOUT) == HAL_OK;
+    watchdog.refresh();
+    return transmit_status ? size : 0;
 }
 
 // Print functions
@@ -227,7 +223,7 @@ size_t PAL_STM32_UART_STREAM::printFloat(float number, uint8_t digits) {
     // Round correctly so that print(1.999, 2) prints as "2.00"
     float rounding = 0.5f;
     for (uint8_t i=0; i < digits; ++i)
-    rounding /= 10.0f;
+        rounding /= 10.0f;
 
     number += rounding;
 

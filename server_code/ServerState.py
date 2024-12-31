@@ -1,4 +1,5 @@
 from enum import Enum, auto
+from Send import send_data_to_backend
 import threading
 from typing import List, Literal
 import json
@@ -374,6 +375,7 @@ class ServerState:
     @staticmethod
     def process_func_(data_dict: dict) -> None:
         logger.debug(f"Processed data: {data_dict}")
+        send_data_to_backend(int(data_dict['firmware_version'] * 100), data_dict['temp_sensors_data'][1], data_dict['temp_sensors_data'][0], data_dict['uv_sensors_data'][0], data_dict['humidity_sensors_data'][0], data_dict['pressure_sensors_data'][0], data_dict['temp_sensors_data'][2], data_dict['temp_sensors_data'][3], data_dict['visible_light_sensors_data'][0], 0.0, 0.0, data_dict['battery_voltage'])
     
     @staticmethod
     def process_imu_func_(data_dict: dict) -> None:
