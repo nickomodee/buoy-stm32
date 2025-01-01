@@ -5,7 +5,7 @@ server_password_b64 = b'E78fXsCYx1o='
 server_password = base64.b64decode(server_password_b64)
 
 def send_data_to_backend(buoy_update_id, air_temp, water_temp, uv_index, humidity, pressure, air_temp2, inner_temp, light_lux, wind_speed, gust_speed, battery_voltage, server_password=server_password):
-    server_address = ('127.0.0.1', 3333)
+    server_address = ('backendserver.yeahbuoy.co.nz', 3896)
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     
     try:

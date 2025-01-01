@@ -30,7 +30,7 @@ time_generator: TimeGenerator = TimeGenerator()
 firmware_update_handler: FirmwareUpdateHandler = FirmwareUpdateHandler(server_state)
 data_constructor: DataConstructor = DataConstructor(time_generator, firmware_update_handler)
 
-LORA_COM_PORT: Literal['COM7'] = 'COM7'
+LORA_COM_PORT: Literal['/dev/ttyUSB0'] = '/dev/ttyUSB0'
 LORA_BAUDRATE: Literal[9600] = 9600
 # LoRa config
 LORA_TIMEOUT: float = 10.0
