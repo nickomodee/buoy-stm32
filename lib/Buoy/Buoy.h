@@ -77,7 +77,7 @@ class Buoy {
         bool send_data();
 
     private:
-        static constexpr uint32_t IMU_RECORD_DURATION_ = 30000; // in ms
+        static constexpr uint32_t IMU_RECORD_DURATION_ = 0;//30000; // in ms
         static constexpr uint8_t IMU_RECORD_FREQUENCY_ = 10; // in Hertz
         static constexpr char IMU_RECORD_FILE_PATH_[] = "imu_data.bin";
 

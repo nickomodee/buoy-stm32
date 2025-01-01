@@ -74,7 +74,7 @@ const std::array<VisibleLightSensor*, 1> visible_light_sensors_array = {&si1145}
 const std::array<IRLightSensor*, 1> ir_light_sensors_array = {&si1145};
 
 constexpr uint8_t buoy_init_retries = 10;
-constexpr firmware_version_type buoy_firmware_version = 1.0f;
+constexpr firmware_version_type buoy_firmware_version = 1.01f;
 
 Buoy<temp_sensors_array.size(), humidity_sensors_array.size(), pressure_sensors_array.size(), uv_sensors_array.size(), visible_light_sensors_array.size(), ir_light_sensors_array.size()> buoy(buoy_init_retries, buoy_firmware_version, &bcp_instance, &bno085, &battery_voltage_reader, temp_sensors_array, humidity_sensors_array, pressure_sensors_array, uv_sensors_array, visible_light_sensors_array, ir_light_sensors_array);
 
@@ -138,7 +138,7 @@ void setup() {
         firmware_updater.update();
     }
 
-    buoy.prepare_for_sleep();
+    // buoy.prepare_for_sleep();
 }
 
 void loop() {
