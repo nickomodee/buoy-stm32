@@ -5,7 +5,7 @@ ADC_HandleTypeDef GUVAS12SD::hadc_ = {};
 GUVAS12SD::GUVAS12SD(GPIO_TypeDef* GPIO_port, const uint8_t GPIO_pin, const uint32_t adc_channel) : GPIO_port_(GPIO_port), GPIO_pin_(GPIO_pin), adc_channel_(adc_channel) {}
 
 bool GUVAS12SD::init() {
-        GPIO_InitTypeDef GPIO_init = {};
+    GPIO_InitTypeDef GPIO_init = {};
 
     // GPIO Ports Clock Enable
     if (GPIO_port_ == GPIOA) {
