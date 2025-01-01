@@ -21,7 +21,8 @@
 #include "BME280.h"
 #include "DS18B20.h"
 #include "SHT30.h"
-#include "SI1145.h"
+// #include "SI1145.h"
+#include "GUVAS12SD.h"
 #include "Buoy.h"
 
 // LoRa config
@@ -64,17 +65,24 @@ DS18B20 water_temp(water_temp_pin);
 constexpr uint8_t air_temp_pin = 3;
 DS18B20 air_temp(air_temp_pin);
 SHT30 sht30;
-SI1145 si1145;
+
+GPIO_TypeDef* UV_GPIO_port = GPIOB;
+constexpr uint8_t UV_GPIO_pin = 0;
+constexpr uint32_t UV_GPIO_channel = ADC_CHANNEL_11;
+GUVAS12SD guvas12sd(UV_GPIO_port, UV_GPIO_pin, UV_GPIO_channel);
+// SI1145 si1145;
 
 const std::array<TempSensor*, 4> temp_sensors_array = {&water_temp, &bme280, &air_temp, &sht30};
 const std::array<HumiditySensor*, 2> humidity_sensors_array = {&bme280, &sht30};
 const std::array<PressureSensor*, 1> pressure_sensors_array = {&bme280};
-const std::array<UVSensor*, 1> uv_sensors_array = {&si1145};
-const std::array<VisibleLightSensor*, 1> visible_light_sensors_array = {&si1145};
-const std::array<IRLightSensor*, 1> ir_light_sensors_array = {&si1145};
+const std::array<UVSensor*, 1> uv_sensors_array = {&guvas12sd};
+const std::array<VisibleLightSensor*, 0> visible_light_sensors_array = {};
+const std::array<IRLightSensor*, 0> ir_light_sensors_array = {};
+// const std::array<VisibleLightSensor*, 1> visible_light_sensors_array = {&si1145};
+// const std::array<IRLightSensor*, 1> ir_light_sensors_array = {&si1145};
 
 constexpr uint8_t buoy_init_retries = 10;
-constexpr firmware_version_type buoy_firmware_version = 1.01f;
+constexpr firmware_version_type buoy_firmware_version = 1.1f;
 
 Buoy<temp_sensors_array.size(), humidity_sensors_array.size(), pressure_sensors_array.size(), uv_sensors_array.size(), visible_light_sensors_array.size(), ir_light_sensors_array.size()> buoy(buoy_init_retries, buoy_firmware_version, &bcp_instance, &bno085, &battery_voltage_reader, temp_sensors_array, humidity_sensors_array, pressure_sensors_array, uv_sensors_array, visible_light_sensors_array, ir_light_sensors_array);
 

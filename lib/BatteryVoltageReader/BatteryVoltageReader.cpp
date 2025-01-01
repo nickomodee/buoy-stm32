@@ -79,7 +79,7 @@ bool BatteryVoltageReader::init_channel_() {
     return HAL_ADC_ConfigChannel(&hadc1_, &channel_config) == HAL_OK;
 }
 
-float BatteryVoltageReader::ADC_to_voltage_(uint32_t adc_value) {
+float BatteryVoltageReader::ADC_to_voltage_(const uint32_t adc_value) {
     const uint32_t max_adc_value = (1 << ((uint32_t)ADC_RESOLUTION_)) - 1;
     return (adc_value / (float)max_adc_value) * ADC_REFERENCE_VOLTAGE_;
 }
