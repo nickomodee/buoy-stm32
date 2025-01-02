@@ -4,7 +4,7 @@ import base64
 server_password_b64 = b'E78fXsCYx1o='
 server_password = base64.b64decode(server_password_b64)
 
-def send_data_to_backend(buoy_update_id, air_temp, water_temp, uv_index, humidity, pressure, air_temp2, inner_temp, light_lux, wind_speed, gust_speed, battery_voltage, server_password=server_password):
+def send_data_to_backend(buoy_update_id, air_temp, water_temp, uv_index, humidity, inner_humidity, pressure, air_temp2, inner_temp, light_lux, wind_speed, gust_speed, battery_voltage, server_password=server_password):
     server_address = ('backendserver.yeahbuoy.co.nz', 3896)
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     
@@ -13,7 +13,7 @@ def send_data_to_backend(buoy_update_id, air_temp, water_temp, uv_index, humidit
         
         password_buffer = server_password + b';'
 
-        data_str = f"{buoy_update_id},{air_temp},{water_temp},{uv_index},{humidity},{pressure},{air_temp2},{inner_temp},{light_lux},{wind_speed},{gust_speed},{battery_voltage}"
+        data_str = f"{buoy_update_id},{air_temp},{water_temp},{uv_index},{humidity},{inner_humidity},{pressure},{air_temp2},{inner_temp},{light_lux},{wind_speed},{gust_speed},{battery_voltage}"
 
         message = password_buffer + data_str.encode()
 
