@@ -29,7 +29,7 @@
 #define LORA_TIMEOUT 10000
 #define LORA_NUM_RETRIES 1
 #define LORA_FREQ 915000000 // 915 MHz
-#define LORA_DATA_RATE DataRate::SF7
+#define LORA_DATA_RATE DataRate::SF11
 #define LORA_BANDWIDTH Bandwidth::BANDWIDTH_500_KHZ
 #define LORA_CODE_RATE CodeRate::RATE_4_BY_5
 #define LORA_TX_POWER 22
@@ -82,7 +82,7 @@ const std::array<IRLightSensor*, 0> ir_light_sensors_array = {};
 // const std::array<IRLightSensor*, 1> ir_light_sensors_array = {&si1145};
 
 constexpr uint8_t buoy_init_retries = 10;
-constexpr firmware_version_type buoy_firmware_version = 1.3f;
+constexpr firmware_version_type buoy_firmware_version = 1.4f;
 
 Buoy<temp_sensors_array.size(), humidity_sensors_array.size(), pressure_sensors_array.size(), uv_sensors_array.size(), visible_light_sensors_array.size(), ir_light_sensors_array.size()> buoy(buoy_init_retries, buoy_firmware_version, &bcp_instance, &bno085, &battery_voltage_reader, temp_sensors_array, humidity_sensors_array, pressure_sensors_array, uv_sensors_array, visible_light_sensors_array, ir_light_sensors_array);
 
