@@ -81,7 +81,7 @@ class Buoy {
         static constexpr uint8_t IMU_RECORD_FREQUENCY_ = 10; // in Hertz
         static constexpr char IMU_RECORD_FILE_PATH_[] = "imu_data.bin";
 
-        static constexpr uint8_t WAKE_PERIOD_ = 15; // in minutes
+        static constexpr uint8_t WAKE_PERIOD_ = 5; // in minutes
         static constexpr uint8_t MINUTES_BEFORE_ALARM_THRESHOLD_ = 1; // in minutes
         static constexpr uint32_t MILLISECONDS_PER_SECOND_ = 1000; // in ms per second
         static constexpr uint32_t MILLISECONDS_PER_MINUTE_ = 60000; // in ms per minute
