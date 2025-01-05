@@ -112,8 +112,8 @@ class Buoy {
         std::array<status_type, num_visible_light_sensors> visible_light_sensors_status_array_ = {};
         std::array<status_type, num_ir_light_sensors> ir_light_sensors_status_array_ = {};
 
-        //                                                    [IMU Status] ->  [IMU File Status]  ->  [IMU Count]  ->  [IMU Sleep Status]  ->   [Firmware Version]   ->    [SD Status]   ->    [RTC Status]   ->    [Second]    ->     [Minute]    ->     [Hour]    ->     [Day]    ->    [Day of Week]    ->    [Month]    ->     [Year] ->  [Battery Voltage Status] ->  [Battery Voltage]     ->      [Num Temp Sensors] -> [Temp Sensor 1 Status] -> [Temp Sensor 1 Data]  ->   ...      ->       [Num Humidity Sensors] -> [Humidity Sensor 1 Status] -> [Humidity Sensor 1 Data]  ->   ...       ->        [Num Pressure Sensors] -> [Pressure Sensor 1 Status] -> [Pressure Sensor 1 Data]  ->   ...       ->        [Num UV Sensors] ->  [UV Sensor 1 Status] -> [UV Sensor 1 Data]  ->   ...       ->       [Num Visible Light Sensors] -> [Visible Light Sensor 1 Status] -> [Visible Light Sensor 1 Data]  ->   ...        ->         [Num IR Light Sensors]  ->  [IR Light Sensor 1 Status] -> [IR Light Sensor 1 Data]  ->   ...
-        static constexpr size_t SENSOR_DATA_BUFFER_SIZE_ = (status_type_size + status_type_size + imu_count_type_size + status_type_size) + firmware_version_type_size + status_type_size + (status_type_size + second_type_size + minute_type_size + hour_type_size + day_type_size + dayofweek_type_size + month_type_size + year_type_size) + (status_type_size  +  battery_voltage_type_size) + ((sizeof(num_temp_sensors) + (status_type_size + temp_sensor_type_size) * num_temp_sensors) + (sizeof(num_humidity_sensors)  +  (status_type_size + humidity_sensor_type_size) * num_humidity_sensors) + (sizeof(num_pressure_sensors)  +  (status_type_size + pressure_sensor_type_size) * num_pressure_sensors) + (sizeof(num_uv_sensors) + (status_type_size + uv_sensor_type_size) * num_uv_sensors)  +  (sizeof(num_visible_light_sensors)   +   (status_type_size + visible_light_sensor_type_size) * num_visible_light_sensors) + (sizeof(num_ir_light_sensors)   +   (status_type_size + ir_light_sensor_type_size) * num_ir_light_sensors));
+        //                                                      [Firmware Version]   ->    [SD Status]   ->    [RTC Status]   ->    [Second]    ->     [Minute]    ->     [Hour]    ->     [Day]    ->    [Day of Week]    ->    [Month]    ->     [Year] ->  [Battery Voltage Status] ->  [Battery Voltage]     ->      [Num Temp Sensors] -> [Temp Sensor 1 Status] -> [Temp Sensor 1 Data]  ->   ...      ->       [Num Humidity Sensors] -> [Humidity Sensor 1 Status] -> [Humidity Sensor 1 Data]  ->   ...       ->        [Num Pressure Sensors] -> [Pressure Sensor 1 Status] -> [Pressure Sensor 1 Data]  ->   ...       ->        [Num UV Sensors] ->  [UV Sensor 1 Status] -> [UV Sensor 1 Data]  ->   ...       ->       [Num Visible Light Sensors] -> [Visible Light Sensor 1 Status] -> [Visible Light Sensor 1 Data]  ->   ...        ->         [Num IR Light Sensors]  ->  [IR Light Sensor 1 Status] -> [IR Light Sensor 1 Data]  ->   ...
+        static constexpr size_t SENSOR_DATA_BUFFER_SIZE_ = firmware_version_type_size + status_type_size + (status_type_size + second_type_size + minute_type_size + hour_type_size + day_type_size + dayofweek_type_size + month_type_size + year_type_size) + (status_type_size  +  battery_voltage_type_size) + ((sizeof(num_temp_sensors) + (status_type_size + temp_sensor_type_size) * num_temp_sensors) + (sizeof(num_humidity_sensors)  +  (status_type_size + humidity_sensor_type_size) * num_humidity_sensors) + (sizeof(num_pressure_sensors)  +  (status_type_size + pressure_sensor_type_size) * num_pressure_sensors) + (sizeof(num_uv_sensors) + (status_type_size + uv_sensor_type_size) * num_uv_sensors)  +  (sizeof(num_visible_light_sensors)   +   (status_type_size + visible_light_sensor_type_size) * num_visible_light_sensors) + (sizeof(num_ir_light_sensors)   +   (status_type_size + ir_light_sensor_type_size) * num_ir_light_sensors));
         static constexpr size_t DATA_BUFFER_SIZE_ = SENSOR_DATA_BUFFER_SIZE_;
         uint8_t data_buffer_[DATA_BUFFER_SIZE_] = {};
 
@@ -314,7 +314,7 @@ bool Buoy<num_temp_sensors, num_humidity_sensors, num_pressure_sensors, num_uv_s
 
     status &= rtc_status_; // status &= init_rtc_(); // we do already this in `setup()`
     status &= sd_status_; // status &= init_sd_(); // we do already this in `setup()`
-    status &= init_imu_();
+    // status &= init_imu_();
     status &= init_battery_voltage_reader_();
     status &= init_temperature_sensors_();
     status &= init_humidity_sensors_();
@@ -564,12 +564,13 @@ bool Buoy<num_temp_sensors, num_humidity_sensors, num_pressure_sensors, num_uv_s
 template<const uint8_t num_temp_sensors, const uint8_t num_humidity_sensors, const uint8_t num_pressure_sensors, const uint8_t num_uv_sensors, const uint8_t num_visible_light_sensors, const uint8_t num_ir_light_sensors>
 bool Buoy<num_temp_sensors, num_humidity_sensors, num_pressure_sensors, num_uv_sensors, num_visible_light_sensors, num_ir_light_sensors>::record_data() {
     size_t data_buffer_index = 0;
-    if (!record_imu_data_(&data_buffer_index)) {
-        return false;
-    }
-    if (!record_imu_sleep_(&data_buffer_index)) {
-        return false;
-    }
+    // if (!record_imu_data_(&data_buffer_index)) {
+    //     return false;
+    // }
+    // PAL_SERIAL.println(1);
+    // if (!record_imu_sleep_(&data_buffer_index)) {
+    //     return false;
+    // }
     if (!record_firmware_version_(&data_buffer_index)) {
         return false;
     }

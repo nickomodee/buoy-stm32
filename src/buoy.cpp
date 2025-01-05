@@ -30,7 +30,7 @@
 #define LORA_NUM_RETRIES 1
 #define LORA_FREQ 915000000 // 915 MHz
 #define LORA_DATA_RATE DataRate::SF11
-#define LORA_BANDWIDTH Bandwidth::BANDWIDTH_125_KHZ
+#define LORA_BANDWIDTH Bandwidth::BANDWIDTH_62_5_KHZ
 #define LORA_CODE_RATE CodeRate::RATE_4_BY_5
 #define LORA_TX_POWER 22
 #define LORA_LNA LNA::ON
@@ -113,36 +113,36 @@ void setup() {
     buoy.check_and_sleep();
     watchdog.init(); // if we don't need to sleep immediately start the watchdog
 
-    // PAL_SERIAL.begin(9600);
+    PAL_SERIAL.begin(9600);
     LORA_SERIAL_INTERFACE.begin(9600);
     Wire.begin();
     encryption.begin();
 
     // PAL_SERIAL.println("Update succesful..."); // uncomment to test ota update
 
-    buoy.init_sd();
-    // PAL_SERIAL.print("SD initialisation status: ");
-    // PAL_SERIAL.println(buoy.init_sd() ? "true" : "false");
+    // buoy.init_sd();
+    PAL_SERIAL.print("SD initialisation status: ");
+    PAL_SERIAL.println(buoy.init_sd() ? "true" : "false");
 
     if (firmware_updater.check()) {
-        // PAL_SERIAL.println("Firmware update available on setup. Updating...");
+        PAL_SERIAL.println("Firmware update available on setup. Updating...");
         firmware_updater.update();
     }
 
-    buoy.init();
-    // PAL_SERIAL.print("Buoy initialistation status: ");
-    // PAL_SERIAL.println(buoy.init() ? "true" : "false");
+    // buoy.init();
+    PAL_SERIAL.print("Buoy initialistation status: ");
+    PAL_SERIAL.println(buoy.init() ? "true" : "false");
 
-    buoy.record_data();
-    // PAL_SERIAL.print("Buoy recording data status: ");
-    // PAL_SERIAL.println(buoy.record_data() ? "true" : "false");
+    // buoy.record_data();
+    PAL_SERIAL.print("Buoy recording data status: ");
+    PAL_SERIAL.println(buoy.record_data() ? "true" : "false");
 
-    buoy.send_data();
-    // PAL_SERIAL.print("Buoy sending data status: ");
-    // PAL_SERIAL.println(buoy.send_data() ? "true" : "false");
+    // buoy.send_data();
+    PAL_SERIAL.print("Buoy sending data status: ");
+    PAL_SERIAL.println(buoy.send_data() ? "true" : "false");
 
     if (firmware_updater.check()) {
-        // PAL_SERIAL.println("Firmware update available after sending data. Updating...");
+        PAL_SERIAL.println("Firmware update available after sending data. Updating...");
         firmware_updater.update();
     }
 
