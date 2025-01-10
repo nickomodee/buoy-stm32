@@ -121,10 +121,26 @@ PacketStatus BCP::send_recv(uint8_t num_packets, PacketType expected_packet_type
     return PacketStatus::TIMEOUT;
 }
 
-bool BCP::synchronise() {
+// bool BCP::synchronise() {
+//     this->current_index_ = 0;
+//     Packet* new_packet = this->new_send_packet();
+//     new_packet->set(PacketType::SYN, -1, 0, "");
+//     if (this->send_recv(1, PacketType::SYNACK) != PacketStatus::SUCCESS) {
+//         return false;
+//     }
+
+//     new_packet = this->new_send_packet();
+//     new_packet->set(PacketType::ACK, -1, 0, "");
+//     // we don't send this packet because it is sent in `send_data_desc(uin32_t)` since if we timeout, we must send both, which is easier to implement in that method
+
+//     return true;
+// }
+bool BCP::synchronise(const char* data, const uint32_t data_size) {
+    const uint8_t packet_data_size = PAL_MIN(MAX_DATA_SIZE, data_size);
+
     this->current_index_ = 0;
     Packet* new_packet = this->new_send_packet();
-    new_packet->set(PacketType::SYN, -1, 0, "");
+    new_packet->set(PacketType::SYN, -1, packet_data_size, data);
     if (this->send_recv(1, PacketType::SYNACK) != PacketStatus::SUCCESS) {
         return false;
     }
@@ -383,7 +399,8 @@ bool BCP::send(const char* data, size_t data_size, const char* file_path/* = nul
         this->set_retransmission_control(RetransmissionController::BUOY);
 
         DEBUG_BCP_PRINTLN(F("Synchronising"));
-        if (!this->synchronise()) {
+        // if (!this->synchronise()) {
+        if (!this->synchronise(data, data_size)) {
             continue;
         }
 

@@ -150,7 +150,8 @@ class BCP : public DataSender {
          * 
          * @returns A boolean if the receiving device successfully acknowledges our synchronisation.
          */
-        bool synchronise();
+        // bool synchronise();
+        bool synchronise(const char* data, const uint32_t data_size);
         /**
          * @brief Send the description of the data to be sent to the other device (how many `DATA` packets in total that will be sent).
          * 
