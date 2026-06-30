@@ -78,13 +78,13 @@ class DataStreamParser:
         self.server_state_: ServerState = server_state
         self.buffer_: bytes = b""
         self.bytes_needed_: int = 0
-        self.state_: DataStreamState = DataStreamState.FIRMWARE_VERSION # DataStreamState.IMU_STATUS
+        self.state_: DataStreamState = DataStreamState.IMU_STATUS
 
         self.reset_()
 
     def reset_(self) -> None:
         self.buffer_ = b""
-        self.state_ = DataStreamState.FIRMWARE_VERSION # DataStreamState.IMU_STATUS
+        self.state_ = DataStreamState.IMU_STATUS
         self.bytes_needed_ = get_data_type_size(self.imu_status_data_type)
     
     def parse_data(self, data: bytes, current_index: int, final_index: int) -> None:
